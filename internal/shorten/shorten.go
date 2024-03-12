@@ -2,14 +2,10 @@ package shorten
 
 import (
 	"github.com/sqids/sqids-go"
-	"math/rand"
-	"time"
 )
 
-func GenerateShortKey() string {
-	number := rand.New(rand.NewSource(time.Now().UnixNano())).Uint64()
-
+func Shorten(number uint32) string {
 	hash, _ := sqids.New()
-	id, _ := hash.Encode([]uint64{number})
+	id, _ := hash.Encode([]uint64{uint64(number)})
 	return id
 }
