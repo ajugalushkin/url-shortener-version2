@@ -1,8 +1,10 @@
 package redirect
 
 import (
+	"github.com/ajugalushkin/url-shortener-version2/internal/model"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -10,87 +12,78 @@ import (
 )
 
 func TestGetHandler(t *testing.T) {
+	type request struct {
+		method      string
+		key         string
+		URL         string
+		contentType string
+	}
 	type want struct {
 		code     int
-		request  string
-		method   string
 		response string
 	}
 	tests := []struct {
-		name string
-		want want
+		name    string
+		request request
+		want    want
 	}{
 		{
-			name: "Test Bad Request 1",
+			name: "Test OK",
+			request: request{
+				method:      http.MethodGet,
+				key:         "rIHY5pi",
+				URL:         "http://localhost:8080/rIHY5pi",
+				contentType: echo.MIMETextPlain,
+			},
 			want: want{
-				code:    http.StatusBadRequest,
-				request: "https://practicum.yandex.ru/",
-				method:  http.MethodGet,
+				code:     http.StatusTemporaryRedirect,
+				response: "https://practicum.yandex.ru/",
+			},
+		},
+		{
+			name: "Test Bad Request 1",
+			request: request{
+				method:      http.MethodGet,
+				URL:         "http://localhost:8080/rIHY5pi",
+				contentType: echo.MIMETextPlain,
+			},
+			want: want{
+				code: http.StatusBadRequest,
 			},
 		},
 		{
 			name: "Test Bad Request 2",
+			request: request{
+				URL:    "http://localhost:8080/rIHY5pi",
+				method: http.MethodPost,
+			},
 			want: want{
-				code:    http.StatusBadRequest,
-				request: "https://practicum.yandex.ru/",
-				method:  http.MethodPost,
+				code: http.StatusBadRequest,
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(test.want.method, test.want.request, nil)
-			request.Header.Set("Content-Type", "text/plain")
-			writer := httptest.NewRecorder()
+			// Setup
+			server := echo.New()
+			req := httptest.NewRequest(test.request.method, test.request.URL, nil)
+			req.Header.Set(echo.HeaderContentType, test.request.contentType)
+			rec := httptest.NewRecorder()
+			context := server.NewContext(req, rec)
 
-			serviceAPI := service.NewService(storage.NewInMemory())
+			storageAPI := storage.NewInMemory()
+			storageAPI.Put(model.Shortening{
+				Key: test.request.key,
+				URL: test.want.response,
+			})
 
-			handler := New(serviceAPI)
-			handler.ServeHTTP(writer, request)
+			handler := New(service.NewService(storageAPI))
 
-			result := writer.Result()
-			defer result.Body.Close()
-
-			assert.Equal(t, test.want.code, result.StatusCode)
-			assert.Equal(t, test.want.response, result.Header.Get("Location"))
-		})
-	}
-
-	tests = []struct {
-		name string
-		want want
-	}{
-		{
-			name: "Test Bad Request 1",
-			want: want{
-				code:    http.StatusBadRequest,
-				request: "https://practicum.yandex.ru/",
-				method:  http.MethodGet,
-			},
-		},
-		{
-			name: "Test Bad Request 2",
-			want: want{
-				code:    http.StatusBadRequest,
-				request: "https://practicum.yandex.ru/",
-				method:  http.MethodPost,
-			},
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(test.want.method, test.want.request, nil)
-			request.Header.Set("Content-Type", "text/plain")
-			writer := httptest.NewRecorder()
-
-			handler := New(service.NewService(storage.NewInMemory()))
-			handler.ServeHTTP(writer, request)
-
-			result := writer.Result()
-			defer result.Body.Close()
-
-			assert.Equal(t, test.want.code, result.StatusCode)
-			assert.Equal(t, test.want.response, result.Header.Get("Location"))
+			// Assertions
+			if assert.NoError(t, handler(context)) {
+				assert.Equal(t, test.want.code, rec.Code)
+				assert.Equal(t, test.want.response, rec.Header().Get(echo.HeaderLocation))
+			}
 		})
 	}
 }

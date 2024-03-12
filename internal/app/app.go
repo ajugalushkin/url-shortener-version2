@@ -1,24 +1,25 @@
 package app
 
 import (
-	"github.com/ajugalushkin/url-shortener-version2/internal/handlers/middleware"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handlers/redirect"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handlers/save"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
-	"net/http"
+	"github.com/labstack/echo/v4"
 )
 
 func Run() error {
-	mux := http.NewServeMux()
+	server := echo.New()
 
 	serviceAPI := service.NewService(storage.NewInMemory())
 
-	mux.Handle("/", middleware.Switch(save.New(serviceAPI), redirect.New(serviceAPI)))
+	server.POST("/", save.New(serviceAPI))
+	server.GET("/:id", redirect.New(serviceAPI))
 
-	err := http.ListenAndServe(`:8080`, mux)
+	err := server.Start(":8080")
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

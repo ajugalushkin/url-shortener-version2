@@ -3,6 +3,7 @@ package save
 import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -30,11 +31,11 @@ func TestPostHandler(t *testing.T) {
 			request: request{
 				method:      http.MethodPost,
 				body:        "https://practicum.yandex.ru/",
-				contentType: "text/plain",
+				contentType: echo.MIMETextPlain,
 			},
 			want: want{
 				code:        http.StatusCreated,
-				contentType: "text/plain",
+				contentType: echo.MIMETextPlain,
 			},
 		},
 		{
@@ -42,30 +43,43 @@ func TestPostHandler(t *testing.T) {
 			request: request{
 				method:      http.MethodGet,
 				body:        "https://practicum.yandex.ru/",
-				contentType: "text/plain",
+				contentType: echo.MIMETextPlain,
 			},
 			want: want{
 				code:        http.StatusBadRequest,
-				contentType: "text/plain; charset=utf-8",
+				contentType: echo.MIMETextPlainCharsetUTF8,
+			},
+		},
+		{
+			name: "Test Empty URL",
+			request: request{
+				method:      http.MethodGet,
+				body:        "",
+				contentType: echo.MIMETextPlain,
+			},
+			want: want{
+				code:        http.StatusBadRequest,
+				contentType: echo.MIMETextPlainCharsetUTF8,
 			},
 		},
 	}
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(test.request.method, "/",
-				strings.NewReader(test.request.body))
-			request.Header.Set("Content-Type", test.request.contentType)
-
-			writer := httptest.NewRecorder()
+			// Setup
+			server := echo.New()
+			req := httptest.NewRequest(test.request.method, "/", strings.NewReader(test.request.body))
+			req.Header.Set(echo.HeaderContentType, test.request.contentType)
+			rec := httptest.NewRecorder()
+			c := server.NewContext(req, rec)
 
 			handler := New(service.NewService(storage.NewInMemory()))
-			handler.ServeHTTP(writer, request)
 
-			result := writer.Result()
-			defer result.Body.Close()
-
-			assert.Equal(t, test.want.code, result.StatusCode)
-			assert.Equal(t, test.want.contentType, result.Header.Get("Content-Type"))
+			// Assertions
+			if assert.NoError(t, handler(c)) {
+				assert.Equal(t, test.want.code, rec.Code)
+				assert.Equal(t, test.want.contentType, rec.Header().Get(echo.HeaderContentType))
+			}
 		})
 	}
 }
