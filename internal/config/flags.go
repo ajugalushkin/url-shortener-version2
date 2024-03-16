@@ -5,20 +5,20 @@ import (
 	"os"
 )
 
-var (
+type Config struct {
 	FlagRunAddr string
 	BaseURL     string
-)
+}
 
-func ParseFlags() {
+func (c Config) ParseFlags() {
 	if envRunAddr := os.Getenv("RUN_ADDR"); envRunAddr != "" {
-		FlagRunAddr = envRunAddr
+		c.FlagRunAddr = envRunAddr
 	}
 	if envBaseURL := os.Getenv("BASE_URL"); envBaseURL != "" {
-		BaseURL = envBaseURL
+		c.BaseURL = envBaseURL
 	}
 
-	flag.StringVar(&FlagRunAddr, "a", "localhost:8080", "address and port to run server")
-	flag.StringVar(&BaseURL, "b", "http://localhost:8080", "Base URL for POST request")
+	flag.StringVar(&c.FlagRunAddr, "a", "localhost:8080", "address and port to run server")
+	flag.StringVar(&c.BaseURL, "b", "http://localhost:8080", "Base URL for POST request")
 	flag.Parse()
 }

@@ -6,16 +6,16 @@ import (
 	"github.com/google/uuid"
 )
 
-type Storage interface {
+type PutGetter interface {
 	Put(urlData model.Shortening) (*model.Shortening, error)
 	Get(id string) (*model.Shortening, error)
 }
 
 type Service struct {
-	storage Storage
+	storage PutGetter
 }
 
-func NewService(storage Storage) *Service {
+func NewService(storage PutGetter) *Service {
 	return &Service{storage: storage}
 }
 
