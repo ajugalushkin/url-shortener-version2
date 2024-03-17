@@ -79,17 +79,18 @@ func TestHandler_HandleRedirect(t *testing.T) {
 			context := server.NewContext(req, rec)
 
 			storageAPI := storage.NewInMemory()
-			storageAPI.Put(model.Shortening{
+			_, err := storageAPI.Put(model.Shortening{
 				Key: test.request.key,
 				URL: test.want.response,
 			})
+			if assert.NoError(t, err) {
+				handler := NewHandler(service.NewService(storageAPI), &cfg)
 
-			handler := NewHandler(service.NewService(storageAPI), &cfg)
-
-			// Assertions
-			if assert.NoError(t, handler.HandleRedirect(context)) {
-				assert.Equal(t, test.want.code, rec.Code)
-				assert.Equal(t, test.want.response, rec.Header().Get(echo.HeaderLocation))
+				// Assertions
+				if assert.NoError(t, handler.HandleRedirect(context)) {
+					assert.Equal(t, test.want.code, rec.Code)
+					assert.Equal(t, test.want.response, rec.Header().Get(echo.HeaderLocation))
+				}
 			}
 		})
 	}

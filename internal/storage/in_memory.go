@@ -5,15 +5,15 @@ import (
 	"sync"
 )
 
-type inMemory struct {
+type InMemory struct {
 	m sync.Map
 }
 
-func NewInMemory() *inMemory {
-	return &inMemory{}
+func NewInMemory() *InMemory {
+	return &InMemory{}
 }
 
-func (s *inMemory) Put(shortening model.Shortening) (*model.Shortening, error) {
+func (s *InMemory) Put(shortening model.Shortening) (*model.Shortening, error) {
 	if _, exists := s.m.Load(shortening.Key); exists {
 		return nil, model.ErrIdentifierExists
 	}
@@ -23,7 +23,7 @@ func (s *inMemory) Put(shortening model.Shortening) (*model.Shortening, error) {
 	return &shortening, nil
 }
 
-func (s *inMemory) Get(identifier string) (*model.Shortening, error) {
+func (s *InMemory) Get(identifier string) (*model.Shortening, error) {
 	v, ok := s.m.Load(identifier)
 	if !ok {
 		return nil, model.ErrNotFound

@@ -46,7 +46,10 @@ func (s Handler) HandleSave(context echo.Context) error {
 
 	context.Response().Header().Set(echo.HeaderContentType, echo.MIMETextPlain)
 	context.Response().Status = http.StatusCreated
-	context.Response().Write([]byte(shortenedURL))
+	_, err = context.Response().Write([]byte(shortenedURL))
+	if err != nil {
+		return err
+	}
 
 	return context.String(http.StatusCreated, "")
 }
