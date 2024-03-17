@@ -19,8 +19,8 @@ func Run(cfg *config.Config) error {
 	server.POST("/", handler.HandleSave)
 	server.GET("/:id", handler.HandleRedirect)
 
-	fmt.Println("Running server on", cfg.FlagRunAddr)
-	err := server.Start(cfg.FlagRunAddr)
+	fmt.Println("Running server on", cfg.RunAddr)
+	err := server.Start(cfg.RunAddr)
 	if err != nil {
 		return err
 	}

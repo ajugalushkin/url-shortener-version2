@@ -7,10 +7,10 @@ import (
 )
 
 func main() {
-	var cfg config.Config
-	cfg.ParseFlags()
+	cfg := config.NewConfig()
+	config.ParseFlags(cfg)
 
-	if err := app.Run(&cfg); err != nil {
+	if err := app.Run(cfg); err != nil {
 		fmt.Println(err)
 	}
 }
