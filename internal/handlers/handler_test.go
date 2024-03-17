@@ -79,10 +79,10 @@ func TestHandler_HandleRedirect(t *testing.T) {
 				URL: test.want.response,
 			})
 
-			var cfg config.Config
-			cfg.ParseFlags()
+			cfg := config.NewConfig()
+			config.ParseFlags(cfg)
 
-			handler := NewHandler(service.NewService(storageAPI), &cfg)
+			handler := NewHandler(service.NewService(storageAPI), cfg)
 
 			// Assertions
 			if assert.NoError(t, handler.HandleRedirect(context)) {
@@ -155,10 +155,10 @@ func TestHandler_HandleSave(t *testing.T) {
 			rec := httptest.NewRecorder()
 			context := server.NewContext(req, rec)
 
-			var cfg config.Config
-			cfg.ParseFlags()
+			cfg := config.NewConfig()
+			config.ParseFlags(cfg)
 
-			handler := NewHandler(service.NewService(storage.NewInMemory()), &cfg)
+			handler := NewHandler(service.NewService(storage.NewInMemory()), cfg)
 
 			// Assertions
 			if assert.NoError(t, handler.HandleSave(context)) {
