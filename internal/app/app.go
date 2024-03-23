@@ -20,6 +20,9 @@ func Run(cfg *config.Config) error {
 	}
 
 	server.Use(logger.RequestLogger)
+	server.POST("/api/shorten", handler.HandleShorten)
+
+	server.Use(logger.RequestLogger)
 	server.POST("/", handler.HandleSave)
 
 	server.Use(logger.RequestLogger)

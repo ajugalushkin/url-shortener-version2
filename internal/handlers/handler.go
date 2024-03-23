@@ -112,3 +112,69 @@ func (s Handler) HandleRedirect(context echo.Context) error {
 
 	return context.String(http.StatusTemporaryRedirect, "")
 }
+
+func (s Handler) HandleShorten(context echo.Context) error {
+	if context.Request().Method != http.MethodPost {
+		logger.Log.Debug("Wrong type request",
+			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
+			zap.String("size", strconv.Itoa(0)),
+		)
+		return context.String(http.StatusBadRequest, "Wrong type request")
+	}
+
+	body, err := io.ReadAll(context.Request().Body)
+	if err != nil {
+		logger.Log.Debug("URL parse error",
+			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
+			zap.String("size", strconv.Itoa(0)),
+		)
+		return context.String(http.StatusBadRequest, "URL parse error")
+	}
+
+	shorten := model.Shorten{}
+	err = shorten.UnmarshalJSON(body)
+	if err != nil {
+		logger.Log.Debug("JSON parse error",
+			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
+			zap.String("size", strconv.Itoa(0)),
+		)
+		return context.String(http.StatusBadRequest, "JSON parse error")
+	}
+
+	shortenURL, err := s.servAPI.Shorten(model.ShortenInput{RawURL: shorten.URL})
+	if err != nil {
+		logger.Log.Debug("URL not shortening",
+			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
+			zap.String("size", strconv.Itoa(0)),
+		)
+		return context.String(http.StatusBadRequest, "URL not shortening")
+	}
+
+	shortenResult := model.ShortenResult{Result: fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortenURL.Key)}
+	json, err := shortenResult.MarshalJSON()
+	if err != nil {
+		logger.Log.Debug("JSON not create",
+			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
+			zap.String("size", strconv.Itoa(0)),
+		)
+		return context.String(http.StatusBadRequest, "JSON not create")
+	}
+
+	context.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	context.Response().Status = http.StatusCreated
+	_, err = context.Response().Write(json)
+	if err != nil {
+		logger.Log.Debug("Failed to send URL",
+			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
+			zap.String("size", strconv.Itoa(0)),
+		)
+		return context.String(http.StatusBadRequest, "Failed to send URL")
+	}
+
+	logger.Log.Debug("URL sent",
+		zap.String("status", strconv.Itoa(http.StatusCreated)),
+		zap.String("size", strconv.Itoa(len(json))),
+	)
+
+	return context.String(http.StatusTemporaryRedirect, "")
+}
