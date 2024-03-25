@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handlers"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
@@ -20,12 +21,10 @@ func Run(cfg *config.Config) error {
 	}
 
 	server.Use(logger.RequestLogger)
+	server.Use(compress.GzipMiddleware)
+
 	server.POST("/api/shorten", handler.HandleShorten)
-
-	server.Use(logger.RequestLogger)
 	server.POST("/", handler.HandleSave)
-
-	server.Use(logger.RequestLogger)
 	server.GET("/:id", handler.HandleRedirect)
 
 	fmt.Println("Running server on", cfg.RunAddr)

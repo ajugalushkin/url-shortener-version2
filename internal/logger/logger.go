@@ -27,18 +27,18 @@ func Initialize(level string) error {
 }
 
 func RequestLogger(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
+	return func(context echo.Context) error {
 		start := time.Now()
 
-		if err := next(c); err != nil {
-			c.Error(err)
+		if err := next(context); err != nil {
+			context.Error(err)
 		}
 
 		duration := time.Since(start)
 
 		Log.Debug("got incoming HTTP request",
-			zap.String("method", c.Request().Method),
-			zap.String("path", c.Request().URL.Path),
+			zap.String("method", context.Request().Method),
+			zap.String("path", context.Request().URL.Path),
 			zap.String("time", duration.String()),
 		)
 		return nil
