@@ -6,8 +6,9 @@ import (
 )
 
 type Config struct {
-	RunAddr string `env:"RUN_ADDR"`
-	BaseURL string `env:"BASE_URL"`
+	RunAddr      string `env:"RUN_ADDR"`
+	BaseURL      string `env:"BASE_URL"`
+	FlagLogLevel string `env:"LOG_LEVEL"`
 }
 
 func NewConfig() *Config {
@@ -22,7 +23,12 @@ func ParseFlags(config *Config) {
 		config.BaseURL = envBaseURL
 	}
 
+	if envLogLevel := os.Getenv("LOG_LEVEL"); envLogLevel != "" {
+		config.FlagLogLevel = envLogLevel
+	}
+
 	flag.StringVar(&config.RunAddr, "a", "localhost:8080", "address and port to run server")
 	flag.StringVar(&config.BaseURL, "b", "http://localhost:8080", "Base URL for POST request")
+	flag.StringVar(&config.FlagLogLevel, "c", "info", "Log level")
 	flag.Parse()
 }
