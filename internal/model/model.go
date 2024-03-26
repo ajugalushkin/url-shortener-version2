@@ -1,20 +1,16 @@
 package model
 
-import (
-	"errors"
-)
-
 type Shortening struct {
 	Key string
 	URL string
+}
+
+type File struct {
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
 }
 
 type ShortenInput struct {
 	RawURL     string
 	Identifier string
 }
-
-var (
-	ErrNotFound         = errors.New("not found")
-	ErrIdentifierExists = errors.New("identifier already exists")
-)

@@ -13,7 +13,7 @@ import (
 
 func Run(cfg *config.Config) error {
 	server := echo.New()
-	serviceAPI := service.NewService(storage.NewInMemory())
+	serviceAPI := service.NewService(storage.NewStorage(cfg))
 	handler := save.NewHandler(serviceAPI, cfg)
 
 	if err := logger.Initialize(cfg.FlagLogLevel); err != nil {
