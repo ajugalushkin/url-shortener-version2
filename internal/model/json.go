@@ -8,4 +8,8 @@ type (
 	ShortenResult struct {
 		Result string `json:"result"`
 	}
+	File struct {
+		ShortURL    string `json:"short_url"`
+		OriginalURL string `json:"original_url"`
+	}
 )

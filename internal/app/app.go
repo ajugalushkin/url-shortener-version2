@@ -13,7 +13,15 @@ import (
 
 func Run(cfg *config.Config) error {
 	server := echo.New()
-	serviceAPI := service.NewService(storage.NewStorage(cfg))
+
+	var storageAPI service.PutGetter
+	if cfg.FileStoragePath == "" {
+		storageAPI = storage.NewInMemory()
+	} else {
+		storageAPI = storage.NewStorage(cfg)
+	}
+
+	serviceAPI := service.NewService(storageAPI)
 	handler := save.NewHandler(serviceAPI, cfg)
 
 	if err := logger.Initialize(cfg.FlagLogLevel); err != nil {

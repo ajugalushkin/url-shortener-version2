@@ -2,7 +2,6 @@ package storage
 
 import (
 	"bufio"
-	"encoding/json"
 	"github.com/ajugalushkin/url-shortener-version2/internal/model"
 	"os"
 )
@@ -32,7 +31,8 @@ func (c *Reader) ReadFile() (map[string]model.File, error) {
 		data := c.scanner.Bytes()
 
 		file := model.File{}
-		err := json.Unmarshal(data, &file)
+		err := file.UnmarshalJSON(data)
+		//err := json.Unmarshal(data, &file)
 		if err != nil {
 			return nil, err
 		}

@@ -2,7 +2,6 @@ package storage
 
 import (
 	"bufio"
-	"encoding/json"
 	"github.com/ajugalushkin/url-shortener-version2/internal/model"
 	"os"
 	"path/filepath"
@@ -34,7 +33,7 @@ func NewWriter(fileName string) (*Writer, error) {
 }
 
 func (p *Writer) WriteFile(file *model.File) error {
-	data, err := json.Marshal(&file)
+	data, err := file.MarshalJSON()
 	if err != nil {
 		return err
 	}
