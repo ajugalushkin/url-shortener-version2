@@ -5,6 +5,7 @@ go 1.21.8
 require (
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.11.4
+	github.com/mailru/easyjson v0.7.7
 	github.com/sqids/sqids-go v0.4.1
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
@@ -14,7 +15,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
-	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

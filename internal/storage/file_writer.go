@@ -13,9 +13,10 @@ type Writer struct {
 }
 
 func NewWriter(fileName string) (*Writer, error) {
+	fileName = filepath.FromSlash(fileName)
 	directory, _ := filepath.Split(fileName)
 	if _, err := os.Stat(directory); os.IsNotExist(err) {
-		err := os.Mkdir(directory, os.ModePerm)
+		err := os.MkdirAll(directory, os.ModePerm)
 		if err != nil {
 			return nil, err
 		}
