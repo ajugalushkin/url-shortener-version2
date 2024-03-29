@@ -1,9 +1,12 @@
 package storage
 
 import (
+	"bytes"
 	"errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/model"
+	"os"
+	"path/filepath"
 	"sync"
 )
 
@@ -14,9 +17,7 @@ type FileStorage struct {
 
 func NewStorage(cfg *config.Config) *FileStorage {
 	storage := FileStorage{cfg: cfg}
-
-	_ = refreshMap(&storage.m, storage.cfg.FileStoragePath)
-
+	_ = load(&storage.m, storage.cfg.FileStoragePath)
 	return &storage
 }
 
@@ -25,19 +26,10 @@ func (s *FileStorage) Put(shortening model.Shortening) (*model.Shortening, error
 		return nil, errors.New("identifier already exists")
 	}
 
-	Writer, err := NewWriter(s.cfg.FileStoragePath)
+	s.m.Store(shortening.Key, shortening)
+
+	err := save(s.cfg.FileStoragePath, &s.m)
 	if err != nil {
-		return nil, err
-	}
-	defer Writer.Close()
-
-	if err := Writer.WriteFile(&model.File{
-		ShortURL:    shortening.Key,
-		OriginalURL: shortening.URL}); err != nil {
-		return nil, err
-	}
-
-	if err := refreshMap(&s.m, s.cfg.FileStoragePath); err != nil {
 		return nil, err
 	}
 
@@ -55,29 +47,52 @@ func (s *FileStorage) Get(identifier string) (*model.Shortening, error) {
 	return &shortening, nil
 }
 
-func refreshMap(m *sync.Map, filePath string) error {
-	Reader, err := NewReader(filePath)
-	if err != nil {
-		return err
-	}
-	defer Reader.Close()
+func save(fileName string, urls *sync.Map) error {
+	var byteFile []byte
+	urls.Range(func(k, v interface{}) bool {
+		shortening := v.(model.Shortening)
 
-	files, err := Reader.ReadFile()
-	if err != nil {
-		return err
-	}
+		file := model.File{
+			ShortURL:    shortening.Key,
+			OriginalURL: shortening.URL}
 
-	//erase SyncMap
-	m.Range(func(key interface{}, value interface{}) bool {
-		m.Delete(key)
+		data, err := file.MarshalJSON()
+		if err != nil {
+			return false
+		}
+		data = append(data, '\n')
+		byteFile = append(byteFile, data...)
+
 		return true
 	})
 
-	for _, file := range files {
-		m.Store(file.ShortURL,
-			model.Shortening{
-				Key: file.ShortURL,
-				URL: file.OriginalURL})
+	fileName = filepath.FromSlash(fileName)
+	directory, _ := filepath.Split(fileName)
+	if _, err := os.Stat(directory); os.IsNotExist(err) {
+		err := os.MkdirAll(directory, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
+
+	return os.WriteFile(fileName, byteFile, 0666)
+}
+
+func load(files *sync.Map, fileName string) error {
+	data, err := os.ReadFile(fileName)
+	if err != nil {
+		return err
+	}
+
+	splitData := bytes.Split(data, []byte("\n"))
+
+	for _, item := range splitData {
+		file := model.File{}
+		err := file.UnmarshalJSON(item)
+		if err != nil {
+			return err
+		}
+		files.Store(file.ShortURL, model.Shortening{Key: file.ShortURL, URL: file.OriginalURL})
 	}
 
 	return nil
