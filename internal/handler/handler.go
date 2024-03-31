@@ -1,4 +1,4 @@
-package save
+package handler
 
 import (
 	"fmt"
@@ -43,7 +43,24 @@ func (s Handler) HandleSave(context echo.Context) error {
 		return context.String(http.StatusBadRequest, "URL parse error")
 	}
 
-	originalURL := string(body)
+	contentType := context.Request().Header.Get("Content-Type")
+
+	var originalURL string
+	if contentType == echo.MIMEApplicationJSON {
+		shorten := model.Shorten{}
+		err = shorten.UnmarshalJSON(body)
+		if err != nil {
+			logger.Log.Debug("JSON parse error",
+				zap.String("status", strconv.Itoa(http.StatusBadRequest)),
+				zap.String("size", strconv.Itoa(0)),
+			)
+			return context.String(http.StatusBadRequest, "JSON parse error")
+		}
+		originalURL = shorten.URL
+	} else {
+		originalURL = string(body)
+	}
+
 	if originalURL == "" {
 		logger.Log.Debug("URL parameter is missing",
 			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
@@ -61,11 +78,26 @@ func (s Handler) HandleSave(context echo.Context) error {
 		return context.String(http.StatusBadRequest, "URL not shortening")
 	}
 
-	shortenedURL := fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortenURL.Key)
+	var newBody []byte
+	if contentType == echo.MIMEApplicationJSON {
+		shortenResult := model.ShortenResult{Result: fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortenURL.Key)}
+		newBody, err = shortenResult.MarshalJSON()
+		if err != nil {
+			logger.Log.Debug("JSON not create",
+				zap.String("status", strconv.Itoa(http.StatusBadRequest)),
+				zap.String("size", strconv.Itoa(0)),
+			)
+			return context.String(http.StatusBadRequest, "JSON not create")
+		}
 
-	context.Response().Header().Set(echo.HeaderContentType, echo.MIMETextPlain)
+		context.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	} else {
+		newBody = []byte(fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortenURL.Key))
+		context.Response().Header().Set(echo.HeaderContentType, echo.MIMETextPlain)
+	}
+
 	context.Response().Status = http.StatusCreated
-	_, err = context.Response().Write([]byte(shortenedURL))
+	_, err = context.Response().Write(newBody)
 	if err != nil {
 		logger.Log.Debug("Failed to send URL",
 			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
@@ -76,7 +108,7 @@ func (s Handler) HandleSave(context echo.Context) error {
 
 	logger.Log.Debug("URL sent",
 		zap.String("status", strconv.Itoa(http.StatusCreated)),
-		zap.String("size", strconv.Itoa(len([]byte(shortenedURL)))),
+		zap.String("size", strconv.Itoa(len(newBody))),
 	)
 
 	return context.String(http.StatusCreated, "")
@@ -108,72 +140,6 @@ func (s Handler) HandleRedirect(context echo.Context) error {
 	logger.Log.Debug("Original URL not found!",
 		zap.String("status", strconv.Itoa(http.StatusTemporaryRedirect)),
 		zap.String("size", strconv.Itoa(0)),
-	)
-
-	return context.String(http.StatusTemporaryRedirect, "")
-}
-
-func (s Handler) HandleShorten(context echo.Context) error {
-	if context.Request().Method != http.MethodPost {
-		logger.Log.Debug("Wrong type request",
-			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
-			zap.String("size", strconv.Itoa(0)),
-		)
-		return context.String(http.StatusBadRequest, "Wrong type request")
-	}
-
-	body, err := io.ReadAll(context.Request().Body)
-	if err != nil {
-		logger.Log.Debug("URL parse error",
-			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
-			zap.String("size", strconv.Itoa(0)),
-		)
-		return context.String(http.StatusBadRequest, "URL parse error")
-	}
-
-	shorten := model.Shorten{}
-	err = shorten.UnmarshalJSON(body)
-	if err != nil {
-		logger.Log.Debug("JSON parse error",
-			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
-			zap.String("size", strconv.Itoa(0)),
-		)
-		return context.String(http.StatusBadRequest, "JSON parse error")
-	}
-
-	shortenURL, err := s.servAPI.Shorten(model.ShortenInput{RawURL: shorten.URL})
-	if err != nil {
-		logger.Log.Debug("URL not shortening",
-			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
-			zap.String("size", strconv.Itoa(0)),
-		)
-		return context.String(http.StatusBadRequest, "URL not shortening")
-	}
-
-	shortenResult := model.ShortenResult{Result: fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortenURL.Key)}
-	json, err := shortenResult.MarshalJSON()
-	if err != nil {
-		logger.Log.Debug("JSON not create",
-			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
-			zap.String("size", strconv.Itoa(0)),
-		)
-		return context.String(http.StatusBadRequest, "JSON not create")
-	}
-
-	context.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	context.Response().Status = http.StatusCreated
-	_, err = context.Response().Write(json)
-	if err != nil {
-		logger.Log.Debug("Failed to send URL",
-			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
-			zap.String("size", strconv.Itoa(0)),
-		)
-		return context.String(http.StatusBadRequest, "Failed to send URL")
-	}
-
-	logger.Log.Debug("URL sent",
-		zap.String("status", strconv.Itoa(http.StatusCreated)),
-		zap.String("size", strconv.Itoa(len(json))),
 	)
 
 	return context.String(http.StatusTemporaryRedirect, "")

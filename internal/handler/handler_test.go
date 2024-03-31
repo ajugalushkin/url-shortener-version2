@@ -1,4 +1,4 @@
-package save
+package handler
 
 import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
@@ -147,6 +147,18 @@ func TestHandler_HandleSave(t *testing.T) {
 				contentType: echo.MIMETextPlainCharsetUTF8,
 			},
 		},
+		{
+			name: "Test JSON Ok",
+			request: request{
+				method:      http.MethodPost,
+				body:        "{\n  \"url\": \"https://practicum.yandex.ru\"\n}",
+				contentType: echo.MIMEApplicationJSON,
+			},
+			want: want{
+				code:        http.StatusCreated,
+				contentType: echo.MIMEApplicationJSON,
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -169,75 +181,75 @@ func TestHandler_HandleSave(t *testing.T) {
 	}
 }
 
-func TestHandler_HandleShorten(t *testing.T) {
-	type request struct {
-		method      string
-		body        string
-		contentType string
-	}
-	type want struct {
-		code        int
-		contentType string
-	}
-	tests := []struct {
-		name    string
-		request request
-		want    want
-	}{
-		{
-			name: "Test StatusCreated",
-			request: request{
-				method:      http.MethodPost,
-				body:        "{\n  \"url\": \"https://practicum.yandex.ru\"\n}",
-				contentType: echo.MIMEApplicationJSON,
-			},
-			want: want{
-				code:        http.StatusCreated,
-				contentType: echo.MIMEApplicationJSON,
-			},
-		},
-		{
-			name: "Test Wrong Request",
-			request: request{
-				method:      http.MethodGet,
-				body:        "{\n  \"url\": \"https://practicum.yandex.ru\"\n}",
-				contentType: echo.MIMEApplicationJSON,
-			},
-			want: want{
-				code:        http.StatusBadRequest,
-				contentType: echo.MIMETextPlainCharsetUTF8,
-			},
-		},
-		{
-			name: "Test Empty URL",
-			request: request{
-				method:      http.MethodGet,
-				body:        "",
-				contentType: echo.MIMEApplicationJSON,
-			},
-			want: want{
-				code:        http.StatusBadRequest,
-				contentType: echo.MIMETextPlainCharsetUTF8,
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			// Setup
-			server := echo.New()
-			req := httptest.NewRequest(test.request.method, "/api/shorten", strings.NewReader(test.request.body))
-			req.Header.Set(echo.HeaderContentType, test.request.contentType)
-			rec := httptest.NewRecorder()
-			context := server.NewContext(req, rec)
-
-			handler := NewHandler(service.NewService(storage.NewInMemory()), &cfg)
-
-			// Assertions
-			if assert.NoError(t, handler.HandleShorten(context)) {
-				assert.Equal(t, test.want.code, rec.Code)
-				assert.Equal(t, test.want.contentType, rec.Header().Get(echo.HeaderContentType))
-			}
-		})
-	}
-}
+//func TestHandler_HandleShorten(t *testing.T) {
+//	type request struct {
+//		method      string
+//		body        string
+//		contentType string
+//	}
+//	type want struct {
+//		code        int
+//		contentType string
+//	}
+//	tests := []struct {
+//		name    string
+//		request request
+//		want    want
+//	}{
+//		{
+//			name: "Test StatusCreated",
+//			request: request{
+//				method:      http.MethodPost,
+//				body:        "{\n  \"url\": \"https://practicum.yandex.ru\"\n}",
+//				contentType: echo.MIMEApplicationJSON,
+//			},
+//			want: want{
+//				code:        http.StatusCreated,
+//				contentType: echo.MIMEApplicationJSON,
+//			},
+//		},
+//		{
+//			name: "Test Wrong Request",
+//			request: request{
+//				method:      http.MethodGet,
+//				body:        "{\n  \"url\": \"https://practicum.yandex.ru\"\n}",
+//				contentType: echo.MIMEApplicationJSON,
+//			},
+//			want: want{
+//				code:        http.StatusBadRequest,
+//				contentType: echo.MIMETextPlainCharsetUTF8,
+//			},
+//		},
+//		{
+//			name: "Test Empty URL",
+//			request: request{
+//				method:      http.MethodGet,
+//				body:        "",
+//				contentType: echo.MIMEApplicationJSON,
+//			},
+//			want: want{
+//				code:        http.StatusBadRequest,
+//				contentType: echo.MIMETextPlainCharsetUTF8,
+//			},
+//		},
+//	}
+//
+//	for _, test := range tests {
+//		t.Run(test.name, func(t *testing.T) {
+//			// Setup
+//			server := echo.New()
+//			req := httptest.NewRequest(test.request.method, "/api/shorten", strings.NewReader(test.request.body))
+//			req.Header.Set(echo.HeaderContentType, test.request.contentType)
+//			rec := httptest.NewRecorder()
+//			context := server.NewContext(req, rec)
+//
+//			handler := NewHandler(service.NewService(storage.NewInMemory()), &cfg)
+//
+//			// Assertions
+//			if assert.NoError(t, handler.HandleShorten(context)) {
+//				assert.Equal(t, test.want.code, rec.Code)
+//				assert.Equal(t, test.want.contentType, rec.Header().Get(echo.HeaderContentType))
+//			}
+//		})
+//	}
+//}

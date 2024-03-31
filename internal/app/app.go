@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
-	"github.com/ajugalushkin/url-shortener-version2/internal/handlers"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
@@ -14,15 +13,8 @@ import (
 func Run(cfg *config.Config) error {
 	server := echo.New()
 
-	var storageAPI service.PutGetter
-	if cfg.FileStoragePath == "" {
-		storageAPI = storage.NewInMemory()
-	} else {
-		storageAPI = storage.NewStorage(cfg)
-	}
-
-	serviceAPI := service.NewService(storageAPI)
-	handler := save.NewHandler(serviceAPI, cfg)
+	serviceAPI := service.NewService(storage.NewStorage(cfg))
+	handler := handler.NewHandler(serviceAPI, cfg)
 
 	if err := logger.Initialize(cfg.FlagLogLevel); err != nil {
 		return err
@@ -31,7 +23,7 @@ func Run(cfg *config.Config) error {
 	server.Use(logger.RequestLogger)
 	server.Use(compress.GzipMiddleware)
 
-	server.POST("/api/shorten", handler.HandleShorten)
+	server.POST("/api/shorten", handler.HandleSave)
 	server.POST("/", handler.HandleSave)
 	server.GET("/:id", handler.HandleRedirect)
 
