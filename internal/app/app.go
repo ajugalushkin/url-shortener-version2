@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
@@ -14,7 +15,7 @@ func Run(cfg *config.Config) error {
 	server := echo.New()
 
 	serviceAPI := service.NewService(storage.NewStorage(cfg))
-	handler := handler.NewHandler(serviceAPI, cfg)
+	newHandler := handler.NewHandler(serviceAPI, cfg)
 
 	if err := logger.Initialize(cfg.FlagLogLevel); err != nil {
 		return err
@@ -23,9 +24,9 @@ func Run(cfg *config.Config) error {
 	server.Use(logger.RequestLogger)
 	server.Use(compress.GzipMiddleware)
 
-	server.POST("/api/shorten", handler.HandleSave)
-	server.POST("/", handler.HandleSave)
-	server.GET("/:id", handler.HandleRedirect)
+	server.POST("/api/shorten", newHandler.HandleSave)
+	server.POST("/", newHandler.HandleSave)
+	server.GET("/:id", newHandler.HandleRedirect)
 
 	fmt.Println("Running server on", cfg.RunAddr)
 	err := server.Start(cfg.RunAddr)
