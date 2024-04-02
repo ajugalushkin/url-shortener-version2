@@ -27,10 +27,7 @@ func Run(cfg *config.Config) error {
 	server.Use(logger.RequestLogger)
 	server.Use(compress.GzipWithConfig(compress.GzipConfig{
 		Skipper: func(c echo.Context) bool {
-			if strings.Contains(c.Request().URL.Path, "swagger") {
-				return true
-			}
-			return false
+			return strings.Contains(c.Request().URL.Path, "swagger")
 		},
 	}))
 
