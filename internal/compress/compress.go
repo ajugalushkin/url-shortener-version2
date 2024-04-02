@@ -8,6 +8,22 @@ import (
 	"strings"
 )
 
+type (
+	Skipper func(c echo.Context) bool
+
+	GzipConfig struct {
+		Skipper Skipper
+	}
+)
+
+var (
+	DefaultGzipConfig = GzipConfig{
+		Skipper: func(c echo.Context) bool {
+			return false
+		},
+	}
+)
+
 type compressWriter struct {
 	w  http.ResponseWriter
 	zw *gzip.Writer
@@ -70,35 +86,82 @@ func (c *compressReader) Close() error {
 	return c.zr.Close()
 }
 
-func GzipMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(context echo.Context) error {
-		ow := context.Response().Writer
+func Gzip() echo.MiddlewareFunc {
+	return GzipWithConfig(DefaultGzipConfig)
+}
 
-		acceptEncoding := context.Request().Header.Get("Accept-Encoding")
-		supportsGzip := strings.Contains(acceptEncoding, "gzip")
-		if supportsGzip {
-			cw := newCompressWriter(context.Response().Writer)
-			ow = cw
-			defer cw.Close()
-		}
+func GzipWithConfig(config GzipConfig) echo.MiddlewareFunc {
+	if config.Skipper == nil {
+		config.Skipper = DefaultGzipConfig.Skipper
+	}
 
-		contentEncoding := context.Request().Header.Get("Content-Encoding")
-		sendsGzip := strings.Contains(contentEncoding, "gzip")
-		if sendsGzip {
-			cr, err := newCompressReader(context.Request().Body)
-			if err != nil {
-				context.Response().WriteHeader(http.StatusInternalServerError)
-				return nil
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(context echo.Context) error {
+			if config.Skipper(context) {
+				return next(context)
 			}
 
-			context.Request().Body = cr
-			defer cr.Close()
-		}
+			ow := context.Response().Writer
 
-		context.Response().Writer = ow
-		if err := next(context); err != nil {
-			context.Error(err)
+			acceptEncoding := context.Request().Header.Get("Accept-Encoding")
+			supportsGzip := strings.Contains(acceptEncoding, "gzip")
+			if supportsGzip {
+				cw := newCompressWriter(context.Response().Writer)
+				ow = cw
+				defer cw.Close()
+			}
+
+			contentEncoding := context.Request().Header.Get("Content-Encoding")
+			sendsGzip := strings.Contains(contentEncoding, "gzip")
+			if sendsGzip {
+				cr, err := newCompressReader(context.Request().Body)
+				if err != nil {
+					context.Response().WriteHeader(http.StatusInternalServerError)
+					return nil
+				}
+
+				context.Request().Body = cr
+				defer cr.Close()
+			}
+
+			context.Response().Writer = ow
+			if err := next(context); err != nil {
+				context.Error(err)
+			}
+			return nil
 		}
-		return nil
 	}
 }
+
+//func GzipMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+//	return func(context echo.Context) error {
+//		ow := context.Response().Writer
+//
+//		acceptEncoding := context.Request().Header.Get("Accept-Encoding")
+//		supportsGzip := strings.Contains(acceptEncoding, "gzip")
+//		if supportsGzip {
+//			cw := newCompressWriter(context.Response().Writer)
+//			ow = cw
+//			defer cw.Close()
+//		}
+//
+//		contentEncoding := context.Request().Header.Get("Content-Encoding")
+//		sendsGzip := strings.Contains(contentEncoding, "gzip")
+//		if sendsGzip {
+//			cr, err := newCompressReader(context.Request().Body)
+//			if err != nil {
+//				context.Response().WriteHeader(http.StatusInternalServerError)
+//				return nil
+//			}
+//
+//			context.Request().Body = cr
+//			defer cr.Close()
+//		}
+//
+//		context.Response().Writer = ow
+//		if err := next(context); err != nil {
+//			context.Error(err)
+//		}
+//		return nil
+//	}
+//}

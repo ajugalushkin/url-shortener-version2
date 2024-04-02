@@ -1,0 +1,77 @@
+basePath: /
+definitions:
+  model.Shorten:
+    properties:
+      url:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Shorting URL API
+  title: shortener-url API
+  version: "1.0"
+paths:
+  /:
+    get:
+      consumes:
+      - text/plain
+      description: Redirect to origin URL by short URL
+      operationId: redirect
+      produces:
+      - text/html; charset=utf-8
+      responses:
+        "307":
+          description: Temporary Redirect
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+      summary: Redirect
+    post:
+      consumes:
+      - text/plain
+      description: Short URL
+      operationId: shorten
+      produces:
+      - text/plain
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+      summary: Shorten
+  /api/shorten:
+    post:
+      consumes:
+      - application/json
+      description: Short URL in json format
+      operationId: shorten-json
+      parameters:
+      - description: URL for shortening
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/model.Shorten'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+      summary: ShortenJSON
+schemes:
+- http
+swagger: "2.0"
