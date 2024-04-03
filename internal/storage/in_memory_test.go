@@ -1,25 +1,26 @@
 package storage
 
 import (
-	"github.com/ajugalushkin/url-shortener-version2/internal/model"
 	"sync"
 	"testing"
+
+	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 )
 
 func setupStorage(m *sync.Map) {
-	m.Store("Xnrr2Mt", model.Shortening{Key: "Xnrr2Mt", URL: "https://practicum.yandex.ru"})
+	m.Store("Xnrr2Mt", dto.Shortening{Key: "Xnrr2Mt", URL: "https://practicum.yandex.ru"})
 }
 
 func TestInMemory_Put(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   model.Shortening
-		want    *model.Shortening
+		input   dto.Shortening
+		want    *dto.Shortening
 		wantErr bool
 	}{
 		{name: "Test Exists",
-			input:   model.Shortening{Key: "Xnrr2Mt", URL: "https://practicum.yandex.ru"},
-			want:    &model.Shortening{Key: "", URL: ""},
+			input:   dto.Shortening{Key: "Xnrr2Mt", URL: "https://practicum.yandex.ru"},
+			want:    &dto.Shortening{Key: "", URL: ""},
 			wantErr: true},
 	}
 	for _, test := range tests {

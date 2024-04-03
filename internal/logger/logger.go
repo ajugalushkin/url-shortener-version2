@@ -1,9 +1,10 @@
 package logger
 
 import (
+	"time"
+
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
-	"time"
 )
 
 var Log *zap.Logger = zap.NewNop()
@@ -26,7 +27,7 @@ func Initialize(level string) error {
 	return nil
 }
 
-func middlewareLogger(next echo.HandlerFunc) echo.HandlerFunc {
+func MiddlewareLogger(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(context echo.Context) error {
 		start := time.Now()
 

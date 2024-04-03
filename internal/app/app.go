@@ -2,6 +2,8 @@ package app
 
 import (
 	"fmt"
+	"strings"
+
 	_ "github.com/ajugalushkin/url-shortener-version2/docs"
 	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
@@ -11,7 +13,6 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
-	"strings"
 )
 
 func Run(cfg *config.Config) error {
@@ -24,7 +25,7 @@ func Run(cfg *config.Config) error {
 		return err
 	}
 
-	server.Use(logger.RequestLogger)
+	server.Use(logger.MiddlewareLogger)
 	server.Use(compress.GzipWithConfig(compress.GzipConfig{
 		Skipper: func(c echo.Context) bool {
 			return strings.Contains(c.Request().URL.Path, "swagger")

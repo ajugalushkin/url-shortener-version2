@@ -3,17 +3,18 @@ package compress
 import (
 	"bytes"
 	"compress/gzip"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
-	"github.com/ajugalushkin/url-shortener-version2/internal/model"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 // import (
@@ -55,7 +56,7 @@ func TestGzipMiddleware(t *testing.T) {
 
 		context := server.NewContext(request, recorder)
 		storageAPI := storage.NewInMemory()
-		_, err = storageAPI.Put(model.Shortening{
+		_, err = storageAPI.Put(dto.Shortening{
 			Key: "rIHY5pi",
 			URL: "http://localhost:8080/rIHY5pi",
 		})

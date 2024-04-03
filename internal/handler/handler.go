@@ -2,16 +2,17 @@ package handler
 
 import (
 	"fmt"
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
-	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
-	"github.com/ajugalushkin/url-shortener-version2/internal/model"
-	"github.com/ajugalushkin/url-shortener-version2/internal/service"
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
+	"github.com/ajugalushkin/url-shortener-version2/internal/service"
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 type Handler struct {
@@ -60,7 +61,7 @@ func (s Handler) HandleSave(context echo.Context) error {
 		return context.String(http.StatusBadRequest, "URL parameter is missing")
 	}
 
-	shortenURL, err := s.servAPI.Shorten(model.ShortenInput{RawURL: originalURL})
+	shortenURL, err := s.servAPI.Shorten(dto.ShortenInput{RawURL: originalURL})
 	if err != nil {
 		logger.Log.Debug("URL not shortening",
 			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
@@ -117,7 +118,7 @@ func (s Handler) HandleShorten(context echo.Context) error {
 		return context.String(http.StatusBadRequest, "URL parse error")
 	}
 
-	shorten := model.Shorten{}
+	shorten := dto.Shorten{}
 	err = shorten.UnmarshalJSON(body)
 	if err != nil {
 		logger.Log.Debug("JSON parse error",
@@ -127,7 +128,7 @@ func (s Handler) HandleShorten(context echo.Context) error {
 		return context.String(http.StatusBadRequest, "JSON parse error")
 	}
 
-	shortenURL, err := s.servAPI.Shorten(model.ShortenInput{RawURL: shorten.URL})
+	shortenURL, err := s.servAPI.Shorten(dto.ShortenInput{RawURL: shorten.URL})
 	if err != nil {
 		logger.Log.Debug("URL not shortening",
 			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
@@ -136,7 +137,7 @@ func (s Handler) HandleShorten(context echo.Context) error {
 		return context.String(http.StatusBadRequest, "URL not shortening")
 	}
 
-	shortenResult := model.ShortenResult{Result: fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortenURL.Key)}
+	shortenResult := dto.ShortenResult{Result: fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortenURL.Key)}
 	json, err := shortenResult.MarshalJSON()
 	if err != nil {
 		logger.Log.Debug("JSON not create",

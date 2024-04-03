@@ -1,16 +1,17 @@
 package handler
 
 import (
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
-	"github.com/ajugalushkin/url-shortener-version2/internal/model"
-	"github.com/ajugalushkin/url-shortener-version2/internal/service"
-	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	"github.com/ajugalushkin/url-shortener-version2/internal/service"
+	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
 )
 
 var cfg = config.Config{
@@ -79,7 +80,7 @@ func TestHandler_HandleRedirect(t *testing.T) {
 			context := server.NewContext(req, rec)
 
 			storageAPI := storage.NewInMemory()
-			_, err := storageAPI.Put(model.Shortening{
+			_, err := storageAPI.Put(dto.Shortening{
 				Key: test.request.key,
 				URL: test.want.response,
 			})
