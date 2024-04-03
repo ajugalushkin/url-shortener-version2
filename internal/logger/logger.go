@@ -26,7 +26,7 @@ func Initialize(level string) error {
 	return nil
 }
 
-func RequestLogger(next echo.HandlerFunc) echo.HandlerFunc {
+func middlewareLogger(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(context echo.Context) error {
 		start := time.Now()
 
