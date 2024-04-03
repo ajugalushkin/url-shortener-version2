@@ -1,4 +1,4 @@
-package model
+package dto
 
 //go:generate easyjson -all json.go
 type (
