@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"flag"
 	"os"
 )
@@ -38,4 +39,17 @@ func ParseFlags(config *Config) {
 	if envStoragePath := os.Getenv("FILE_STORAGE_PATH"); envStoragePath != "" {
 		config.FileStoragePath = envStoragePath
 	}
+}
+
+type ctxConfig struct{}
+
+func ContextWithConfig(ctx context.Context, config *Config) context.Context {
+	return context.WithValue(ctx, ctxConfig{}, config)
+}
+
+func ConfigFromContext(ctx context.Context) *Config {
+	if config, ok := ctx.Value(ctxConfig{}).(*Config); ok {
+		return config
+	}
+	return &Config{}
 }

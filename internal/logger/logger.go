@@ -1,18 +1,30 @@
 package logger
 
 import (
+	"context"
 	"time"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
-var Log *zap.Logger = zap.NewNop()
+type ctxLogger struct{}
 
-func Initialize(level string) error {
+func ContextWithLogger(ctx context.Context, logger *zap.Logger) context.Context {
+	return context.WithValue(ctx, ctxLogger{}, logger)
+}
+
+func LoggerFromContext(ctx context.Context) *zap.Logger {
+	if logger, ok := ctx.Value(ctxLogger{}).(*zap.Logger); ok {
+		return logger
+	}
+	return zap.L()
+}
+
+func Initialize(level string) (*zap.Logger, error) {
 	lvl, err := zap.ParseAtomicLevel(level)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	cfg := zap.NewProductionConfig()
 
@@ -20,28 +32,31 @@ func Initialize(level string) error {
 
 	zl, err := cfg.Build()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	Log = zl
-	return nil
+	return zl, nil
 }
 
-func MiddlewareLogger(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(context echo.Context) error {
-		start := time.Now()
+func MiddlewareLogger(ctx context.Context) func(echo.HandlerFunc) echo.HandlerFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		fn := func(context echo.Context) error {
+			start := time.Now()
 
-		if err := next(context); err != nil {
-			context.Error(err)
+			if err := next(context); err != nil {
+				context.Error(err)
+			}
+
+			duration := time.Since(start)
+
+			log := LoggerFromContext(ctx)
+			log.Debug("got incoming HTTP request",
+				zap.String("method", context.Request().Method),
+				zap.String("path", context.Request().URL.Path),
+				zap.String("time", duration.String()),
+			)
+			return nil
 		}
-
-		duration := time.Since(start)
-
-		Log.Debug("got incoming HTTP request",
-			zap.String("method", context.Request().Method),
-			zap.String("path", context.Request().URL.Path),
-			zap.String("time", duration.String()),
-		)
-		return nil
+		return fn
 	}
 }

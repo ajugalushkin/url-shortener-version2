@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -13,12 +14,14 @@ import (
 
 type Storage struct {
 	m   sync.Map
-	cfg *config.Config
+	ctx context.Context
 }
 
-func NewStorage(cfg *config.Config) *Storage {
-	storage := Storage{cfg: cfg}
-	_ = load(&storage.m, storage.cfg.FileStoragePath)
+func NewStorage(ctx context.Context) *Storage {
+	storage := Storage{ctx: ctx}
+
+	flags := config.ConfigFromContext(ctx)
+	_ = load(&storage.m, flags.FileStoragePath)
 	return &storage
 }
 
@@ -29,7 +32,8 @@ func (s *Storage) Put(shortening dto.Shortening) (*dto.Shortening, error) {
 
 	s.m.Store(shortening.Key, shortening)
 
-	err := save(s.cfg.FileStoragePath, &s.m)
+	flags := config.ConfigFromContext(s.ctx)
+	err := save(flags.FileStoragePath, &s.m)
 	if err != nil {
 		return nil, err
 	}

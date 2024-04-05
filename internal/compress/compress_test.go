@@ -62,7 +62,7 @@ func TestGzipMiddleware(t *testing.T) {
 		})
 		if assert.NoError(t, err) {
 			handlerGzip := Gzip()
-			middlewareGzip := handlerGzip(handler.NewHandler(service.NewService(storageAPI), &config.Config{}).HandleRedirect)
+			middlewareGzip := handlerGzip(handler.NewHandler(&config.Config{}, service.NewService(storageAPI)).HandleRedirect)
 
 			// Assertions
 			if assert.NoError(t, middlewareGzip(context)) {

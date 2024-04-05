@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -15,17 +16,22 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-func Run(cfg *config.Config) error {
-	server := echo.New()
+func Run(ctx context.Context) error {
+	flags := config.ConfigFromContext(ctx)
 
-	serviceAPI := service.NewService(storage.NewStorage(cfg))
-	newHandler := handler.NewHandler(serviceAPI, cfg)
-
-	if err := logger.Initialize(cfg.FlagLogLevel); err != nil {
+	log, err := logger.Initialize(flags.FlagLogLevel)
+	if err != nil {
 		return err
 	}
 
-	server.Use(logger.MiddlewareLogger)
+	ctx = logger.ContextWithLogger(ctx, log)
+
+	server := echo.New()
+	serviceAPI := service.NewService(storage.NewStorage(ctx))
+	newHandler := handler.NewHandler(ctx, serviceAPI)
+
+	server.Use(logger.MiddlewareLogger(ctx))
+
 	server.Use(compress.GzipWithConfig(compress.GzipConfig{
 		Skipper: func(c echo.Context) bool {
 			return strings.Contains(c.Request().URL.Path, "swagger")
@@ -39,8 +45,8 @@ func Run(cfg *config.Config) error {
 	//Swagger
 	server.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	fmt.Println("Running server on", cfg.RunAddr)
-	err := server.Start(cfg.RunAddr)
+	fmt.Println("Running server on", flags.RunAddr)
+	err = server.Start(flags.RunAddr)
 	if err != nil {
 		return err
 	}

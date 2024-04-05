@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+
 	"github.com/ajugalushkin/url-shortener-version2/internal/app"
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 )
@@ -14,10 +16,12 @@ import (
 // @BasePath /
 // @schemes http
 func main() {
-	cfg := config.NewConfig()
-	config.ParseFlags(cfg)
+	flagConfig := config.NewConfig()
+	config.ParseFlags(flagConfig)
 
-	if err := app.Run(cfg); err != nil {
+	ctx := config.ContextWithConfig(context.Background(), flagConfig)
+
+	if err := app.Run(ctx); err != nil {
 		fmt.Println(err)
 	}
 }
