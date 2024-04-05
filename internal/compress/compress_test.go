@@ -3,11 +3,11 @@ package compress
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
@@ -54,7 +54,7 @@ func TestGzipMiddleware(t *testing.T) {
 
 		recorder := httptest.NewRecorder()
 
-		context := server.NewContext(request, recorder)
+		echoCtx := server.NewContext(request, recorder)
 		storageAPI := storage.NewInMemory()
 		_, err = storageAPI.Put(dto.Shortening{
 			Key: "rIHY5pi",
@@ -62,10 +62,10 @@ func TestGzipMiddleware(t *testing.T) {
 		})
 		if assert.NoError(t, err) {
 			handlerGzip := Gzip()
-			middlewareGzip := handlerGzip(handler.NewHandler(&config.Config{}, service.NewService(storageAPI)).HandleRedirect)
+			middlewareGzip := handlerGzip(handler.NewHandler(context.Background(), service.NewService(storageAPI)).HandleRedirect)
 
 			// Assertions
-			if assert.NoError(t, middlewareGzip(context)) {
+			if assert.NoError(t, middlewareGzip(echoCtx)) {
 				assert.Equal(t, http.StatusTemporaryRedirect, recorder.Code)
 			}
 		}
