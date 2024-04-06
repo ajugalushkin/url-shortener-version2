@@ -2,12 +2,9 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
-	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/parse"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
@@ -43,18 +40,15 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 		return err
 	}
 
-	shortenURL, err := s.servAPI.Shorten(dto.ShortenInput{RawURL: parseURL})
+	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMETextPlain)
+	echoCtx.Response().Status = http.StatusCreated
+
+	body, err := parse.SetBody(s.ctx, echoCtx, s.servAPI, parseURL)
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.URLNotShortening, http.StatusBadRequest, 0)
+		return err
 	}
 
-	flags := config.ConfigFromContext(s.ctx)
-	newBody := []byte(fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.Key))
-
-	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMETextPlain)
-
-	echoCtx.Response().Status = http.StatusCreated
-	sizeBody, err := echoCtx.Response().Write(newBody)
+	sizeBody, err := echoCtx.Response().Write(body)
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
 	}
@@ -81,21 +75,15 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 		return err
 	}
 
-	shortenURL, err := s.servAPI.Shorten(dto.ShortenInput{RawURL: parseURL})
-	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.URLNotShortening, http.StatusBadRequest, 0)
-	}
-
-	flags := config.ConfigFromContext(s.ctx)
-	shortenResult := dto.ShortenResult{Result: fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.Key)}
-	json, err := shortenResult.MarshalJSON()
-	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.JSONNotCreate, http.StatusBadRequest, 0)
-	}
-
 	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	echoCtx.Response().Status = http.StatusCreated
-	sizeBody, err := echoCtx.Response().Write(json)
+
+	body, err := parse.SetBody(s.ctx, echoCtx, s.servAPI, parseURL)
+	if err != nil {
+		return err
+	}
+
+	sizeBody, err := echoCtx.Response().Write(body)
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
 	}
