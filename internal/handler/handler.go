@@ -59,7 +59,7 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
 	}
 
-	return validate.AddError(s.ctx, echoCtx, validate.UrlSent, http.StatusTemporaryRedirect, sizeBody)
+	return validate.AddMessageOK(s.ctx, echoCtx, validate.UrlSent, http.StatusTemporaryRedirect, sizeBody)
 }
 
 // @Summary ShortenJSON
@@ -95,12 +95,12 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 
 	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	echoCtx.Response().Status = http.StatusCreated
-	_, err = echoCtx.Response().Write(json)
+	sizeBody, err := echoCtx.Response().Write(json)
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
 	}
 
-	return validate.AddError(s.ctx, echoCtx, validate.UrlSent, http.StatusTemporaryRedirect, len(json))
+	return validate.AddMessageOK(s.ctx, echoCtx, validate.UrlSent, http.StatusTemporaryRedirect, sizeBody)
 }
 
 // @Summary Redirect
@@ -123,6 +123,6 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 
 	echoCtx.Response().Header().Set(echo.HeaderLocation, redirect)
 	echoCtx.Response().Status = http.StatusTemporaryRedirect
-
-	return validate.AddError(s.ctx, echoCtx, validate.UrlSent, http.StatusTemporaryRedirect, 0)
+	
+	return validate.AddMessageOK(s.ctx, echoCtx, validate.UrlSent, http.StatusTemporaryRedirect, 0)
 }

@@ -32,3 +32,12 @@ func AddError(ctx context.Context, echoCtx echo.Context, message string, httpSta
 
 	return echoCtx.String(httpStatus, message)
 }
+
+func AddMessageOK(ctx context.Context, echoCtx echo.Context, message string, httpStatus int, size int) error {
+	logger.LoggerFromContext(ctx).Debug(message,
+		zap.String(Status, strconv.Itoa(httpStatus)),
+		zap.String(Size, strconv.Itoa(size)),
+	)
+
+	return echoCtx.String(httpStatus, "")
+}

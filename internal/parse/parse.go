@@ -35,14 +35,3 @@ func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
 
 	return parseURL, nil
 }
-
-//func SetBody(ctx context.Context, echoCtx echo.Context, parseURL string) ([]byte, error) {
-//	var newBody []byte
-//	shortenURL, err := s.servAPI.Shorten(dto.ShortenInput{RawURL: parseURL})
-//	if err != nil {
-//		return newBody, validate.AddError(ctx, echoCtx, validate.UrlNotShortening, http.StatusBadRequest, 0)
-//	}
-//
-//	flags := config.ConfigFromContext(s.ctx)
-//	return []byte(fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.Key)), nil
-//}
