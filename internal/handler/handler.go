@@ -112,7 +112,7 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 // @Failure 400 {integer} integer 1
 // @Router / [get]
 func (s Handler) HandleRedirect(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodPost {
+	if echoCtx.Request().Method != http.MethodGet {
 		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
 	}
 
@@ -123,6 +123,6 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 
 	echoCtx.Response().Header().Set(echo.HeaderLocation, redirect)
 	echoCtx.Response().Status = http.StatusTemporaryRedirect
-	
+
 	return validate.AddMessageOK(s.ctx, echoCtx, validate.UrlSent, http.StatusTemporaryRedirect, 0)
 }
