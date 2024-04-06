@@ -13,7 +13,7 @@ import (
 func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
 	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil {
-		return "", validate.AddError(ctx, echoCtx, validate.UrlParseError, http.StatusBadRequest, 0)
+		return "", validate.AddError(ctx, echoCtx, validate.URLParseError, http.StatusBadRequest, 0)
 	}
 
 	var parseURL string
@@ -24,13 +24,13 @@ func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
 		shorten := dto.Shorten{}
 		err = shorten.UnmarshalJSON(body)
 		if err != nil {
-			return "", validate.AddError(ctx, echoCtx, validate.JsonParseError, http.StatusBadRequest, 0)
+			return "", validate.AddError(ctx, echoCtx, validate.JSONParseError, http.StatusBadRequest, 0)
 		}
 		parseURL = shorten.URL
 	}
 
 	if parseURL == "" {
-		return "", validate.AddError(ctx, echoCtx, validate.UrlMissing, http.StatusBadRequest, 0)
+		return "", validate.AddError(ctx, echoCtx, validate.URLMissing, http.StatusBadRequest, 0)
 	}
 
 	return parseURL, nil

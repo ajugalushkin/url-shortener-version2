@@ -11,14 +11,14 @@ import (
 
 const (
 	WrongTypeRequest = "Wrong type request"
-	UrlParseError    = "URL parse error"
-	UrlMissing       = "URL parameter is missing"
-	UrlNotShortening = "URL not shortening"
+	URLParseError    = "URL parse error"
+	URLMissing       = "URL parameter is missing"
+	URLNotShortening = "URL not shortening"
 	FailedToSend     = "Failed to send URL"
-	JsonParseError   = "JSON parse error"
-	JsonNotCreate    = "JSON not create"
-	UrlSent          = "URL sent"
-	UrlNotFound      = "Original URL not found!"
+	JSONParseError   = "JSON parse error"
+	JSONNotCreate    = "JSON not create"
+	URLSent          = "URL sent"
+	URLNotFound      = "Original URL not found!"
 
 	Status = "status"
 	Size   = "size"

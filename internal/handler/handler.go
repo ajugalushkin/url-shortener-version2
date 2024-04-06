@@ -45,7 +45,7 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 
 	shortenURL, err := s.servAPI.Shorten(dto.ShortenInput{RawURL: parseURL})
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.UrlNotShortening, http.StatusBadRequest, 0)
+		return validate.AddError(s.ctx, echoCtx, validate.URLNotShortening, http.StatusBadRequest, 0)
 	}
 
 	flags := config.ConfigFromContext(s.ctx)
@@ -59,7 +59,7 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
 	}
 
-	return validate.AddMessageOK(s.ctx, echoCtx, validate.UrlSent, http.StatusTemporaryRedirect, sizeBody)
+	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
 }
 
 // @Summary ShortenJSON
@@ -83,14 +83,14 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 
 	shortenURL, err := s.servAPI.Shorten(dto.ShortenInput{RawURL: parseURL})
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.UrlNotShortening, http.StatusBadRequest, 0)
+		return validate.AddError(s.ctx, echoCtx, validate.URLNotShortening, http.StatusBadRequest, 0)
 	}
 
 	flags := config.ConfigFromContext(s.ctx)
 	shortenResult := dto.ShortenResult{Result: fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.Key)}
 	json, err := shortenResult.MarshalJSON()
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.JsonNotCreate, http.StatusBadRequest, 0)
+		return validate.AddError(s.ctx, echoCtx, validate.JSONNotCreate, http.StatusBadRequest, 0)
 	}
 
 	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -100,7 +100,7 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
 	}
 
-	return validate.AddMessageOK(s.ctx, echoCtx, validate.UrlSent, http.StatusTemporaryRedirect, sizeBody)
+	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
 }
 
 // @Summary Redirect
@@ -118,11 +118,11 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 
 	redirect, err := s.servAPI.Redirect(strings.Replace(echoCtx.Request().URL.Path, "/", "", -1))
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.UrlNotFound, http.StatusBadRequest, 0)
+		return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
 	}
 
 	echoCtx.Response().Header().Set(echo.HeaderLocation, redirect)
 	echoCtx.Response().Status = http.StatusTemporaryRedirect
 
-	return validate.AddMessageOK(s.ctx, echoCtx, validate.UrlSent, http.StatusTemporaryRedirect, 0)
+	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, 0)
 }
