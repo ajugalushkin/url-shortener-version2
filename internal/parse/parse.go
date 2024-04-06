@@ -1,0 +1,48 @@
+package parse
+
+import (
+	"context"
+	"io"
+	"net/http"
+
+	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
+	"github.com/labstack/echo/v4"
+)
+
+func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
+	body, err := io.ReadAll(echoCtx.Request().Body)
+	if err != nil {
+		return "", validate.AddError(ctx, echoCtx, validate.UrlParseError, http.StatusBadRequest, 0)
+	}
+
+	var parseURL string
+	contentType := echoCtx.Request().Header.Get(echo.HeaderContentType)
+	if contentType != echo.MIMEApplicationJSON {
+		parseURL = string(body)
+	} else {
+		shorten := dto.Shorten{}
+		err = shorten.UnmarshalJSON(body)
+		if err != nil {
+			return "", validate.AddError(ctx, echoCtx, validate.JsonParseError, http.StatusBadRequest, 0)
+		}
+		parseURL = shorten.URL
+	}
+
+	if parseURL == "" {
+		return "", validate.AddError(ctx, echoCtx, validate.UrlMissing, http.StatusBadRequest, 0)
+	}
+
+	return parseURL, nil
+}
+
+//func SetBody(ctx context.Context, echoCtx echo.Context, parseURL string) ([]byte, error) {
+//	var newBody []byte
+//	shortenURL, err := s.servAPI.Shorten(dto.ShortenInput{RawURL: parseURL})
+//	if err != nil {
+//		return newBody, validate.AddError(ctx, echoCtx, validate.UrlNotShortening, http.StatusBadRequest, 0)
+//	}
+//
+//	flags := config.ConfigFromContext(s.ctx)
+//	return []byte(fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.Key)), nil
+//}

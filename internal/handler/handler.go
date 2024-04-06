@@ -3,18 +3,15 @@ package handler
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
-	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
+	"github.com/ajugalushkin/url-shortener-version2/internal/parse"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
 	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 )
 
 type Handler struct {
@@ -37,59 +34,32 @@ func NewHandler(ctx context.Context, servAPI *service.Service) *Handler {
 // @Failure 400 {integer} integer 1
 // @Router / [post]
 func (s Handler) HandleSave(echoCtx echo.Context) error {
-	log := logger.LoggerFromContext(s.ctx)
+	if echoCtx.Request().Method != http.MethodPost {
+		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
+	}
 
-	err := validate.CheckMethodType(s.ctx, echoCtx)
+	parseURL, err := parse.GetURL(s.ctx, echoCtx)
 	if err != nil {
 		return err
 	}
 
-	body, err := io.ReadAll(echoCtx.Request().Body)
+	shortenURL, err := s.servAPI.Shorten(dto.ShortenInput{RawURL: parseURL})
 	if err != nil {
-		log.Debug(validate.UrlParseError,
-			zap.String(validate.Status, strconv.Itoa(http.StatusBadRequest)),
-			zap.String(validate.Size, strconv.Itoa(0)),
-		)
-		return echoCtx.String(http.StatusBadRequest, validate.UrlParseError)
-	}
-
-	originalURL := string(body)
-
-	s.ctx = context.WithValue(s.ctx, "URL", originalURL)
-	err = validate.CheckUrlEmpty(s.ctx, echoCtx)
-	if err != nil {
-		return err
-	}
-
-	shortenURL, err := s.servAPI.Shorten(dto.ShortenInput{RawURL: originalURL})
-	if err != nil {
-		log.Debug(validate.UrlNotShortening,
-			zap.String(validate.Status, strconv.Itoa(http.StatusBadRequest)),
-			zap.String(validate.Size, strconv.Itoa(0)),
-		)
-		return echoCtx.String(http.StatusBadRequest, validate.UrlNotShortening)
+		return validate.AddError(s.ctx, echoCtx, validate.UrlNotShortening, http.StatusBadRequest, 0)
 	}
 
 	flags := config.ConfigFromContext(s.ctx)
 	newBody := []byte(fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.Key))
+
 	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMETextPlain)
 
 	echoCtx.Response().Status = http.StatusCreated
-	_, err = echoCtx.Response().Write(newBody)
+	sizeBody, err := echoCtx.Response().Write(newBody)
 	if err != nil {
-		log.Debug(validate.FailedToSend,
-			zap.String(validate.Status, strconv.Itoa(http.StatusBadRequest)),
-			zap.String(validate.Size, strconv.Itoa(0)),
-		)
-		return echoCtx.String(http.StatusBadRequest, validate.FailedToSend)
+		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
 	}
 
-	log.Debug(validate.UrlSent,
-		zap.String(validate.Status, strconv.Itoa(http.StatusCreated)),
-		zap.String(validate.Size, strconv.Itoa(len(newBody))),
-	)
-
-	return echoCtx.String(http.StatusCreated, "")
+	return validate.AddError(s.ctx, echoCtx, validate.UrlSent, http.StatusTemporaryRedirect, sizeBody)
 }
 
 // @Summary ShortenJSON
@@ -102,75 +72,35 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 // @Failure 400 {integer} integer 1
 // @Router /api/shorten [post]
 func (s Handler) HandleShorten(echoCtx echo.Context) error {
-	log := logger.LoggerFromContext(s.ctx)
+	if echoCtx.Request().Method != http.MethodPost {
+		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
+	}
 
-	err := validate.CheckMethodType(s.ctx, echoCtx)
+	parseURL, err := parse.GetURL(s.ctx, echoCtx)
 	if err != nil {
 		return err
 	}
 
-	body, err := io.ReadAll(echoCtx.Request().Body)
+	shortenURL, err := s.servAPI.Shorten(dto.ShortenInput{RawURL: parseURL})
 	if err != nil {
-		log.Debug(validate.UrlParseError,
-			zap.String(validate.Status, strconv.Itoa(http.StatusBadRequest)),
-			zap.String(validate.Size, strconv.Itoa(0)),
-		)
-		return echoCtx.String(http.StatusBadRequest, validate.UrlParseError)
-	}
-
-	shorten := dto.Shorten{}
-	err = shorten.UnmarshalJSON(body)
-	if err != nil {
-		log.Debug(validate.JsonParseError,
-			zap.String(validate.Status, strconv.Itoa(http.StatusBadRequest)),
-			zap.String(validate.Size, strconv.Itoa(0)),
-		)
-		return echoCtx.String(http.StatusBadRequest, validate.JsonParseError)
-	}
-
-	s.ctx = context.WithValue(s.ctx, "URL", shorten.URL)
-	err = validate.CheckUrlEmpty(s.ctx, echoCtx)
-	if err != nil {
-		return err
-	}
-
-	shortenURL, err := s.servAPI.Shorten(dto.ShortenInput{RawURL: shorten.URL})
-	if err != nil {
-		log.Debug(validate.UrlNotShortening,
-			zap.String(validate.Status, strconv.Itoa(http.StatusBadRequest)),
-			zap.String(validate.Size, strconv.Itoa(0)),
-		)
-		return echoCtx.String(http.StatusBadRequest, validate.UrlNotShortening)
+		return validate.AddError(s.ctx, echoCtx, validate.UrlNotShortening, http.StatusBadRequest, 0)
 	}
 
 	flags := config.ConfigFromContext(s.ctx)
 	shortenResult := dto.ShortenResult{Result: fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.Key)}
 	json, err := shortenResult.MarshalJSON()
 	if err != nil {
-		log.Debug(validate.JsonNotCreate,
-			zap.String(validate.Status, strconv.Itoa(http.StatusBadRequest)),
-			zap.String(validate.Size, strconv.Itoa(0)),
-		)
-		return echoCtx.String(http.StatusBadRequest, validate.JsonNotCreate)
+		return validate.AddError(s.ctx, echoCtx, validate.JsonNotCreate, http.StatusBadRequest, 0)
 	}
 
 	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	echoCtx.Response().Status = http.StatusCreated
 	_, err = echoCtx.Response().Write(json)
 	if err != nil {
-		log.Debug(validate.FailedToSend,
-			zap.String(validate.Status, strconv.Itoa(http.StatusBadRequest)),
-			zap.String(validate.Size, strconv.Itoa(0)),
-		)
-		return echoCtx.String(http.StatusBadRequest, validate.FailedToSend)
+		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
 	}
 
-	log.Debug(validate.UrlSent,
-		zap.String(validate.Status, strconv.Itoa(http.StatusCreated)),
-		zap.String(validate.Size, strconv.Itoa(len(json))),
-	)
-
-	return echoCtx.String(http.StatusTemporaryRedirect, "")
+	return validate.AddError(s.ctx, echoCtx, validate.UrlSent, http.StatusTemporaryRedirect, len(json))
 }
 
 // @Summary Redirect
@@ -182,31 +112,17 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 // @Failure 400 {integer} integer 1
 // @Router / [get]
 func (s Handler) HandleRedirect(echoCtx echo.Context) error {
-	log := logger.LoggerFromContext(s.ctx)
-
-	err := validate.CheckMethodType(s.ctx, echoCtx)
-	if err != nil {
-		return err
+	if echoCtx.Request().Method != http.MethodPost {
+		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
 	}
 
-	key := strings.Replace(echoCtx.Request().URL.Path, "/", "", -1)
-
-	redirect, err := s.servAPI.Redirect(key)
+	redirect, err := s.servAPI.Redirect(strings.Replace(echoCtx.Request().URL.Path, "/", "", -1))
 	if err != nil {
-		log.Debug(validate.UrlNotFound,
-			zap.String(validate.Status, strconv.Itoa(http.StatusBadRequest)),
-			zap.String(validate.Size, strconv.Itoa(0)),
-		)
-		return echoCtx.String(http.StatusBadRequest, validate.UrlNotFound)
+		return validate.AddError(s.ctx, echoCtx, validate.UrlNotFound, http.StatusBadRequest, 0)
 	}
 
-	echoCtx.Response().Header().Set("Location", redirect)
+	echoCtx.Response().Header().Set(echo.HeaderLocation, redirect)
 	echoCtx.Response().Status = http.StatusTemporaryRedirect
 
-	log.Debug(validate.UrlSent,
-		zap.String(validate.Status, strconv.Itoa(http.StatusTemporaryRedirect)),
-		zap.String(validate.Size, strconv.Itoa(0)),
-	)
-
-	return echoCtx.String(http.StatusTemporaryRedirect, "")
+	return validate.AddError(s.ctx, echoCtx, validate.UrlSent, http.StatusTemporaryRedirect, 0)
 }

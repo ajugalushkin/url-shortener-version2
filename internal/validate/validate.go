@@ -2,12 +2,10 @@ package validate
 
 import (
 	"context"
-	"net/http"
 	"strconv"
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 	"go.uber.org/zap"
 )
 
@@ -26,26 +24,11 @@ const (
 	Size   = "size"
 )
 
-func CheckMethodType(ctx context.Context, context echo.Context) error {
-	if context.Request().Method != http.MethodPost {
-		log := logger.LoggerFromContext(ctx)
-		log.Debug(WrongTypeRequest,
-			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
-			zap.String("size", strconv.Itoa(0)),
-		)
-		return context.String(http.StatusBadRequest, WrongTypeRequest)
-	}
-	return nil
-}
+func AddError(ctx context.Context, echoCtx echo.Context, message string, httpStatus int, size int) error {
+	logger.LoggerFromContext(ctx).Debug(message,
+		zap.String(Status, strconv.Itoa(httpStatus)),
+		zap.String(Size, strconv.Itoa(size)),
+	)
 
-func CheckUrlEmpty(ctx context.Context, context echo.Context) error {
-	originalURL := ctx.Value("URL").(string)
-	if originalURL == "" {
-		log.Debug(UrlMissing,
-			zap.String("status", strconv.Itoa(http.StatusBadRequest)),
-			zap.String("size", strconv.Itoa(0)),
-		)
-		return context.String(http.StatusBadRequest, UrlMissing)
-	}
-	return nil
+	return echoCtx.String(httpStatus, message)
 }
