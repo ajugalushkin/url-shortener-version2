@@ -24,7 +24,7 @@ func ParseFlags(config *Config) {
 	flag.StringVar(&config.FlagLogLevel, "l", "info", "Log level")
 	flag.StringVar(&config.FileStoragePath, "f", "/tmp/short-url-db.json",
 		"full name of the file where data in JSON format is saved")
-	flag.StringVar(&config.FileStoragePath, "d", "host=%s user=%s password=%s sslmode=disable",
+	flag.StringVar(&config.DataBaseDsn, "d", "host=%s user=%s password=%s sslmode=disable",
 		"DB path for connect")
 	flag.Parse()
 
