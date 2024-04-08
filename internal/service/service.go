@@ -1,14 +1,14 @@
 package service
 
 import (
-	"github.com/ajugalushkin/url-shortener-version2/internal/model"
+	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/shorten"
 	"github.com/google/uuid"
 )
 
 type PutGetter interface {
-	Put(urlData model.Shortening) (*model.Shortening, error)
-	Get(id string) (*model.Shortening, error)
+	Put(urlData dto.Shortening) (*dto.Shortening, error)
+	Get(id string) (*dto.Shortening, error)
 }
 
 type Service struct {
@@ -19,7 +19,7 @@ func NewService(storage PutGetter) *Service {
 	return &Service{storage: storage}
 }
 
-func (s *Service) Shorten(input model.ShortenInput) (*model.Shortening, error) {
+func (s *Service) Shorten(input dto.ShortenInput) (*dto.Shortening, error) {
 	var (
 		id         = uuid.New().ID()
 		identifier = input.Identifier
@@ -28,7 +28,7 @@ func (s *Service) Shorten(input model.ShortenInput) (*model.Shortening, error) {
 		identifier = shorten.Shorten(id)
 	}
 
-	newShortening := model.Shortening{
+	newShortening := dto.Shortening{
 		Key: identifier,
 		URL: input.RawURL,
 	}

@@ -1,22 +1,26 @@
-package save
+package handler
 
 import (
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
-	"github.com/ajugalushkin/url-shortener-version2/internal/model"
-	"github.com/ajugalushkin/url-shortener-version2/internal/service"
-	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	"github.com/ajugalushkin/url-shortener-version2/internal/service"
+	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
 )
 
-var cfg = config.Config{
+var newConfig = config.Config{
 	RunAddr: "localhost:8080",
 	BaseURL: "http://localhost:8080",
 }
+
+var ctx = config.ContextWithConfig(context.Background(), &newConfig)
 
 func TestHandler_HandleRedirect(t *testing.T) {
 	type request struct {
@@ -79,12 +83,12 @@ func TestHandler_HandleRedirect(t *testing.T) {
 			context := server.NewContext(req, rec)
 
 			storageAPI := storage.NewInMemory()
-			_, err := storageAPI.Put(model.Shortening{
+			_, err := storageAPI.Put(dto.Shortening{
 				Key: test.request.key,
 				URL: test.want.response,
 			})
 			if assert.NoError(t, err) {
-				handler := NewHandler(service.NewService(storageAPI), &cfg)
+				handler := NewHandler(ctx, service.NewService(storageAPI))
 
 				// Assertions
 				if assert.NoError(t, handler.HandleRedirect(context)) {
@@ -156,12 +160,85 @@ func TestHandler_HandleSave(t *testing.T) {
 			req := httptest.NewRequest(test.request.method, "/", strings.NewReader(test.request.body))
 			req.Header.Set(echo.HeaderContentType, test.request.contentType)
 			rec := httptest.NewRecorder()
-			context := server.NewContext(req, rec)
+			echoCtx := server.NewContext(req, rec)
 
-			handler := NewHandler(service.NewService(storage.NewInMemory()), &cfg)
+			handler := NewHandler(ctx, service.NewService(storage.NewInMemory()))
 
 			// Assertions
-			if assert.NoError(t, handler.HandleSave(context)) {
+			if assert.NoError(t, handler.HandleSave(echoCtx)) {
+				assert.Equal(t, test.want.code, rec.Code)
+				assert.Equal(t, test.want.contentType, rec.Header().Get(echo.HeaderContentType))
+			}
+		})
+	}
+}
+
+func TestHandler_HandleShorten(t *testing.T) {
+	type request struct {
+		method      string
+		body        string
+		contentType string
+	}
+	type want struct {
+		code        int
+		contentType string
+	}
+	tests := []struct {
+		name    string
+		request request
+		want    want
+	}{
+		{
+			name: "Test StatusCreated",
+			request: request{
+				method:      http.MethodPost,
+				body:        "{\n  \"url\": \"https://practicum.yandex.ru\"\n}",
+				contentType: echo.MIMEApplicationJSON,
+			},
+			want: want{
+				code:        http.StatusCreated,
+				contentType: echo.MIMEApplicationJSON,
+			},
+		},
+		{
+			name: "Test Wrong Request",
+			request: request{
+				method:      http.MethodGet,
+				body:        "{\n  \"url\": \"https://practicum.yandex.ru\"\n}",
+				contentType: echo.MIMEApplicationJSON,
+			},
+			want: want{
+				code:        http.StatusBadRequest,
+				contentType: echo.MIMETextPlainCharsetUTF8,
+			},
+		},
+		{
+			name: "Test Empty URL",
+			request: request{
+				method:      http.MethodGet,
+				body:        "",
+				contentType: echo.MIMEApplicationJSON,
+			},
+			want: want{
+				code:        http.StatusBadRequest,
+				contentType: echo.MIMETextPlainCharsetUTF8,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// Setup
+			server := echo.New()
+			req := httptest.NewRequest(test.request.method, "/api/shorten", strings.NewReader(test.request.body))
+			req.Header.Set(echo.HeaderContentType, test.request.contentType)
+			rec := httptest.NewRecorder()
+			echoCtx := server.NewContext(req, rec)
+
+			handler := NewHandler(ctx, service.NewService(storage.NewInMemory()))
+
+			// Assertions
+			if assert.NoError(t, handler.HandleShorten(echoCtx)) {
 				assert.Equal(t, test.want.code, rec.Code)
 				assert.Equal(t, test.want.contentType, rec.Header().Get(echo.HeaderContentType))
 			}

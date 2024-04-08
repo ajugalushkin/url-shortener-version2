@@ -1,26 +1,52 @@
 package app
 
 import (
+	"context"
 	"fmt"
+	"strings"
+
+	_ "github.com/ajugalushkin/url-shortener-version2/docs"
+	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
-	"github.com/ajugalushkin/url-shortener-version2/internal/handlers"
+	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
+	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
 	"github.com/labstack/echo/v4"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-func Run(cfg *config.Config) error {
+func Run(ctx context.Context) error {
+	flags := config.ConfigFromContext(ctx)
+
+	log, err := logger.Initialize(flags.FlagLogLevel)
+	if err != nil {
+		return err
+	}
+
+	ctx = logger.ContextWithLogger(ctx, log)
+
 	server := echo.New()
+	serviceAPI := service.NewService(storage.NewStorage(ctx))
+	newHandler := handler.NewHandler(ctx, serviceAPI)
 
-	serviceAPI := service.NewService(storage.NewInMemory())
+	server.Use(logger.MiddlewareLogger(ctx))
 
-	handler := save.NewHandler(serviceAPI, cfg)
+	server.Use(compress.GzipWithConfig(compress.GzipConfig{
+		Skipper: func(c echo.Context) bool {
+			return strings.Contains(c.Request().URL.Path, "swagger")
+		},
+	}))
 
-	server.POST("/", handler.HandleSave)
-	server.GET("/:id", handler.HandleRedirect)
+	server.POST("/api/shorten", newHandler.HandleShorten)
+	server.POST("/", newHandler.HandleSave)
+	server.GET("/:id", newHandler.HandleRedirect)
 
-	fmt.Println("Running server on", cfg.RunAddr)
-	err := server.Start(cfg.RunAddr)
+	//Swagger
+	server.GET("/swagger/*", echoSwagger.WrapHandler)
+
+	fmt.Println("Running server on", flags.RunAddr)
+	err = server.Start(flags.RunAddr)
 	if err != nil {
 		return err
 	}

@@ -1,0 +1,61 @@
+package parse
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"net/http"
+
+	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	"github.com/ajugalushkin/url-shortener-version2/internal/service"
+	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
+	"github.com/labstack/echo/v4"
+)
+
+func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
+	body, err := io.ReadAll(echoCtx.Request().Body)
+	if err != nil {
+		return "", validate.AddError(ctx, echoCtx, validate.URLParseError, http.StatusBadRequest, 0)
+	}
+
+	var parseURL string
+	contentType := echoCtx.Request().Header.Get(echo.HeaderContentType)
+	if contentType != echo.MIMEApplicationJSON {
+		parseURL = string(body)
+	} else {
+		shorten := dto.Shorten{}
+		err = shorten.UnmarshalJSON(body)
+		if err != nil {
+			return "", validate.AddError(ctx, echoCtx, validate.JSONParseError, http.StatusBadRequest, 0)
+		}
+		parseURL = shorten.URL
+	}
+
+	if parseURL == "" {
+		return "", validate.AddError(ctx, echoCtx, validate.URLMissing, http.StatusBadRequest, 0)
+	}
+
+	return parseURL, nil
+}
+func SetBody(ctx context.Context, echoCtx echo.Context, servAPI *service.Service, parseURL string) ([]byte, error) {
+	var newBody []byte
+	shortenURL, err := servAPI.Shorten(dto.ShortenInput{RawURL: parseURL})
+	if err != nil {
+		return newBody, validate.AddError(ctx, echoCtx, validate.URLNotShortening, http.StatusBadRequest, 0)
+	}
+
+	flags := config.ConfigFromContext(ctx)
+
+	contentType := echoCtx.Request().Header.Get(echo.HeaderContentType)
+	if contentType != echo.MIMEApplicationJSON {
+		newBody = []byte(fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.Key))
+	} else {
+		shortenResult := dto.ShortenResult{Result: fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.Key)}
+		newBody, err = shortenResult.MarshalJSON()
+		if err != nil {
+			return newBody, validate.AddError(ctx, echoCtx, validate.JSONNotCreate, http.StatusBadRequest, 0)
+		}
+	}
+	return newBody, nil
+}
