@@ -6,7 +6,7 @@ import (
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
-	_ "github.com/jackc/pgx"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/labstack/echo/v4"
 )
 
