@@ -41,6 +41,7 @@ func Run(ctx context.Context) error {
 	server.POST("/api/shorten", newHandler.HandleShorten)
 	server.POST("/", newHandler.HandleSave)
 	server.GET("/:id", newHandler.HandleRedirect)
+	server.GET("/ping", newHandler.HandlePing)
 
 	//Swagger
 	server.GET("/swagger/*", echoSwagger.WrapHandler)

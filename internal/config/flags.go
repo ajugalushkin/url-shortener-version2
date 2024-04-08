@@ -11,6 +11,7 @@ type Config struct {
 	BaseURL         string `env:"BASE_URL"`
 	FlagLogLevel    string `env:"LOG_LEVEL"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
+	DataBaseDsn     string `env:"DATABASE_DSN"`
 }
 
 func NewConfig() *Config {
@@ -23,6 +24,8 @@ func ParseFlags(config *Config) {
 	flag.StringVar(&config.FlagLogLevel, "l", "info", "Log level")
 	flag.StringVar(&config.FileStoragePath, "f", "/tmp/short-url-db.json",
 		"full name of the file where data in JSON format is saved")
+	flag.StringVar(&config.FileStoragePath, "d", "host=%s user=%s password=%s sslmode=disable",
+		"DB path for connect")
 	flag.Parse()
 
 	if envRunAddr := os.Getenv("RUN_ADDR"); envRunAddr != "" {
@@ -38,6 +41,10 @@ func ParseFlags(config *Config) {
 
 	if envStoragePath := os.Getenv("FILE_STORAGE_PATH"); envStoragePath != "" {
 		config.FileStoragePath = envStoragePath
+	}
+
+	if envDataBaseDsn := os.Getenv("DATABASE_DSN"); envDataBaseDsn != "" {
+		config.DataBaseDsn = envDataBaseDsn
 	}
 }
 
