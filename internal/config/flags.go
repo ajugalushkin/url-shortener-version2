@@ -22,9 +22,9 @@ func ParseFlags(config *Config) {
 	flag.StringVar(&config.RunAddr, "a", "localhost:8080", "address and port to run server")
 	flag.StringVar(&config.BaseURL, "b", "http://localhost:8080", "Base URL for POST request")
 	flag.StringVar(&config.FlagLogLevel, "l", "info", "Log level")
-	flag.StringVar(&config.FileStoragePath, "f", "/tmp/short-url-db.json",
+	flag.StringVar(&config.FileStoragePath, "f", "",
 		"full name of the file where data in JSON format is saved")
-	flag.StringVar(&config.DataBaseDsn, "d", "host=%s user=%s password=%s sslmode=disable",
+	flag.StringVar(&config.DataBaseDsn, "d", "",
 		"DB path for connect")
 	flag.Parse()
 
