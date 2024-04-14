@@ -42,19 +42,12 @@ func (s *Storage) Put(shortening dto.Shortening) (*dto.Shortening, error) {
 }
 
 func (s *Storage) PutList(list dto.ShorteningList) error {
-	//if _, exists := s.m.Load(shortening.ShortURL); exists {
-	//	return nil, errors.New("identifier already exists")
-	//}
-	//
-	//s.m.Store(shortening.ShortURL, shortening)
-	//
-	//flags := config.FlagsFromContext(s.ctx)
-	//err := save(flags.FileStoragePath, &s.m)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//return &shortening, nil
+	for _, shortening := range list {
+		_, err := s.Put(shortening)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
