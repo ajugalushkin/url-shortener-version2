@@ -82,8 +82,8 @@ func SetJSONDataToBody(ctx context.Context, echoCtx echo.Context, list *dto.Shor
 		shortenListOut = append(
 			shortenListOut,
 			dto.ShortenListOutputLine{
-				CorrelationId: item.CorrelationId,
-				ShortUrl:      item.ShortURL,
+				CorrelationID: item.CorrelationID,
+				ShortURL:      item.ShortURL,
 			},
 		)
 	}

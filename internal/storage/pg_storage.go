@@ -38,7 +38,7 @@ func (s *PGStorage) Put(shortening dto.Shortening) (*dto.Shortening, error) {
 		s.ctx,
 		"INSERT INTO shorten_urls (short_url,correlation_id,original_url) VALUES ($1,$2,$3)",
 		shortening.ShortURL,
-		shortening.CorrelationId,
+		shortening.CorrelationID,
 		shortening.OriginalURL,
 	)
 	if err != nil {
@@ -48,17 +48,47 @@ func (s *PGStorage) Put(shortening dto.Shortening) (*dto.Shortening, error) {
 	return &shortening, nil
 }
 
+func (s *PGStorage) PutList(list dto.ShorteningList) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	for _, item := range list {
+		res, errNotFound := s.Get(item.ShortURL)
+		if errNotFound == nil && *res != (dto.Shortening{}) {
+			continue
+		}
+
+		_, err := tx.ExecContext(s.ctx,
+			"INSERT INTO shorten_urls (short_url,correlation_id,original_url) "+
+				"VALUES ($1,$2,$3)", item.ShortURL, item.CorrelationID, item.OriginalURL)
+		if err != nil {
+			errRollback := tx.Rollback()
+			if errRollback != nil {
+				return errRollback
+			}
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
 func (s *PGStorage) Get(id string) (*dto.Shortening, error) {
-	row := s.db.QueryRowContext(s.ctx, "SELECT * FROM shorten_urls WHERE short_url = ?", id)
+	var shortening dto.Shortening
 
-	urlData := dto.Shortening{}
-	if err := row.Scan(&urlData.ShortURL, &urlData.OriginalURL); err == sql.ErrNoRows {
-		return &urlData, err
+	row := s.db.QueryRowContext(s.ctx, "SELECT * FROM shorten_urls WHERE short_url = $1", id)
+	if row.Err() != nil {
+		return &shortening, row.Err()
 	}
 
-	if urlData == (dto.Shortening{}) {
-		return &urlData, errors.New("URL not found in DataBase")
+	if err := row.Scan(&shortening.ShortURL, &shortening.CorrelationID, &shortening.OriginalURL); err == sql.ErrNoRows {
+		return &shortening, err
 	}
 
-	return &urlData, nil
+	if shortening == (dto.Shortening{}) {
+		return &shortening, errors.New("URL not found in DataBase")
+	}
+
+	return &shortening, nil
 }

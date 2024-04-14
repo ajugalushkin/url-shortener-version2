@@ -25,6 +25,17 @@ func (s *InMemory) Put(shortening dto.Shortening) (*dto.Shortening, error) {
 	return &shortening, nil
 }
 
+func (s *InMemory) PutList(list dto.ShorteningList) error {
+	//if _, exists := s.m.Load(shortening.ShortURL); exists {
+	//	return nil, errors.New("identifier already exists")
+	//}
+	//
+	//s.m.Store(shortening.ShortURL, shortening)
+	//
+	//return &shortening, nil
+	return nil
+}
+
 func (s *InMemory) Get(identifier string) (*dto.Shortening, error) {
 	v, ok := s.m.Load(identifier)
 	if !ok {

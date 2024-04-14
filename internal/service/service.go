@@ -8,6 +8,7 @@ import (
 
 type PutGetter interface {
 	Put(urlData dto.Shortening) (*dto.Shortening, error)
+	PutList(list dto.ShorteningList) error
 	Get(id string) (*dto.Shortening, error)
 }
 
@@ -31,7 +32,7 @@ func (s *Service) Shorten(input dto.Shortening) (*dto.Shortening, error) {
 	newShortening := dto.Shortening{
 		ShortURL:      identifier,
 		OriginalURL:   input.OriginalURL,
-		CorrelationId: input.CorrelationId,
+		CorrelationID: input.CorrelationID,
 	}
 
 	shortening, err := s.storage.Get(newShortening.ShortURL)
@@ -46,25 +47,23 @@ func (s *Service) Shorten(input dto.Shortening) (*dto.Shortening, error) {
 }
 
 func (s *Service) ShortenList(input dto.ShortenListInput) (*dto.ShorteningList, error) {
-	var resultList dto.ShorteningList
+	var shorteningList dto.ShorteningList
 	for _, item := range input {
 		newShortening := dto.Shortening{
 			ShortURL:      shorten.Shorten(uuid.New().ID()),
 			OriginalURL:   item.OriginalURL,
-			CorrelationId: item.CorrelationId,
+			CorrelationID: item.CorrelationID,
 		}
 
-		resultShortening, err := s.storage.Get(newShortening.ShortURL)
-		if err != nil {
-			resultShortening, err = s.storage.Put(newShortening)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		resultList = append(resultList, *resultShortening)
+		shorteningList = append(shorteningList, newShortening)
 	}
-	return &resultList, nil
+
+	err := s.storage.PutList(shorteningList)
+	if err != nil {
+		return nil, err
+	}
+
+	return &shorteningList, nil
 }
 
 func (s *Service) Redirect(identifier string) (string, error) {

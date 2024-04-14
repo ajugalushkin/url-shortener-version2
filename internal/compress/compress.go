@@ -133,36 +133,3 @@ func GzipWithConfig(config GzipConfig) echo.MiddlewareFunc {
 		}
 	}
 }
-
-//func GzipMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-//	return func(context echo.Context) error {
-//		ow := context.Response().Writer
-//
-//		acceptEncoding := context.Request().Header.Get("Accept-Encoding")
-//		supportsGzip := strings.Contains(acceptEncoding, "gzip")
-//		if supportsGzip {
-//			cw := newCompressWriter(context.Response().Writer)
-//			ow = cw
-//			defer cw.Close()
-//		}
-//
-//		contentEncoding := context.Request().Header.Get("Content-Encoding")
-//		sendsGzip := strings.Contains(contentEncoding, "gzip")
-//		if sendsGzip {
-//			cr, err := newCompressReader(context.Request().Body)
-//			if err != nil {
-//				context.Response().WriteHeader(http.StatusInternalServerError)
-//				return nil
-//			}
-//
-//			context.Request().Body = cr
-//			defer cr.Close()
-//		}
-//
-//		context.Response().Writer = ow
-//		if err := next(context); err != nil {
-//			context.Error(err)
-//		}
-//		return nil
-//	}
-//}

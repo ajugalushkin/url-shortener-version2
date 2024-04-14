@@ -4,7 +4,7 @@ package dto
 
 //easyjson:json
 type Shortening struct {
-	CorrelationId string `json:"correlation_id"`
+	CorrelationID string `json:"correlation_id"`
 	ShortURL      string `json:"short_url"`
 	OriginalURL   string `json:"original_url"`
 }
@@ -24,14 +24,14 @@ type ShortenOutput struct {
 
 //easyjson:json
 type ShortenListInput []struct {
-	CorrelationId string `json:"correlation_id"`
+	CorrelationID string `json:"correlation_id"`
 	OriginalURL   string `json:"original_url"`
 }
 
 //easyjson:json
 type ShortenListOutputLine struct {
-	CorrelationId string `json:"correlation_id"`
-	ShortUrl      string `json:"short_url"`
+	CorrelationID string `json:"correlation_id"`
+	ShortURL      string `json:"short_url"`
 }
 
 //easyjson:json
