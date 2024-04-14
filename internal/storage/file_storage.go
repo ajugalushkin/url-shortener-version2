@@ -20,19 +20,19 @@ type Storage struct {
 func NewStorage(ctx context.Context) *Storage {
 	storage := Storage{ctx: ctx}
 
-	flags := config.ConfigFromContext(ctx)
+	flags := config.FlagsFromContext(ctx)
 	_ = load(&storage.m, flags.FileStoragePath)
 	return &storage
 }
 
 func (s *Storage) Put(shortening dto.Shortening) (*dto.Shortening, error) {
-	if _, exists := s.m.Load(shortening.Key); exists {
+	if _, exists := s.m.Load(shortening.ShortURL); exists {
 		return nil, errors.New("identifier already exists")
 	}
 
-	s.m.Store(shortening.Key, shortening)
+	s.m.Store(shortening.ShortURL, shortening)
 
-	flags := config.ConfigFromContext(s.ctx)
+	flags := config.FlagsFromContext(s.ctx)
 	err := save(flags.FileStoragePath, &s.m)
 	if err != nil {
 		return nil, err
@@ -57,9 +57,9 @@ func save(fileName string, urls *sync.Map) error {
 	urls.Range(func(k, v interface{}) bool {
 		shortening := v.(dto.Shortening)
 
-		file := dto.File{
-			ShortURL:    shortening.Key,
-			OriginalURL: shortening.URL}
+		file := dto.Shortening{
+			ShortURL:    shortening.ShortURL,
+			OriginalURL: shortening.OriginalURL}
 
 		data, err := file.MarshalJSON()
 		if err != nil {
@@ -92,12 +92,12 @@ func load(files *sync.Map, fileName string) error {
 	splitData := bytes.Split(data, []byte("\n"))
 
 	for _, item := range splitData {
-		file := dto.File{}
+		file := dto.Shortening{}
 		err := file.UnmarshalJSON(item)
 		if err != nil {
 			return err
 		}
-		files.Store(file.ShortURL, dto.Shortening{Key: file.ShortURL, URL: file.OriginalURL})
+		files.Store(file.ShortURL, dto.Shortening{ShortURL: file.ShortURL, OriginalURL: file.OriginalURL})
 	}
 
 	return nil

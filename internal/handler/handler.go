@@ -22,7 +22,7 @@ func NewHandler(ctx context.Context, servAPI *service.Service) *Handler {
 		servAPI: servAPI}
 }
 
-// @Summary Shorten
+// HandleSave @Summary Shorten
 // @Description Short URL
 // @ID shorten
 // @Accept text/plain
@@ -56,7 +56,7 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
 }
 
-// @Summary ShortenJSON
+// HandleShorten @Summary ShortenJSON
 // @Description Short URL in json format
 // @ID shorten-json
 // @Accept json
@@ -91,7 +91,41 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
 }
 
-// @Summary Redirect
+func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
+	if echoCtx.Request().Method != http.MethodPost {
+		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
+	}
+
+	if ctType := echoCtx.Request().Header.Get(echo.HeaderContentType); ctType != echo.MIMEApplicationJSON {
+		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
+	}
+
+	inputList, err := parse.GetJSONDataFromBatch(s.ctx, echoCtx)
+	if err != nil {
+		return err
+	}
+
+	shortList, err := s.servAPI.ShortenList(inputList)
+	if err != nil {
+		return err
+	}
+
+	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	echoCtx.Response().Status = http.StatusCreated
+
+	body, err := parse.SetJSONDataToBody(s.ctx, echoCtx, shortList)
+	if err != nil {
+		return err
+	}
+
+	sizeBody, err := echoCtx.Response().Write(body)
+	if err != nil {
+		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
+	}
+	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
+}
+
+// HandleRedirect @Summary Redirect
 // @Description Redirect to origin URL by short URL
 // @ID redirect
 // @Accept text/plain

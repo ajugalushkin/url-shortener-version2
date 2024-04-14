@@ -20,7 +20,7 @@ var newConfig = config.Config{
 	BaseURL: "http://localhost:8080",
 }
 
-var ctx = config.ContextWithConfig(context.Background(), &newConfig)
+var ctx = config.ContextWithFlags(context.Background(), &newConfig)
 
 func TestHandler_HandleRedirect(t *testing.T) {
 	type request struct {
@@ -80,18 +80,18 @@ func TestHandler_HandleRedirect(t *testing.T) {
 			req := httptest.NewRequest(test.request.method, test.request.URL, nil)
 			req.Header.Set(echo.HeaderContentType, test.request.contentType)
 			rec := httptest.NewRecorder()
-			context := server.NewContext(req, rec)
+			echoCtx := server.NewContext(req, rec)
 
 			storageAPI := storage.NewInMemory()
 			_, err := storageAPI.Put(dto.Shortening{
-				Key: test.request.key,
-				URL: test.want.response,
+				ShortURL:    test.request.key,
+				OriginalURL: test.want.response,
 			})
 			if assert.NoError(t, err) {
 				handler := NewHandler(ctx, service.NewService(storageAPI))
 
 				// Assertions
-				if assert.NoError(t, handler.HandleRedirect(context)) {
+				if assert.NoError(t, handler.HandleRedirect(echoCtx)) {
 					assert.Equal(t, test.want.code, rec.Code)
 					assert.Equal(t, test.want.response, rec.Header().Get(echo.HeaderLocation))
 				}

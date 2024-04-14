@@ -16,11 +16,11 @@ func NewInMemory() *InMemory {
 }
 
 func (s *InMemory) Put(shortening dto.Shortening) (*dto.Shortening, error) {
-	if _, exists := s.m.Load(shortening.Key); exists {
+	if _, exists := s.m.Load(shortening.ShortURL); exists {
 		return nil, errors.New("identifier already exists")
 	}
 
-	s.m.Store(shortening.Key, shortening)
+	s.m.Store(shortening.ShortURL, shortening)
 
 	return &shortening, nil
 }

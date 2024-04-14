@@ -15,7 +15,7 @@ func (s Handler) HandlePing(echoCtx echo.Context) error {
 		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
 	}
 
-	flags := config.ConfigFromContext(s.ctx)
+	flags := config.FlagsFromContext(s.ctx)
 	db, err := sql.Open("pgx", flags.DataBaseDsn)
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, "", http.StatusInternalServerError, 0)

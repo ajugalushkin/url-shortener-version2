@@ -25,7 +25,7 @@ const (
 )
 
 func AddError(ctx context.Context, echoCtx echo.Context, message string, httpStatus int, size int) error {
-	logger.LoggerFromContext(ctx).Debug(message,
+	logger.LogFromContext(ctx).Debug(message,
 		zap.String(Status, strconv.Itoa(httpStatus)),
 		zap.String(Size, strconv.Itoa(size)),
 	)
@@ -34,7 +34,7 @@ func AddError(ctx context.Context, echoCtx echo.Context, message string, httpSta
 }
 
 func AddMessageOK(ctx context.Context, echoCtx echo.Context, message string, httpStatus int, size int) error {
-	logger.LoggerFromContext(ctx).Debug(message,
+	logger.LogFromContext(ctx).Debug(message,
 		zap.String(Status, strconv.Itoa(httpStatus)),
 		zap.String(Size, strconv.Itoa(size)),
 	)

@@ -24,7 +24,7 @@ func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
 	if contentType != echo.MIMEApplicationJSON {
 		parseURL = string(body)
 	} else {
-		shorten := dto.Shorten{}
+		shorten := dto.ShortenInput{}
 		err = shorten.UnmarshalJSON(body)
 		if err != nil {
 			return "", validate.AddError(ctx, echoCtx, validate.JSONParseError, http.StatusBadRequest, 0)
@@ -40,22 +40,58 @@ func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
 }
 func SetBody(ctx context.Context, echoCtx echo.Context, servAPI *service.Service, parseURL string) ([]byte, error) {
 	var newBody []byte
-	shortenURL, err := servAPI.Shorten(dto.ShortenInput{RawURL: parseURL})
+	shortenURL, err := servAPI.Shorten(dto.Shortening{OriginalURL: parseURL})
 	if err != nil {
 		return newBody, validate.AddError(ctx, echoCtx, validate.URLNotShortening, http.StatusBadRequest, 0)
 	}
 
-	flags := config.ConfigFromContext(ctx)
+	flags := config.FlagsFromContext(ctx)
 
 	contentType := echoCtx.Request().Header.Get(echo.HeaderContentType)
 	if contentType != echo.MIMEApplicationJSON {
-		newBody = []byte(fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.Key))
+		newBody = []byte(fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.ShortURL))
 	} else {
-		shortenResult := dto.ShortenResult{Result: fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.Key)}
+		shortenResult := dto.ShortenOutput{Result: fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.ShortURL)}
 		newBody, err = shortenResult.MarshalJSON()
 		if err != nil {
 			return newBody, validate.AddError(ctx, echoCtx, validate.JSONNotCreate, http.StatusBadRequest, 0)
 		}
 	}
+	return newBody, nil
+}
+
+func GetJSONDataFromBatch(ctx context.Context, echoCtx echo.Context) (dto.ShortenListInput, error) {
+	var shortList dto.ShortenListInput
+
+	body, err := io.ReadAll(echoCtx.Request().Body)
+	if err != nil {
+		return shortList, validate.AddError(ctx, echoCtx, validate.URLParseError, http.StatusBadRequest, 0)
+	}
+
+	err = shortList.UnmarshalJSON(body)
+	if err != nil {
+		return shortList, validate.AddError(ctx, echoCtx, validate.JSONParseError, http.StatusBadRequest, 0)
+	}
+
+	return shortList, nil
+}
+
+func SetJSONDataToBody(ctx context.Context, echoCtx echo.Context, list *dto.ShorteningList) ([]byte, error) {
+	var shortenListOut dto.ShortenListOutput
+	for _, item := range *list {
+		shortenListOut = append(
+			shortenListOut,
+			dto.ShortenListOutputLine{
+				CorrelationId: item.CorrelationId,
+				ShortUrl:      item.ShortURL,
+			},
+		)
+	}
+
+	newBody, err := shortenListOut.MarshalJSON()
+	if err != nil {
+		return newBody, validate.AddError(ctx, echoCtx, validate.JSONNotCreate, http.StatusBadRequest, 0)
+	}
+
 	return newBody, nil
 }

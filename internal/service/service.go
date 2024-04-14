@@ -19,21 +19,22 @@ func NewService(storage PutGetter) *Service {
 	return &Service{storage: storage}
 }
 
-func (s *Service) Shorten(input dto.ShortenInput) (*dto.Shortening, error) {
+func (s *Service) Shorten(input dto.Shortening) (*dto.Shortening, error) {
 	var (
 		id         = uuid.New().ID()
-		identifier = input.Identifier
+		identifier = input.ShortURL
 	)
 	if identifier == "" {
 		identifier = shorten.Shorten(id)
 	}
 
 	newShortening := dto.Shortening{
-		Key: identifier,
-		URL: input.RawURL,
+		ShortURL:      identifier,
+		OriginalURL:   input.OriginalURL,
+		CorrelationId: input.CorrelationId,
 	}
 
-	shortening, err := s.storage.Get(newShortening.Key)
+	shortening, err := s.storage.Get(newShortening.ShortURL)
 	if err != nil {
 		shortening, err = s.storage.Put(newShortening)
 		if err != nil {
@@ -44,11 +45,33 @@ func (s *Service) Shorten(input dto.ShortenInput) (*dto.Shortening, error) {
 	return shortening, nil
 }
 
+func (s *Service) ShortenList(input dto.ShortenListInput) (*dto.ShorteningList, error) {
+	var resultList dto.ShorteningList
+	for _, item := range input {
+		newShortening := dto.Shortening{
+			ShortURL:      shorten.Shorten(uuid.New().ID()),
+			OriginalURL:   item.OriginalURL,
+			CorrelationId: item.CorrelationId,
+		}
+
+		resultShortening, err := s.storage.Get(newShortening.ShortURL)
+		if err != nil {
+			resultShortening, err = s.storage.Put(newShortening)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		resultList = append(resultList, *resultShortening)
+	}
+	return &resultList, nil
+}
+
 func (s *Service) Redirect(identifier string) (string, error) {
 	shortening, err := s.storage.Get(identifier)
 	if err != nil {
 		return "", err
 	}
 
-	return shortening.URL, nil
+	return shortening.OriginalURL, nil
 }

@@ -57,8 +57,8 @@ func TestGzipMiddleware(t *testing.T) {
 		echoCtx := server.NewContext(request, recorder)
 		storageAPI := storage.NewInMemory()
 		_, err = storageAPI.Put(dto.Shortening{
-			Key: "rIHY5pi",
-			URL: "http://localhost:8080/rIHY5pi",
+			ShortURL:    "rIHY5pi",
+			OriginalURL: "http://localhost:8080/rIHY5pi",
 		})
 		if assert.NoError(t, err) {
 			handlerGzip := Gzip()

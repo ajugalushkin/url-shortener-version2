@@ -17,7 +17,7 @@ import (
 )
 
 func Run(ctx context.Context) error {
-	flags := config.ConfigFromContext(ctx)
+	flags := config.FlagsFromContext(ctx)
 
 	log, err := logger.Initialize(flags.FlagLogLevel)
 	if err != nil {
@@ -30,16 +30,19 @@ func Run(ctx context.Context) error {
 	serviceAPI := service.NewService(storage.GetStorage(ctx))
 	newHandler := handler.NewHandler(ctx, serviceAPI)
 
+	//Middleware
 	server.Use(logger.MiddlewareLogger(ctx))
-
 	server.Use(compress.GzipWithConfig(compress.GzipConfig{
 		Skipper: func(c echo.Context) bool {
 			return strings.Contains(c.Request().URL.Path, "swagger")
 		},
 	}))
 
-	server.POST("/api/shorten", newHandler.HandleShorten)
+	//Handlers
 	server.POST("/", newHandler.HandleSave)
+	server.POST("/api/shorten", newHandler.HandleShorten)
+	server.POST("/api/shorten/batch", newHandler.HandleShortenBatch)
+
 	server.GET("/:id", newHandler.HandleRedirect)
 	server.GET("/ping", newHandler.HandlePing)
 

@@ -50,11 +50,11 @@ func ParseFlags(config *Config) {
 
 type ctxConfig struct{}
 
-func ContextWithConfig(ctx context.Context, config *Config) context.Context {
+func ContextWithFlags(ctx context.Context, config *Config) context.Context {
 	return context.WithValue(ctx, ctxConfig{}, config)
 }
 
-func ConfigFromContext(ctx context.Context) *Config {
+func FlagsFromContext(ctx context.Context) *Config {
 	if config, ok := ctx.Value(ctxConfig{}).(*Config); ok {
 		return config
 	}
