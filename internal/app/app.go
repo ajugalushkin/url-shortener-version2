@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	_ "github.com/ajugalushkin/url-shortener-version2/docs"
@@ -14,6 +13,7 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
+	"go.uber.org/zap"
 )
 
 func Run(ctx context.Context) error {
@@ -49,7 +49,7 @@ func Run(ctx context.Context) error {
 	//Swagger
 	server.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	fmt.Println("Running server on", flags.RunAddr)
+	log.Info("Running server", zap.String("address", flags.RunAddr))
 	err = server.Start(flags.RunAddr)
 	if err != nil {
 		return err

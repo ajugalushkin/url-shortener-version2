@@ -143,8 +143,5 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 		return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
 	}
 
-	echoCtx.Response().Header().Set(echo.HeaderLocation, redirect)
-	echoCtx.Response().Status = http.StatusTemporaryRedirect
-
-	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, 0)
+	return validate.Redirect(s.ctx, echoCtx, redirect)
 }

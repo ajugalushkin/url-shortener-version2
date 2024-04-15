@@ -245,3 +245,75 @@ func TestHandler_HandleShorten(t *testing.T) {
 		})
 	}
 }
+
+func TestHandler_HandleShortenBatch(t *testing.T) {
+	type fields struct {
+		ctx     context.Context
+		servAPI *service.Service
+	}
+	tests := []struct {
+		name             string
+		fields           fields
+		inputContentType string
+		inputMethod      string
+		inputBody        string
+		expectedHeader   string
+		expectedCode     int
+	}{
+		{
+			name: "Test ОК",
+			fields: fields{
+				ctx:     ctx,
+				servAPI: service.NewService(storage.NewInMemory())},
+			inputContentType: echo.MIMEApplicationJSON,
+			inputMethod:      http.MethodPost,
+			inputBody:        "[\n    {\n        \"correlation_id\": \"1\",\n        \"original_url\": \"https://vk.com/ajugalushkin\"\n    }\n]",
+			expectedHeader:   echo.MIMEApplicationJSON,
+			expectedCode:     http.StatusCreated,
+		},
+		{
+			name: "Test Bad Request Type",
+			fields: fields{
+				ctx:     ctx,
+				servAPI: service.NewService(storage.NewInMemory())},
+			inputContentType: echo.MIMEApplicationJSON,
+			inputMethod:      http.MethodGet,
+			inputBody:        "[\n    {\n        \"correlation_id\": \"1\",\n        \"original_url\": \"https://vk.com/ajugalushkin\"\n    }\n]",
+			expectedHeader:   echo.MIMETextPlainCharsetUTF8,
+			expectedCode:     http.StatusBadRequest,
+		},
+		{
+			name: "Test Bad Content Type",
+			fields: fields{
+				ctx:     ctx,
+				servAPI: service.NewService(storage.NewInMemory())},
+			inputContentType: echo.MIMETextPlain,
+			inputMethod:      http.MethodPost,
+			inputBody:        "[\n    {\n        \"correlation_id\": \"1\",\n        \"original_url\": \"https://vk.com/ajugalushkin\"\n    }\n]",
+			expectedHeader:   echo.MIMETextPlainCharsetUTF8,
+			expectedCode:     http.StatusBadRequest,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// Setup
+			req := httptest.NewRequest(
+				test.inputMethod,
+				"/api/shorten/batch",
+				strings.NewReader(test.inputBody),
+			)
+			req.Header.Set(echo.HeaderContentType, test.inputContentType)
+			rec := httptest.NewRecorder()
+
+			echoCtx := echo.New().NewContext(req, rec)
+
+			handler := Handler{ctx: test.fields.ctx, servAPI: test.fields.servAPI}
+
+			// Assertions
+			if assert.NoError(t, handler.HandleShortenBatch(echoCtx)) {
+				assert.Equal(t, test.expectedHeader, rec.Header().Get(echo.HeaderContentType))
+				assert.Equal(t, test.expectedCode, rec.Code)
+			}
+		})
+	}
+}
