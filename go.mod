@@ -3,6 +3,7 @@ module github.com/ajugalushkin/url-shortener-version2
 go 1.21.8
 
 require (
+	github.com/Yandex-Practicum/go-autotests v0.10.5
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/labstack/echo/v4 v4.11.4
