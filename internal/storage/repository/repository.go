@@ -49,13 +49,11 @@ func (r *Repo) Put(ctx context.Context, shorteningInput dto.Shortening) (*dto.Sh
 
 	if err != nil {
 		if pgErr, ok := errors.Unwrap(errors.Unwrap(err)).(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UniqueViolation {
-			//duplicateURL, _ := r.GetByURL(ctx, shorteningInput.OriginalURL)
-			//return duplicateURL, errors.New("Conflict")
 			shortening, _ := r.GetByURL(ctx, shorteningInput.OriginalURL)
 			if shortening.OriginalURL != "" {
 				return shortening, &url_errors.DuplicateURLError{
 					Shortening: *shortening,
-					URLError:   fmt.Errorf("Duplicate for %s", shortening.OriginalURL),
+					URLError:   fmt.Errorf("duplicate for %s", shortening.OriginalURL),
 				}
 			}
 		}
