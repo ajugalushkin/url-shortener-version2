@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS shorten_urls (
     correlation_id VARCHAR(250) NOT NULL DEFAULT '',
     original_url VARCHAR(250) NOT NULL DEFAULT ''
 );
+CREATE UNIQUE INDEX original_url ON shorten_urls (original_url);
 -- +goose StatementEnd
 
 -- +goose Down

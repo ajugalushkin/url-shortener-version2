@@ -3,10 +3,13 @@ package handler
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	url_errors "github.com/ajugalushkin/url-shortener-version2/internal/errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/parse"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
@@ -35,13 +38,7 @@ func NewHandler(ctx context.Context, servAPI *service.Service) *Handler {
 // @Router / [post]
 func (s Handler) HandleSave(echoCtx echo.Context) error {
 	if echoCtx.Request().Method != http.MethodPost {
-		return validate.AddError(
-			s.ctx,
-			echoCtx,
-			validate.WrongTypeRequest,
-			http.StatusBadRequest,
-			0,
-		)
+		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
 	}
 
 	parseURL, err := parse.GetURL(s.ctx, echoCtx)
@@ -49,32 +46,17 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 		return err
 	}
 
-	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMETextPlain)
-	echoCtx.Response().Status = http.StatusCreated
+	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{OriginalURL: parseURL})
+	var doubleErr *url_errors.DuplicateURLError
+	if errors.As(err, &doubleErr) {
+		return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
+	}
 
-	body, err := parse.SetBody(s.ctx, echoCtx, s.servAPI, parseURL)
 	if err != nil {
 		return err
 	}
 
-	sizeBody, err := echoCtx.Response().Write(body)
-	if err != nil {
-		return validate.AddError(
-			s.ctx,
-			echoCtx,
-			validate.FailedToSend,
-			http.StatusBadRequest,
-			0,
-		)
-	}
-
-	return validate.AddMessageOK(
-		s.ctx,
-		echoCtx,
-		validate.URLSent,
-		http.StatusTemporaryRedirect,
-		sizeBody,
-	)
+	return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusCreated)
 }
 
 // HandleShorten @Summary ShortenJSON
@@ -88,13 +70,7 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 // @Router /api/shorten [post]
 func (s Handler) HandleShorten(echoCtx echo.Context) error {
 	if echoCtx.Request().Method != http.MethodPost {
-		return validate.AddError(
-			s.ctx,
-			echoCtx,
-			validate.WrongTypeRequest,
-			http.StatusBadRequest,
-			0,
-		)
+		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
 	}
 
 	parseURL, err := parse.GetURL(s.ctx, echoCtx)
@@ -102,32 +78,17 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 		return err
 	}
 
-	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	echoCtx.Response().Status = http.StatusCreated
+	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{OriginalURL: parseURL})
+	var doubleErr *url_errors.DuplicateURLError
+	if errors.As(err, &doubleErr) {
+		return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
+	}
 
-	body, err := parse.SetBody(s.ctx, echoCtx, s.servAPI, parseURL)
 	if err != nil {
 		return err
 	}
 
-	sizeBody, err := echoCtx.Response().Write(body)
-	if err != nil {
-		return validate.AddError(
-			s.ctx,
-			echoCtx,
-			validate.FailedToSend,
-			http.StatusBadRequest,
-			0,
-		)
-	}
-
-	return validate.AddMessageOK(
-		s.ctx,
-		echoCtx,
-		validate.URLSent,
-		http.StatusTemporaryRedirect,
-		sizeBody,
-	)
+	return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusCreated)
 }
 
 func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {

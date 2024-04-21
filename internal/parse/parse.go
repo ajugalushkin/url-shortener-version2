@@ -2,14 +2,12 @@ package parse
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
-	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
 	"github.com/labstack/echo/v4"
 )
@@ -39,26 +37,26 @@ func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
 
 	return parseURL, nil
 }
-func SetBody(ctx context.Context, echoCtx echo.Context, servAPI *service.Service, parseURL string) ([]byte, error) {
-	var newBody []byte
-	shortenURL, err := servAPI.Shorten(ctx, dto.Shortening{OriginalURL: parseURL})
-	if err != nil {
-		return newBody, validate.AddError(ctx, echoCtx, validate.URLNotShortening, http.StatusBadRequest, 0)
-	}
 
-	flags := config.FlagsFromContext(ctx)
-
+func SetResponse(ctx context.Context, echoCtx echo.Context, parseURL string, httpStatus int) error {
 	contentType := echoCtx.Request().Header.Get(echo.HeaderContentType)
+
+	echoCtx.Response().Header().Set(echo.HeaderContentType, contentType)
+	echoCtx.Response().Status = httpStatus
+
+	var newBody []byte
 	if contentType != echo.MIMEApplicationJSON {
-		newBody = []byte(fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.ShortURL))
+		newBody = []byte(parseURL)
 	} else {
-		shortenResult := dto.ShortenOutput{Result: fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.ShortURL)}
-		newBody, err = shortenResult.MarshalJSON()
-		if err != nil {
-			return newBody, validate.AddError(ctx, echoCtx, validate.JSONNotCreate, http.StatusBadRequest, 0)
-		}
+		shortenResult := dto.ShortenOutput{Result: parseURL}
+		newBody, _ = shortenResult.MarshalJSON()
 	}
-	return newBody, nil
+
+	sizeBody, err := echoCtx.Response().Write(newBody)
+	if err != nil {
+		return validate.AddError(ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
+	}
+	return validate.AddMessageOK(ctx, echoCtx, validate.URLSent, httpStatus, sizeBody)
 }
 
 func GetJSONDataFromBatch(ctx context.Context, echoCtx echo.Context) (dto.ShortenListInput, error) {

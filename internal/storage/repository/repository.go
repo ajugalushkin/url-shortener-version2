@@ -3,12 +3,15 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"strconv"
+	"fmt"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/ajugalushkin/url-shortener-version2/internal/database"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	url_errors "github.com/ajugalushkin/url-shortener-version2/internal/errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -25,12 +28,8 @@ type Repo struct {
 	db *sqlx.DB
 }
 
-func (r *Repo) Put(ctx context.Context, shortening dto.Shortening) (*dto.Shortening, error) {
-	var (
-		result sql.Result
-		err    error
-	)
-
+func (r *Repo) Put(ctx context.Context, shorteningInput dto.Shortening) (*dto.Shortening, error) {
+	var err error
 	err = database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
 		sb := squirrel.StatementBuilder.
 			Insert("shorten_urls").
@@ -39,26 +38,30 @@ func (r *Repo) Put(ctx context.Context, shortening dto.Shortening) (*dto.Shorten
 			RunWith(r.db)
 
 		sb = sb.Values(
-			shortening.ShortURL,
-			shortening.CorrelationID,
-			shortening.OriginalURL,
+			shorteningInput.ShortURL,
+			shorteningInput.CorrelationID,
+			shorteningInput.OriginalURL,
 		)
 
-		result, err = sb.ExecContext(ctx)
+		_, err = sb.ExecContext(ctx)
 		return err
 	})
 
 	if err != nil {
+		if pgErr, ok := errors.Unwrap(errors.Unwrap(err)).(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UniqueViolation {
+			//duplicateURL, _ := r.GetByURL(ctx, shorteningInput.OriginalURL)
+			//return duplicateURL, errors.New("Conflict")
+			shortening, _ := r.GetByURL(ctx, shorteningInput.OriginalURL)
+			if shortening.OriginalURL != "" {
+				return shortening, &url_errors.DuplicateURLError{
+					Shortening: *shortening,
+					URLError:   fmt.Errorf("Duplicate for %s", shortening.OriginalURL),
+				}
+			}
+		}
 		return nil, errors.Wrap(err, "repository.Put")
 	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		return nil, errors.Wrap(err, "repository.Put")
-	}
-	shortening.ShortURL = strconv.FormatInt(id, 10)
-
-	return &shortening, nil
+	return &shorteningInput, nil
 }
 
 func (r *Repo) Get(ctx context.Context, shortURL string) (*dto.Shortening, error) {
@@ -69,6 +72,41 @@ func (r *Repo) Get(ctx context.Context, shortURL string) (*dto.Shortening, error
 			From("shorten_urls").
 			PlaceholderFormat(squirrel.Dollar).
 			Where(squirrel.Eq{"short_url": []string{shortURL}}).
+			RunWith(r.db)
+
+		query, args, err := sb.ToSql()
+		if err != nil {
+			return err
+		}
+
+		return r.db.SelectContext(ctx, &shorteningList, query, args...)
+	})
+	log := logger.LogFromContext(ctx)
+	if err != nil {
+		log.Info("repository.Get", zap.Error(err))
+		return nil, errors.Wrap(err, "repository.Get")
+	}
+
+	if len(shorteningList) == 0 {
+		log.Info("repository.Get", zap.Error(sql.ErrNoRows))
+		return nil, errors.Wrap(sql.ErrNoRows, "repository.Get")
+	}
+
+	shortening := shorteningList[0]
+
+	log.Info("repository.Get OK", zap.String("Original URL", shortening.OriginalURL))
+
+	return &shortening, nil
+}
+
+func (r *Repo) GetByURL(ctx context.Context, originURL string) (*dto.Shortening, error) {
+	var shorteningList []dto.Shortening
+
+	err := database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
+		sb := squirrel.Select("short_url", "correlation_id", "original_url").
+			From("shorten_urls").
+			PlaceholderFormat(squirrel.Dollar).
+			Where(squirrel.Eq{"original_url": []string{originURL}}).
 			RunWith(r.db)
 
 		query, args, err := sb.ToSql()

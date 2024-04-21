@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"net/url"
 
+	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/shorten"
@@ -39,12 +41,11 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 		CorrelationID: input.CorrelationID,
 	}
 
-	shortening, err := s.storage.Get(ctx, newShortening.ShortURL)
+	shortening, err := s.storage.Put(ctx, newShortening)
+	shortening.ShortURL, _ = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
+
 	if err != nil {
-		shortening, err = s.storage.Put(ctx, newShortening)
-		if err != nil {
-			return nil, err
-		}
+		return shortening, err
 	}
 
 	return shortening, nil
@@ -80,5 +81,6 @@ func (s *Service) Redirect(ctx context.Context, identifier string) (string, erro
 	}
 
 	log.Info("service.Redirect OK", zap.String("URL", shortening.OriginalURL))
+
 	return shortening.OriginalURL, nil
 }
