@@ -18,5 +18,7 @@ func NewConnection(driver, dsn string) (*sqlx.DB, error) {
 		return nil, err
 	}
 
+	Migrate(dsn)
+
 	return db, nil
 }

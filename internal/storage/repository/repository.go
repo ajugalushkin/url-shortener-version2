@@ -117,3 +117,30 @@ func (r *Repo) PutList(ctx context.Context, list dto.ShorteningList) error {
 
 	return nil
 }
+
+//func isTableExists(ctx context.Context, db *sqlx.DB) bool {
+//	var (
+//		result interface{}
+//		err    error
+//	)
+//
+//	err = database.WithTx(ctx, db, func(ctx context.Context, tx *sqlx.Tx) error {
+//		sb := squirrel.StatementBuilder.
+//			Select("shorten_urls").
+//			Limit(1).
+//			PlaceholderFormat(squirrel.Dollar).
+//			RunWith(db)
+//
+//		query, args, err := sb.ToSql()
+//		if err != nil {
+//			return err
+//		}
+//
+//		return db.SelectContext(ctx, &result, query, args...)
+//	})
+//
+//	if err != nil {
+//		return false
+//	}
+//	return true
+//}

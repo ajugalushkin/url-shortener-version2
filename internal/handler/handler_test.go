@@ -10,7 +10,7 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
-	"github.com/ajugalushkin/url-shortener-version2/internal/storage/in_memory"
+	"github.com/ajugalushkin/url-shortener-version2/internal/storage/inmemory"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
@@ -82,7 +82,7 @@ func TestHandler_HandleRedirect(t *testing.T) {
 			rec := httptest.NewRecorder()
 			echoCtx := server.NewContext(req, rec)
 
-			storageAPI := in_memory.NewInMemory()
+			storageAPI := inmemory.NewInMemory()
 			_, err := storageAPI.Put(ctx, dto.Shortening{
 				ShortURL:    test.request.key,
 				OriginalURL: test.want.response,
@@ -162,7 +162,7 @@ func TestHandler_HandleSave(t *testing.T) {
 			rec := httptest.NewRecorder()
 			echoCtx := server.NewContext(req, rec)
 
-			handler := NewHandler(ctx, service.NewService(in_memory.NewInMemory()))
+			handler := NewHandler(ctx, service.NewService(inmemory.NewInMemory()))
 
 			// Assertions
 			if assert.NoError(t, handler.HandleSave(echoCtx)) {
@@ -235,7 +235,7 @@ func TestHandler_HandleShorten(t *testing.T) {
 			rec := httptest.NewRecorder()
 			echoCtx := server.NewContext(req, rec)
 
-			handler := NewHandler(ctx, service.NewService(in_memory.NewInMemory()))
+			handler := NewHandler(ctx, service.NewService(inmemory.NewInMemory()))
 
 			// Assertions
 			if assert.NoError(t, handler.HandleShorten(echoCtx)) {
@@ -264,7 +264,7 @@ func TestHandler_HandleShortenBatch(t *testing.T) {
 			name: "Test ОК",
 			fields: fields{
 				ctx:     ctx,
-				servAPI: service.NewService(in_memory.NewInMemory())},
+				servAPI: service.NewService(inmemory.NewInMemory())},
 			inputContentType: echo.MIMEApplicationJSON,
 			inputMethod:      http.MethodPost,
 			inputBody:        "[\n    {\n        \"correlation_id\": \"1\",\n        \"original_url\": \"https://vk.com/ajugalushkin\"\n    }\n]",
@@ -275,7 +275,7 @@ func TestHandler_HandleShortenBatch(t *testing.T) {
 			name: "Test Bad Request Type",
 			fields: fields{
 				ctx:     ctx,
-				servAPI: service.NewService(in_memory.NewInMemory())},
+				servAPI: service.NewService(inmemory.NewInMemory())},
 			inputContentType: echo.MIMEApplicationJSON,
 			inputMethod:      http.MethodGet,
 			inputBody:        "[\n    {\n        \"correlation_id\": \"1\",\n        \"original_url\": \"https://vk.com/ajugalushkin\"\n    }\n]",
@@ -286,7 +286,7 @@ func TestHandler_HandleShortenBatch(t *testing.T) {
 			name: "Test Bad Content Type",
 			fields: fields{
 				ctx:     ctx,
-				servAPI: service.NewService(in_memory.NewInMemory())},
+				servAPI: service.NewService(inmemory.NewInMemory())},
 			inputContentType: echo.MIMETextPlain,
 			inputMethod:      http.MethodPost,
 			inputBody:        "[\n    {\n        \"correlation_id\": \"1\",\n        \"original_url\": \"https://vk.com/ajugalushkin\"\n    }\n]",
