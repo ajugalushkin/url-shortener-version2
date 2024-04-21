@@ -21,14 +21,7 @@ func GetStorage(ctx context.Context) service.PutGetter {
 			log.Error(err.Error())
 			return nil
 		}
-
-		repo := repository.NewRepository(db)
-		if err != nil {
-			log := logger.LogFromContext(ctx)
-			log.Error(err.Error())
-			return nil
-		}
-		return repo
+		return repository.NewRepository(db)
 	} else if flags.FileStoragePath != "" {
 		return file.NewStorage(flags.FileStoragePath)
 	} else {
