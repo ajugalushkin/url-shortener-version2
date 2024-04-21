@@ -2,8 +2,10 @@ package app
 
 import (
 	"context"
+	"strings"
 
 	_ "github.com/ajugalushkin/url-shortener-version2/docs"
+	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
@@ -29,11 +31,11 @@ func Run(ctx context.Context) error {
 
 	//Middleware
 	server.Use(logger.MiddlewareLogger(ctx))
-	//server.Use(compress.GzipWithConfig(compress.GzipConfig{
-	//	Skipper: func(c echo.Context) bool {
-	//		return strings.Contains(c.Request().URL.Path, "swagger")
-	//	},
-	//}))
+	server.Use(compress.GzipWithConfig(compress.GzipConfig{
+		Skipper: func(c echo.Context) bool {
+			return strings.Contains(c.Request().URL.Path, "swagger")
+		},
+	}))
 
 	//Handlers
 	server.POST("/", newHandler.HandleSave)
