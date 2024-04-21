@@ -32,7 +32,13 @@ func NewHandler(ctx context.Context, servAPI *service.Service) *Handler {
 // @Router / [post]
 func (s Handler) HandleSave(echoCtx echo.Context) error {
 	if echoCtx.Request().Method != http.MethodPost {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
+		return validate.AddError(
+			s.ctx,
+			echoCtx,
+			validate.WrongTypeRequest,
+			http.StatusBadRequest,
+			0,
+		)
 	}
 
 	parseURL, err := parse.GetURL(s.ctx, echoCtx)
@@ -50,10 +56,22 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 
 	sizeBody, err := echoCtx.Response().Write(body)
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
+		return validate.AddError(
+			s.ctx,
+			echoCtx,
+			validate.FailedToSend,
+			http.StatusBadRequest,
+			0,
+		)
 	}
 
-	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
+	return validate.AddMessageOK(
+		s.ctx,
+		echoCtx,
+		validate.URLSent,
+		http.StatusTemporaryRedirect,
+		sizeBody,
+	)
 }
 
 // HandleShorten @Summary ShortenJSON
@@ -67,7 +85,13 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 // @Router /api/shorten [post]
 func (s Handler) HandleShorten(echoCtx echo.Context) error {
 	if echoCtx.Request().Method != http.MethodPost {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
+		return validate.AddError(
+			s.ctx,
+			echoCtx,
+			validate.WrongTypeRequest,
+			http.StatusBadRequest,
+			0,
+		)
 	}
 
 	parseURL, err := parse.GetURL(s.ctx, echoCtx)
@@ -85,19 +109,43 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 
 	sizeBody, err := echoCtx.Response().Write(body)
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
+		return validate.AddError(
+			s.ctx,
+			echoCtx,
+			validate.FailedToSend,
+			http.StatusBadRequest,
+			0,
+		)
 	}
 
-	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
+	return validate.AddMessageOK(
+		s.ctx,
+		echoCtx,
+		validate.URLSent,
+		http.StatusTemporaryRedirect,
+		sizeBody,
+	)
 }
 
 func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 	if echoCtx.Request().Method != http.MethodPost {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
+		return validate.AddError(
+			s.ctx,
+			echoCtx,
+			validate.WrongTypeRequest,
+			http.StatusBadRequest,
+			0,
+		)
 	}
 
 	if ctType := echoCtx.Request().Header.Get(echo.HeaderContentType); ctType != echo.MIMEApplicationJSON {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
+		return validate.AddError(
+			s.ctx,
+			echoCtx,
+			validate.WrongTypeRequest,
+			http.StatusBadRequest,
+			0,
+		)
 	}
 
 	inputList, err := parse.GetJSONDataFromBatch(s.ctx, echoCtx)
@@ -105,7 +153,7 @@ func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 		return err
 	}
 
-	shortList, err := s.servAPI.ShortenList(inputList)
+	shortList, err := s.servAPI.ShortenList(s.ctx, inputList)
 	if err != nil {
 		return err
 	}
@@ -120,9 +168,21 @@ func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 
 	sizeBody, err := echoCtx.Response().Write(body)
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
+		return validate.AddError(
+			s.ctx,
+			echoCtx,
+			validate.FailedToSend,
+			http.StatusBadRequest,
+			0,
+		)
 	}
-	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
+	return validate.AddMessageOK(
+		s.ctx,
+		echoCtx,
+		validate.URLSent,
+		http.StatusTemporaryRedirect,
+		sizeBody,
+	)
 }
 
 // HandleRedirect @Summary Redirect
@@ -138,15 +198,10 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
 	}
 
-	redirect, err := s.servAPI.Redirect(strings.Replace(echoCtx.Request().URL.Path, "/", "", -1))
+	redirect, err := s.servAPI.Redirect(s.ctx, strings.Replace(echoCtx.Request().URL.Path, "/", "", -1))
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
 	}
 
-	echoCtx.Response().Header().Set(echo.HeaderLocation, redirect)
-	echoCtx.Response().Status = http.StatusTemporaryRedirect
-	//
-	//return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, 0)
-	//return echoCtx.Redirect(http.StatusTemporaryRedirect, redirect)
-	return echoCtx.String(http.StatusTemporaryRedirect, "")
+	return validate.Redirect(s.ctx, echoCtx, redirect)
 }

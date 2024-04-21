@@ -1,15 +1,17 @@
 package service
 
 import (
+	"context"
+
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/shorten"
 	"github.com/google/uuid"
 )
 
 type PutGetter interface {
-	Put(urlData dto.Shortening) (*dto.Shortening, error)
-	PutList(list dto.ShorteningList) error
-	Get(id string) (*dto.Shortening, error)
+	Put(ctx context.Context, shortening dto.Shortening) (*dto.Shortening, error)
+	Get(ctx context.Context, shortURL string) (*dto.Shortening, error)
+	PutList(ctx context.Context, list dto.ShorteningList) error
 }
 
 type Service struct {
@@ -20,7 +22,7 @@ func NewService(storage PutGetter) *Service {
 	return &Service{storage: storage}
 }
 
-func (s *Service) Shorten(input dto.Shortening) (*dto.Shortening, error) {
+func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Shortening, error) {
 	var (
 		id         = uuid.New().ID()
 		identifier = input.ShortURL
@@ -35,9 +37,9 @@ func (s *Service) Shorten(input dto.Shortening) (*dto.Shortening, error) {
 		CorrelationID: input.CorrelationID,
 	}
 
-	shortening, err := s.storage.Get(newShortening.ShortURL)
+	shortening, err := s.storage.Get(ctx, newShortening.ShortURL)
 	if err != nil {
-		shortening, err = s.storage.Put(newShortening)
+		shortening, err = s.storage.Put(ctx, newShortening)
 		if err != nil {
 			return nil, err
 		}
@@ -46,7 +48,7 @@ func (s *Service) Shorten(input dto.Shortening) (*dto.Shortening, error) {
 	return shortening, nil
 }
 
-func (s *Service) ShortenList(input dto.ShortenListInput) (*dto.ShorteningList, error) {
+func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (*dto.ShorteningList, error) {
 	var shorteningList dto.ShorteningList
 	for _, item := range input {
 		newShortening := dto.Shortening{
@@ -58,7 +60,7 @@ func (s *Service) ShortenList(input dto.ShortenListInput) (*dto.ShorteningList, 
 		shorteningList = append(shorteningList, newShortening)
 	}
 
-	err := s.storage.PutList(shorteningList)
+	err := s.storage.PutList(ctx, shorteningList)
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +68,8 @@ func (s *Service) ShortenList(input dto.ShortenListInput) (*dto.ShorteningList, 
 	return &shorteningList, nil
 }
 
-func (s *Service) Redirect(identifier string) (string, error) {
-	shortening, err := s.storage.Get(identifier)
+func (s *Service) Redirect(ctx context.Context, identifier string) (string, error) {
+	shortening, err := s.storage.Get(ctx, identifier)
 	if err != nil {
 		return "", err
 	}

@@ -1,4 +1,4 @@
-package storage
+package file
 
 import (
 	"bytes"
@@ -13,26 +13,23 @@ import (
 )
 
 type Storage struct {
-	m   sync.Map
-	ctx context.Context
+	m sync.Map
 }
 
-func NewStorage(ctx context.Context) *Storage {
-	storage := Storage{ctx: ctx}
-
-	flags := config.FlagsFromContext(ctx)
-	_ = load(&storage.m, flags.FileStoragePath)
+func NewStorage(path string) *Storage {
+	storage := Storage{}
+	_ = load(&storage.m, path)
 	return &storage
 }
 
-func (s *Storage) Put(shortening dto.Shortening) (*dto.Shortening, error) {
+func (s *Storage) Put(ctx context.Context, shortening dto.Shortening) (*dto.Shortening, error) {
 	if _, exists := s.m.Load(shortening.ShortURL); exists {
 		return nil, errors.New("identifier already exists")
 	}
 
 	s.m.Store(shortening.ShortURL, shortening)
 
-	flags := config.FlagsFromContext(s.ctx)
+	flags := config.FlagsFromContext(ctx)
 	err := save(flags.FileStoragePath, &s.m)
 	if err != nil {
 		return nil, err
@@ -41,9 +38,9 @@ func (s *Storage) Put(shortening dto.Shortening) (*dto.Shortening, error) {
 	return &shortening, nil
 }
 
-func (s *Storage) PutList(list dto.ShorteningList) error {
+func (s *Storage) PutList(ctx context.Context, list dto.ShorteningList) error {
 	for _, shortening := range list {
-		_, err := s.Put(shortening)
+		_, err := s.Put(ctx, shortening)
 		if err != nil {
 			return err
 		}
@@ -51,7 +48,7 @@ func (s *Storage) PutList(list dto.ShorteningList) error {
 	return nil
 }
 
-func (s *Storage) Get(identifier string) (*dto.Shortening, error) {
+func (s *Storage) Get(ctx context.Context, identifier string) (*dto.Shortening, error) {
 	v, ok := s.m.Load(identifier)
 	if !ok {
 		return nil, errors.New("not found")

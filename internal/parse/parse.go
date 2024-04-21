@@ -40,7 +40,7 @@ func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
 }
 func SetBody(ctx context.Context, echoCtx echo.Context, servAPI *service.Service, parseURL string) ([]byte, error) {
 	var newBody []byte
-	shortenURL, err := servAPI.Shorten(dto.Shortening{OriginalURL: parseURL})
+	shortenURL, err := servAPI.Shorten(ctx, dto.Shortening{OriginalURL: parseURL})
 	if err != nil {
 		return newBody, validate.AddError(ctx, echoCtx, validate.URLNotShortening, http.StatusBadRequest, 0)
 	}

@@ -27,8 +27,7 @@ func Run(ctx context.Context) error {
 	ctx = logger.ContextWithLogger(ctx, log)
 
 	server := echo.New()
-	serviceAPI := service.NewService(storage.GetStorage(ctx))
-	newHandler := handler.NewHandler(ctx, serviceAPI)
+	newHandler := handler.NewHandler(ctx, service.NewService(storage.GetStorage(ctx)))
 
 	//Middleware
 	server.Use(logger.MiddlewareLogger(ctx))

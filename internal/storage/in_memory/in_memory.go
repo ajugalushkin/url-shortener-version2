@@ -1,6 +1,7 @@
-package storage
+package in_memory
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -15,7 +16,7 @@ func NewInMemory() *InMemory {
 	return &InMemory{}
 }
 
-func (s *InMemory) Put(shortening dto.Shortening) (*dto.Shortening, error) {
+func (s *InMemory) Put(ctx context.Context, shortening dto.Shortening) (*dto.Shortening, error) {
 	if _, exists := s.m.Load(shortening.ShortURL); exists {
 		return nil, errors.New("identifier already exists")
 	}
@@ -25,9 +26,9 @@ func (s *InMemory) Put(shortening dto.Shortening) (*dto.Shortening, error) {
 	return &shortening, nil
 }
 
-func (s *InMemory) PutList(list dto.ShorteningList) error {
+func (s *InMemory) PutList(ctx context.Context, list dto.ShorteningList) error {
 	for _, shortening := range list {
-		_, err := s.Put(shortening)
+		_, err := s.Put(ctx, shortening)
 		if err != nil {
 			return err
 		}
@@ -35,7 +36,7 @@ func (s *InMemory) PutList(list dto.ShorteningList) error {
 	return nil
 }
 
-func (s *InMemory) Get(identifier string) (*dto.Shortening, error) {
+func (s *InMemory) Get(ctx context.Context, identifier string) (*dto.Shortening, error) {
 	v, ok := s.m.Load(identifier)
 	if !ok {
 		return nil, errors.New("not found")

@@ -1,6 +1,7 @@
-package storage
+package in_memory
 
 import (
+	"context"
 	"sync"
 	"testing"
 
@@ -28,7 +29,7 @@ func TestInMemory_Put(t *testing.T) {
 			s := &InMemory{}
 			setupStorage(&s.m)
 
-			_, err := s.Put(test.input)
+			_, err := s.Put(context.Background(), test.input)
 			if (err != nil) != test.wantErr {
 				t.Errorf("Put() error = %v, wantErr %v", err, test.wantErr)
 				return
