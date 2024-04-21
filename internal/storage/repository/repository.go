@@ -8,9 +8,11 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/ajugalushkin/url-shortener-version2/internal/database"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 func NewRepository(db *sqlx.DB) *Repo {
@@ -76,16 +78,20 @@ func (r *Repo) Get(ctx context.Context, shortURL string) (*dto.Shortening, error
 
 		return r.db.SelectContext(ctx, &shorteningList, query, args...)
 	})
-
+	log := logger.LogFromContext(ctx)
 	if err != nil {
+		log.Info("repository.Get", zap.Error(err))
 		return nil, errors.Wrap(err, "repository.Get")
 	}
 
 	if len(shorteningList) == 0 {
+		log.Info("repository.Get", zap.Error(sql.ErrNoRows))
 		return nil, errors.Wrap(sql.ErrNoRows, "repository.Get")
 	}
 
 	shortening := shorteningList[0]
+
+	log.Info("repository.Get OK", zap.String("Original URL", shortening.OriginalURL))
 
 	return &shortening, nil
 }
@@ -117,30 +123,3 @@ func (r *Repo) PutList(ctx context.Context, list dto.ShorteningList) error {
 
 	return nil
 }
-
-//func isTableExists(ctx context.Context, db *sqlx.DB) bool {
-//	var (
-//		result interface{}
-//		err    error
-//	)
-//
-//	err = database.WithTx(ctx, db, func(ctx context.Context, tx *sqlx.Tx) error {
-//		sb := squirrel.StatementBuilder.
-//			Select("shorten_urls").
-//			Limit(1).
-//			PlaceholderFormat(squirrel.Dollar).
-//			RunWith(db)
-//
-//		query, args, err := sb.ToSql()
-//		if err != nil {
-//			return err
-//		}
-//
-//		return db.SelectContext(ctx, &result, query, args...)
-//	})
-//
-//	if err != nil {
-//		return false
-//	}
-//	return true
-//}

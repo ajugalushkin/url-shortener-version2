@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
@@ -78,12 +79,14 @@ func GetJSONDataFromBatch(ctx context.Context, echoCtx echo.Context) (dto.Shorte
 
 func SetJSONDataToBody(ctx context.Context, echoCtx echo.Context, list *dto.ShorteningList) ([]byte, error) {
 	var shortenListOut dto.ShortenListOutput
+	flag := config.FlagsFromContext(ctx)
 	for _, item := range *list {
+		shortWithHost, _ := url.JoinPath(flag.BaseURL, item.ShortURL)
 		shortenListOut = append(
 			shortenListOut,
 			dto.ShortenListOutputLine{
 				CorrelationID: item.CorrelationID,
-				ShortURL:      item.ShortURL,
+				ShortURL:      shortWithHost,
 			},
 		)
 	}

@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/shorten"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 type PutGetter interface {
@@ -69,10 +71,14 @@ func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (
 }
 
 func (s *Service) Redirect(ctx context.Context, identifier string) (string, error) {
+	log := logger.LogFromContext(ctx)
+
 	shortening, err := s.storage.Get(ctx, identifier)
 	if err != nil {
+		log.Info("service.Redirect ERROR", zap.Error(err))
 		return "", err
 	}
 
+	log.Info("service.Redirect OK", zap.String("URL", shortening.OriginalURL))
 	return shortening.OriginalURL, nil
 }
