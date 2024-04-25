@@ -78,11 +78,9 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 	}
 
 	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{OriginalURL: parseURL})
-	//var doubleErr *url_errors.DuplicateURLError
-
-	//if errors.As(err, &doubleErr) {
-	//	return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
-	//}
+	if errors.Is(err, userErr.ErrorDuplicateURL) {
+		return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
+	}
 
 	if err != nil {
 		return err
