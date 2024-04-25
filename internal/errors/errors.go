@@ -1,16 +1,15 @@
 package errors
 
-import (
-	"fmt"
+import "errors"
 
-	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+//type DuplicateURLError struct {
+//	Shortening dto.Shortening
+//	URLError   error
+//}
+
+//	func (d *DuplicateURLError) Error() string {
+//		return fmt.Sprintf("[%s] %v", d.Shortening, d.URLError)
+//	}
+var (
+	ErrorDuplicateURL = errors.New("duplicate URL")
 )
-
-type DuplicateURLError struct {
-	Shortening dto.Shortening
-	URLError   error
-}
-
-func (d *DuplicateURLError) Error() string {
-	return fmt.Sprintf("[%s] %v", d.Shortening, d.URLError)
-}

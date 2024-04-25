@@ -9,7 +9,7 @@ import (
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
-	url_errors "github.com/ajugalushkin/url-shortener-version2/internal/errors"
+	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/parse"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
@@ -47,8 +47,7 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 	}
 
 	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{OriginalURL: parseURL})
-	var doubleErr *url_errors.DuplicateURLError
-	if errors.As(err, &doubleErr) {
+	if errors.Is(err, userErr.ErrorDuplicateURL) {
 		return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
 	}
 
@@ -79,10 +78,11 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 	}
 
 	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{OriginalURL: parseURL})
-	var doubleErr *url_errors.DuplicateURLError
-	if errors.As(err, &doubleErr) {
-		return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
-	}
+	//var doubleErr *url_errors.DuplicateURLError
+
+	//if errors.As(err, &doubleErr) {
+	//	return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
+	//}
 
 	if err != nil {
 		return err

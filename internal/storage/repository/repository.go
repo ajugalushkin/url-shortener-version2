@@ -3,12 +3,11 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/ajugalushkin/url-shortener-version2/internal/database"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
-	url_errors "github.com/ajugalushkin/url-shortener-version2/internal/errors"
+	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -51,10 +50,7 @@ func (r *Repo) Put(ctx context.Context, shorteningInput dto.Shortening) (*dto.Sh
 		if pgErr, ok := errors.Unwrap(errors.Unwrap(err)).(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UniqueViolation {
 			shortening, _ := r.GetByURL(ctx, shorteningInput.OriginalURL)
 			if shortening.OriginalURL != "" {
-				return shortening, &url_errors.DuplicateURLError{
-					Shortening: *shortening,
-					URLError:   fmt.Errorf("duplicate for %s", shortening.OriginalURL),
-				}
+				return shortening, errors.Wrapf(userErr.ErrorDuplicateURL, "%s %s", userErr.ErrorDuplicateURL, shortening.OriginalURL)
 			}
 		}
 		return nil, errors.Wrap(err, "repository.Put")
