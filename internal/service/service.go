@@ -1,14 +1,21 @@
 package service
 
 import (
+	"context"
+	"net/url"
+
+	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/shorten"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 type PutGetter interface {
-	Put(urlData dto.Shortening) (*dto.Shortening, error)
-	Get(id string) (*dto.Shortening, error)
+	Put(ctx context.Context, shortening dto.Shortening) (*dto.Shortening, error)
+	Get(ctx context.Context, shortURL string) (*dto.Shortening, error)
+	PutList(ctx context.Context, list dto.ShorteningList) error
 }
 
 type Service struct {
@@ -19,36 +26,61 @@ func NewService(storage PutGetter) *Service {
 	return &Service{storage: storage}
 }
 
-func (s *Service) Shorten(input dto.ShortenInput) (*dto.Shortening, error) {
+func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Shortening, error) {
 	var (
 		id         = uuid.New().ID()
-		identifier = input.Identifier
+		identifier = input.ShortURL
 	)
 	if identifier == "" {
 		identifier = shorten.Shorten(id)
 	}
 
 	newShortening := dto.Shortening{
-		Key: identifier,
-		URL: input.RawURL,
+		ShortURL:      identifier,
+		OriginalURL:   input.OriginalURL,
+		CorrelationID: input.CorrelationID,
 	}
 
-	shortening, err := s.storage.Get(newShortening.Key)
+	shortening, err := s.storage.Put(ctx, newShortening)
+	shortening.ShortURL, _ = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
+
 	if err != nil {
-		shortening, err = s.storage.Put(newShortening)
-		if err != nil {
-			return nil, err
-		}
+		return shortening, err
 	}
 
 	return shortening, nil
 }
 
-func (s *Service) Redirect(identifier string) (string, error) {
-	shortening, err := s.storage.Get(identifier)
+func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (*dto.ShorteningList, error) {
+	var shorteningList dto.ShorteningList
+	for _, item := range input {
+		newShortening := dto.Shortening{
+			ShortURL:      shorten.Shorten(uuid.New().ID()),
+			OriginalURL:   item.OriginalURL,
+			CorrelationID: item.CorrelationID,
+		}
+
+		shorteningList = append(shorteningList, newShortening)
+	}
+
+	err := s.storage.PutList(ctx, shorteningList)
 	if err != nil {
+		return nil, err
+	}
+
+	return &shorteningList, nil
+}
+
+func (s *Service) Redirect(ctx context.Context, identifier string) (string, error) {
+	log := logger.LogFromContext(ctx)
+
+	shortening, err := s.storage.Get(ctx, identifier)
+	if err != nil {
+		log.Info("service.Redirect ERROR", zap.Error(err))
 		return "", err
 	}
 
-	return shortening.URL, nil
+	log.Info("service.Redirect OK", zap.String("URL", shortening.OriginalURL))
+
+	return shortening.OriginalURL, nil
 }

@@ -2,6 +2,7 @@ package validate
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
@@ -25,7 +26,8 @@ const (
 )
 
 func AddError(ctx context.Context, echoCtx echo.Context, message string, httpStatus int, size int) error {
-	logger.LoggerFromContext(ctx).Debug(message,
+	log := logger.LogFromContext(ctx)
+	log.Debug(message,
 		zap.String(Status, strconv.Itoa(httpStatus)),
 		zap.String(Size, strconv.Itoa(size)),
 	)
@@ -34,10 +36,21 @@ func AddError(ctx context.Context, echoCtx echo.Context, message string, httpSta
 }
 
 func AddMessageOK(ctx context.Context, echoCtx echo.Context, message string, httpStatus int, size int) error {
-	logger.LoggerFromContext(ctx).Debug(message,
+	log := logger.LogFromContext(ctx)
+	log.Debug(message,
 		zap.String(Status, strconv.Itoa(httpStatus)),
 		zap.String(Size, strconv.Itoa(size)),
 	)
 
 	return echoCtx.String(httpStatus, "")
+}
+
+func Redirect(ctx context.Context, echoCtx echo.Context, redirect string) error {
+	log := logger.LogFromContext(ctx)
+	log.Debug(URLSent,
+		zap.String(Status, strconv.Itoa(http.StatusTemporaryRedirect)),
+		zap.String(Size, strconv.Itoa(len(redirect))),
+	)
+
+	return echoCtx.Redirect(http.StatusTemporaryRedirect, redirect)
 }

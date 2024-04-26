@@ -2,9 +2,15 @@ package handler
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"net/http"
 	"strings"
 
+	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
+	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/parse"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
@@ -22,7 +28,7 @@ func NewHandler(ctx context.Context, servAPI *service.Service) *Handler {
 		servAPI: servAPI}
 }
 
-// @Summary Shorten
+// HandleSave @Summary Shorten
 // @Description Short URL
 // @ID shorten
 // @Accept text/plain
@@ -40,23 +46,19 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 		return err
 	}
 
-	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMETextPlain)
-	echoCtx.Response().Status = http.StatusCreated
+	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{OriginalURL: parseURL})
+	if errors.Is(err, userErr.ErrorDuplicateURL) {
+		return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
+	}
 
-	body, err := parse.SetBody(s.ctx, echoCtx, s.servAPI, parseURL)
 	if err != nil {
 		return err
 	}
 
-	sizeBody, err := echoCtx.Response().Write(body)
-	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
-	}
-
-	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
+	return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusCreated)
 }
 
-// @Summary ShortenJSON
+// HandleShorten @Summary ShortenJSON
 // @Description Short URL in json format
 // @ID shorten-json
 // @Accept json
@@ -75,10 +77,41 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 		return err
 	}
 
+	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{OriginalURL: parseURL})
+	if errors.Is(err, userErr.ErrorDuplicateURL) {
+		return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusCreated)
+}
+
+func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
+	if echoCtx.Request().Method != http.MethodPost {
+		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
+	}
+
+	if ctType := echoCtx.Request().Header.Get(echo.HeaderContentType); ctType != echo.MIMEApplicationJSON {
+		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
+	}
+
+	inputList, err := parse.GetJSONDataFromBatch(s.ctx, echoCtx)
+	if err != nil {
+		return err
+	}
+
+	shortList, err := s.servAPI.ShortenList(s.ctx, inputList)
+	if err != nil {
+		return err
+	}
+
 	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	echoCtx.Response().Status = http.StatusCreated
 
-	body, err := parse.SetBody(s.ctx, echoCtx, s.servAPI, parseURL)
+	body, err := parse.SetJSONDataToBody(s.ctx, echoCtx, shortList)
 	if err != nil {
 		return err
 	}
@@ -87,11 +120,10 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
 	}
-
 	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
 }
 
-// @Summary Redirect
+// HandleRedirect @Summary Redirect
 // @Description Redirect to origin URL by short URL
 // @ID redirect
 // @Accept text/plain
@@ -104,13 +136,31 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
 	}
 
-	redirect, err := s.servAPI.Redirect(strings.Replace(echoCtx.Request().URL.Path, "/", "", -1))
+	redirect, err := s.servAPI.Redirect(s.ctx, strings.Replace(echoCtx.Request().URL.Path, "/", "", -1))
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
 	}
 
-	echoCtx.Response().Header().Set(echo.HeaderLocation, redirect)
-	echoCtx.Response().Status = http.StatusTemporaryRedirect
+	if redirect != "" {
+		return validate.Redirect(s.ctx, echoCtx, redirect)
+	}
 
-	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, 0)
+	log := logger.LogFromContext(s.ctx)
+	log.Error(validate.URLNotFound)
+	return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
+}
+
+func (s Handler) HandlePing(echoCtx echo.Context) error {
+	if echoCtx.Request().Method != http.MethodGet {
+		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
+	}
+
+	flags := config.FlagsFromContext(s.ctx)
+	db, err := sql.Open("pgx", flags.DataBaseDsn)
+	if err != nil {
+		return validate.AddError(s.ctx, echoCtx, "", http.StatusInternalServerError, 0)
+	}
+	defer db.Close()
+
+	return validate.AddMessageOK(s.ctx, echoCtx, "", http.StatusOK, 0)
 }

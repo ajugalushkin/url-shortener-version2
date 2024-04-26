@@ -2,13 +2,12 @@ package parse
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
-	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
 	"github.com/labstack/echo/v4"
 )
@@ -24,7 +23,7 @@ func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
 	if contentType != echo.MIMEApplicationJSON {
 		parseURL = string(body)
 	} else {
-		shorten := dto.Shorten{}
+		shorten := dto.ShortenInput{}
 		err = shorten.UnmarshalJSON(body)
 		if err != nil {
 			return "", validate.AddError(ctx, echoCtx, validate.JSONParseError, http.StatusBadRequest, 0)
@@ -38,24 +37,62 @@ func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
 
 	return parseURL, nil
 }
-func SetBody(ctx context.Context, echoCtx echo.Context, servAPI *service.Service, parseURL string) ([]byte, error) {
-	var newBody []byte
-	shortenURL, err := servAPI.Shorten(dto.ShortenInput{RawURL: parseURL})
-	if err != nil {
-		return newBody, validate.AddError(ctx, echoCtx, validate.URLNotShortening, http.StatusBadRequest, 0)
-	}
 
-	flags := config.ConfigFromContext(ctx)
-
+func SetResponse(ctx context.Context, echoCtx echo.Context, parseURL string, httpStatus int) error {
 	contentType := echoCtx.Request().Header.Get(echo.HeaderContentType)
+
+	echoCtx.Response().Header().Set(echo.HeaderContentType, contentType)
+	echoCtx.Response().Status = httpStatus
+
+	var newBody []byte
 	if contentType != echo.MIMEApplicationJSON {
-		newBody = []byte(fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.Key))
+		newBody = []byte(parseURL)
 	} else {
-		shortenResult := dto.ShortenResult{Result: fmt.Sprintf("%s/%s", flags.BaseURL, shortenURL.Key)}
-		newBody, err = shortenResult.MarshalJSON()
-		if err != nil {
-			return newBody, validate.AddError(ctx, echoCtx, validate.JSONNotCreate, http.StatusBadRequest, 0)
-		}
+		shortenResult := dto.ShortenOutput{Result: parseURL}
+		newBody, _ = shortenResult.MarshalJSON()
 	}
+
+	sizeBody, err := echoCtx.Response().Write(newBody)
+	if err != nil {
+		return validate.AddError(ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
+	}
+	return validate.AddMessageOK(ctx, echoCtx, validate.URLSent, httpStatus, sizeBody)
+}
+
+func GetJSONDataFromBatch(ctx context.Context, echoCtx echo.Context) (dto.ShortenListInput, error) {
+	var shortList dto.ShortenListInput
+
+	body, err := io.ReadAll(echoCtx.Request().Body)
+	if err != nil {
+		return shortList, validate.AddError(ctx, echoCtx, validate.URLParseError, http.StatusBadRequest, 0)
+	}
+
+	err = shortList.UnmarshalJSON(body)
+	if err != nil {
+		return shortList, validate.AddError(ctx, echoCtx, validate.JSONParseError, http.StatusBadRequest, 0)
+	}
+
+	return shortList, nil
+}
+
+func SetJSONDataToBody(ctx context.Context, echoCtx echo.Context, list *dto.ShorteningList) ([]byte, error) {
+	var shortenListOut dto.ShortenListOutput
+	flag := config.FlagsFromContext(ctx)
+	for _, item := range *list {
+		shortWithHost, _ := url.JoinPath(flag.BaseURL, item.ShortURL)
+		shortenListOut = append(
+			shortenListOut,
+			dto.ShortenListOutputLine{
+				CorrelationID: item.CorrelationID,
+				ShortURL:      shortWithHost,
+			},
+		)
+	}
+
+	newBody, err := shortenListOut.MarshalJSON()
+	if err != nil {
+		return newBody, validate.AddError(ctx, echoCtx, validate.JSONNotCreate, http.StatusBadRequest, 0)
+	}
+
 	return newBody, nil
 }

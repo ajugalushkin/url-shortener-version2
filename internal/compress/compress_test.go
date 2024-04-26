@@ -11,7 +11,7 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
-	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
+	"github.com/ajugalushkin/url-shortener-version2/internal/storage/inmemory"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,14 +55,15 @@ func TestGzipMiddleware(t *testing.T) {
 		recorder := httptest.NewRecorder()
 
 		echoCtx := server.NewContext(request, recorder)
-		storageAPI := storage.NewInMemory()
-		_, err = storageAPI.Put(dto.Shortening{
-			Key: "rIHY5pi",
-			URL: "http://localhost:8080/rIHY5pi",
+		storageAPI := inmemory.NewInMemory()
+		ctx := context.Background()
+		_, err = storageAPI.Put(ctx, dto.Shortening{
+			ShortURL:    "rIHY5pi",
+			OriginalURL: "http://localhost:8080/rIHY5pi",
 		})
 		if assert.NoError(t, err) {
 			handlerGzip := Gzip()
-			middlewareGzip := handlerGzip(handler.NewHandler(context.Background(), service.NewService(storageAPI)).HandleRedirect)
+			middlewareGzip := handlerGzip(handler.NewHandler(ctx, service.NewService(storageAPI)).HandleRedirect)
 
 			// Assertions
 			if assert.NoError(t, middlewareGzip(echoCtx)) {

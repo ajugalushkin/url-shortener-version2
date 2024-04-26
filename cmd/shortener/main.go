@@ -19,7 +19,7 @@ func main() {
 	flagConfig := config.NewConfig()
 	config.ParseFlags(flagConfig)
 
-	ctx := config.ContextWithConfig(context.Background(), flagConfig)
+	ctx := config.ContextWithFlags(context.Background(), flagConfig)
 
 	if err := app.Run(ctx); err != nil {
 		fmt.Println(err)

@@ -1,6 +1,7 @@
-package storage
+package inmemory
 
 import (
+	"context"
 	"sync"
 	"testing"
 
@@ -8,7 +9,7 @@ import (
 )
 
 func setupStorage(m *sync.Map) {
-	m.Store("Xnrr2Mt", dto.Shortening{Key: "Xnrr2Mt", URL: "https://practicum.yandex.ru"})
+	m.Store("Xnrr2Mt", dto.Shortening{ShortURL: "Xnrr2Mt", OriginalURL: "https://practicum.yandex.ru"})
 }
 
 func TestInMemory_Put(t *testing.T) {
@@ -19,8 +20,8 @@ func TestInMemory_Put(t *testing.T) {
 		wantErr bool
 	}{
 		{name: "Test Exists",
-			input:   dto.Shortening{Key: "Xnrr2Mt", URL: "https://practicum.yandex.ru"},
-			want:    &dto.Shortening{Key: "", URL: ""},
+			input:   dto.Shortening{ShortURL: "Xnrr2Mt", OriginalURL: "https://practicum.yandex.ru"},
+			want:    &dto.Shortening{ShortURL: "", OriginalURL: ""},
 			wantErr: true},
 	}
 	for _, test := range tests {
@@ -28,7 +29,7 @@ func TestInMemory_Put(t *testing.T) {
 			s := &InMemory{}
 			setupStorage(&s.m)
 
-			_, err := s.Put(test.input)
+			_, err := s.Put(context.Background(), test.input)
 			if (err != nil) != test.wantErr {
 				t.Errorf("Put() error = %v, wantErr %v", err, test.wantErr)
 				return

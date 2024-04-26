@@ -14,7 +14,7 @@ func ContextWithLogger(ctx context.Context, logger *zap.Logger) context.Context 
 	return context.WithValue(ctx, ctxLogger{}, logger)
 }
 
-func LoggerFromContext(ctx context.Context) *zap.Logger {
+func LogFromContext(ctx context.Context) *zap.Logger {
 	if logger, ok := ctx.Value(ctxLogger{}).(*zap.Logger); ok {
 		return logger
 	}
@@ -49,7 +49,7 @@ func MiddlewareLogger(ctx context.Context) func(echo.HandlerFunc) echo.HandlerFu
 
 			duration := time.Since(start)
 
-			log := LoggerFromContext(ctx)
+			log := LogFromContext(ctx)
 			log.Debug("got incoming HTTP request",
 				zap.String("method", context.Request().Method),
 				zap.String("path", context.Request().URL.Path),
