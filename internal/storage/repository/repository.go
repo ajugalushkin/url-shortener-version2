@@ -150,7 +150,7 @@ func (r *Repo) PutList(ctx context.Context, list dto.ShorteningList) error {
 	})
 
 	if err != nil {
-		return errors.Wrap(err, "repository.CreateGoods")
+		return errors.Wrap(err, "repository.PutList")
 	}
 
 	return nil
