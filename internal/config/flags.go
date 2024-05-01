@@ -8,13 +8,12 @@ import (
 )
 
 type Config struct {
-	RunAddr         string        `env:"RUN_ADDR"`
-	BaseURL         string        `env:"BASE_URL"`
-	FlagLogLevel    string        `env:"LOG_LEVEL"`
-	FileStoragePath string        `env:"FILE_STORAGE_PATH"`
-	DataBaseDsn     string        `env:"DATABASE_DSN"`
-	SecretKey       string        `env:"SECRET_KEY"`
-	TokenExp        time.Duration `env:"TOKEN_EXP"`
+	RunAddr         string `env:"RUN_ADDR"`
+	BaseURL         string `env:"BASE_URL"`
+	FlagLogLevel    string `env:"LOG_LEVEL"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`
+	DataBaseDsn     string `env:"DATABASE_DSN"`
+	SecretKey       string `env:"SECRET_KEY"`
 }
 
 func NewConfig() *Config {
@@ -36,8 +35,11 @@ func ParseFlags(config *Config) {
 	config.FlagLogLevel = getEnv("LOG_LEVEL", config.FlagLogLevel)
 	config.FileStoragePath = getEnv("FILE_STORAGE_PATH", config.FileStoragePath)
 	config.DataBaseDsn = getEnv("DATABASE_DSN", config.DataBaseDsn)
+
 	config.SecretKey = getEnv("SECRET_KEY", config.SecretKey)
-	config.TokenExp = getEnvAsDuration("TOKEN_EXP", config.TokenExp)
+	if config.SecretKey == "" {
+		config.SecretKey = "SecretKey"
+	}
 }
 
 func getEnv(key string, defaultVal string) string {

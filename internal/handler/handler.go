@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
-	"github.com/ajugalushkin/url-shortener-version2/internal/cookie"
+	"github.com/ajugalushkin/url-shortener-version2/internal/cookies"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
@@ -47,14 +47,14 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 		return err
 	}
 
-	cookieValue, err := cookie.Read(echoCtx, "user")
+	cookieValue, err := cookies.Read(echoCtx, "user")
 	if err != nil {
-		cookieValue = cookie.Write(s.ctx, echoCtx, "user")
+		cookieValue = cookies.Write(s.ctx, echoCtx, "user")
 	}
 
 	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{
 		OriginalURL: parseURL,
-		UserID:      strconv.Itoa(cookie.GetUserID(s.ctx, cookieValue))})
+		UserID:      strconv.Itoa(cookies.GetUserID(s.ctx, cookieValue))})
 	if errors.Is(err, userErr.ErrorDuplicateURL) {
 		return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
 	}
@@ -178,12 +178,12 @@ func (s Handler) HandleUserUrls(echoCtx echo.Context) error {
 		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
 	}
 
-	cookieIn, err := cookie.Read(echoCtx, "user")
+	cookieIn, err := cookies.Read(echoCtx, "user")
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, "", http.StatusUnauthorized, 0)
 	}
 
-	userID := cookie.GetUserID(s.ctx, cookieIn)
+	userID := cookies.GetUserID(s.ctx, cookieIn)
 	if userID == 0 {
 		return validate.AddError(s.ctx, echoCtx, "", http.StatusUnauthorized, 0)
 	}
