@@ -164,3 +164,7 @@ func (s Handler) HandlePing(echoCtx echo.Context) error {
 
 	return validate.AddMessageOK(s.ctx, echoCtx, "", http.StatusOK, 0)
 }
+
+func (s Handler) HandleUserUrls(echoCtx echo.Context) error {
+	return nil
+}

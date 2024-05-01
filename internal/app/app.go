@@ -44,6 +44,7 @@ func Run(ctx context.Context) error {
 
 	server.GET("/:id", newHandler.HandleRedirect)
 	server.GET("/ping", newHandler.HandlePing)
+	server.GET("/api/user/urls", newHandler.HandleUserUrls)
 
 	//Swagger
 	server.GET("/swagger/*", echoSwagger.WrapHandler)
