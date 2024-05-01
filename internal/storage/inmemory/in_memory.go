@@ -46,3 +46,7 @@ func (s *InMemory) Get(ctx context.Context, identifier string) (*dto.Shortening,
 
 	return &shortening, nil
 }
+
+func (r *InMemory) GetListByUser(ctx context.Context, userID string) (*dto.ShorteningList, error) {
+	return &dto.ShorteningList{}, nil
+}

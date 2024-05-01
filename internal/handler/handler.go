@@ -4,10 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"net/http"
-	"strings"
-
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"github.com/ajugalushkin/url-shortener-version2/internal/cookie"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
@@ -15,6 +13,9 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
 	"github.com/labstack/echo/v4"
+	"net/http"
+	"strconv"
+	"strings"
 )
 
 type Handler struct {
@@ -46,7 +47,14 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 		return err
 	}
 
-	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{OriginalURL: parseURL})
+	cookieValue, err := cookie.Read(echoCtx, "user")
+	if err != nil {
+		cookieValue = cookie.Write(s.ctx, echoCtx, "user")
+	}
+
+	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{
+		OriginalURL: parseURL,
+		UserID:      strconv.Itoa(cookie.GetUserID(s.ctx, cookieValue))})
 	if errors.Is(err, userErr.ErrorDuplicateURL) {
 		return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
 	}
@@ -166,6 +174,34 @@ func (s Handler) HandlePing(echoCtx echo.Context) error {
 }
 
 func (s Handler) HandleUserUrls(echoCtx echo.Context) error {
-	// add some coded
-	return nil
+	if echoCtx.Request().Method != http.MethodGet {
+		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
+	}
+
+	cookieIn, err := cookie.Read(echoCtx, "user")
+	if err != nil {
+		return validate.AddError(s.ctx, echoCtx, "", http.StatusUnauthorized, 0)
+	}
+
+	userID := cookie.GetUserID(s.ctx, cookieIn)
+	if userID == 0 {
+		return validate.AddError(s.ctx, echoCtx, "", http.StatusUnauthorized, 0)
+	}
+
+	shortList, err := s.servAPI.GetUserURLS(s.ctx, userID)
+	if err != nil {
+		return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
+	}
+
+	body, err := parse.SetUserURLSToBody(s.ctx, echoCtx, shortList)
+	if err != nil {
+		return validate.AddError(s.ctx, echoCtx, "", http.StatusNoContent, 0)
+	}
+
+	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	sizeBody, err := echoCtx.Response().Write(body)
+	if err != nil {
+		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
+	}
+	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
 }

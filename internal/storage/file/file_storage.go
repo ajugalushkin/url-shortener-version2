@@ -59,6 +59,10 @@ func (s *Storage) Get(ctx context.Context, identifier string) (*dto.Shortening, 
 	return &shortening, nil
 }
 
+func (r *Storage) GetListByUser(ctx context.Context, userID string) (*dto.ShorteningList, error) {
+	return &dto.ShorteningList{}, nil
+}
+
 func save(fileName string, urls *sync.Map) error {
 	var byteFile []byte
 	urls.Range(func(k, v interface{}) bool {

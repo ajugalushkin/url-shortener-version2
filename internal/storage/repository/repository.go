@@ -32,7 +32,7 @@ func (r *Repo) Put(ctx context.Context, shorteningInput dto.Shortening) (*dto.Sh
 	err = database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
 		sb := squirrel.StatementBuilder.
 			Insert("shorten_urls").
-			Columns("short_url", "correlation_id", "original_url").
+			Columns("short_url", "correlation_id", "original_url", "user_id").
 			PlaceholderFormat(squirrel.Dollar).
 			RunWith(r.db)
 
@@ -40,6 +40,7 @@ func (r *Repo) Put(ctx context.Context, shorteningInput dto.Shortening) (*dto.Sh
 			shorteningInput.ShortURL,
 			shorteningInput.CorrelationID,
 			shorteningInput.OriginalURL,
+			shorteningInput.UserID,
 		)
 
 		_, err = sb.ExecContext(ctx)
@@ -62,7 +63,7 @@ func (r *Repo) Get(ctx context.Context, shortURL string) (*dto.Shortening, error
 	var shorteningList []dto.Shortening
 
 	err := database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
-		sb := squirrel.Select("short_url", "correlation_id", "original_url").
+		sb := squirrel.Select("short_url", "correlation_id", "original_url", "user_id").
 			From("shorten_urls").
 			PlaceholderFormat(squirrel.Dollar).
 			Where(squirrel.Eq{"short_url": []string{shortURL}}).
@@ -97,7 +98,7 @@ func (r *Repo) GetByURL(ctx context.Context, originURL string) (*dto.Shortening,
 	var shorteningList []dto.Shortening
 
 	err := database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
-		sb := squirrel.Select("short_url", "correlation_id", "original_url").
+		sb := squirrel.Select("short_url", "correlation_id", "original_url", "user_id").
 			From("shorten_urls").
 			PlaceholderFormat(squirrel.Dollar).
 			Where(squirrel.Eq{"original_url": []string{originURL}}).
@@ -133,7 +134,7 @@ func (r *Repo) PutList(ctx context.Context, list dto.ShorteningList) error {
 	err = database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
 		sb := squirrel.StatementBuilder.
 			Insert("shorten_urls").
-			Columns("short_url", "correlation_id", "original_url").
+			Columns("short_url", "correlation_id", "original_url", "user_id").
 			PlaceholderFormat(squirrel.Dollar).
 			RunWith(r.db)
 
@@ -142,6 +143,7 @@ func (r *Repo) PutList(ctx context.Context, list dto.ShorteningList) error {
 				shortening.ShortURL,
 				shortening.CorrelationID,
 				shortening.OriginalURL,
+				shortening.UserID,
 			)
 		}
 
@@ -154,4 +156,34 @@ func (r *Repo) PutList(ctx context.Context, list dto.ShorteningList) error {
 	}
 
 	return nil
+}
+
+func (r *Repo) GetListByUser(ctx context.Context, userID string) (*dto.ShorteningList, error) {
+	var shorteningList dto.ShorteningList
+
+	err := database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
+		sb := squirrel.Select("short_url", "correlation_id", "original_url", "user_id").
+			From("shorten_urls").
+			PlaceholderFormat(squirrel.Dollar).
+			Where(squirrel.Eq{"user_id": []string{userID}}).
+			RunWith(r.db)
+
+		query, args, err := sb.ToSql()
+		if err != nil {
+			return err
+		}
+
+		return r.db.SelectContext(ctx, &shorteningList, query, args...)
+	})
+	log := logger.LogFromContext(ctx)
+	if err != nil {
+		log.Info("repository.GetListByUser", zap.Error(err))
+		return nil, errors.Wrap(err, "repository.GetListByUser")
+	}
+
+	if len(shorteningList) == 0 {
+		log.Info("repository.GetListByUser", zap.Error(sql.ErrNoRows))
+		return nil, errors.Wrap(sql.ErrNoRows, "repository.GetListByUser")
+	}
+	return &shorteningList, nil
 }
