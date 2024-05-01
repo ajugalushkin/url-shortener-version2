@@ -1,7 +1,7 @@
 
 POSTGRES_APP_USER ?= praktikum
 POSTGRES_APP_PASS ?= pass
-POSTGRES_APP_DB ?= shortenurls
+POSTGRES_APP_DB ?= shortener
 
 DATABASE_URL ?= postgresql://${POSTGRES_APP_USER}:${POSTGRES_APP_PASS}@localhost:5432/${POSTGRES_APP_DB}
 

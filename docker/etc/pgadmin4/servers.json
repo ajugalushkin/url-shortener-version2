@@ -1,11 +1,11 @@
 {
     "Servers": {
-        "1": {
-            "Name": "ShortenURLS Database",
+        "2": {
+            "Name": "Shortener Database",
             "Group": "Servers",
             "Host": "postgres",
             "Port": 5432,
-            "MaintenanceDB": "shortenurls",
+            "MaintenanceDB": "shortener",
             "Username": "praktikum",
             "SSLMode": "prefer"
         }
