@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"os"
-	"time"
 )
 
 type Config struct {
@@ -44,15 +43,6 @@ func ParseFlags(config *Config) {
 
 func getEnv(key string, defaultVal string) string {
 	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-
-	return defaultVal
-}
-
-func getEnvAsDuration(name string, defaultVal time.Duration) time.Duration {
-	valueStr := getEnv(name, "")
-	if value, err := time.ParseDuration(valueStr); err == nil {
 		return value
 	}
 

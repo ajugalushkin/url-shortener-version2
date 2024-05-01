@@ -16,7 +16,7 @@ type Claims struct {
 	UserID int
 }
 
-const TOKEN_EXP = time.Hour * 3
+const TokenExp = time.Hour * 3
 
 func buildJWTString(ctx context.Context) (string, error) {
 	flags := config.FlagsFromContext(ctx)
@@ -29,7 +29,7 @@ func buildJWTString(ctx context.Context) (string, error) {
 	userID := int(rawUser.Int64())
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TOKEN_EXP)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TokenExp)),
 		},
 		UserID: userID,
 	})
@@ -59,7 +59,7 @@ func createCookie(ctx context.Context, nameCookie string) *http.Cookie {
 	cookie := new(http.Cookie)
 	cookie.Name = nameCookie
 	cookie.Value, _ = buildJWTString(ctx)
-	cookie.Expires = time.Now().Add(TOKEN_EXP)
+	cookie.Expires = time.Now().Add(TokenExp)
 	return cookie
 }
 
