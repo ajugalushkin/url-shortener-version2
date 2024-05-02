@@ -187,3 +187,25 @@ func (r *Repo) GetListByUser(ctx context.Context, userID string) (*dto.Shortenin
 	}
 	return &shorteningList, nil
 }
+
+func (r *Repo) DeleteUserURL(ctx context.Context, shortURL string, userID int) error {
+	var err error
+	err = database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
+		sb := squirrel.StatementBuilder.
+			Update("shorten_urls").
+			Set("is_deleted", true).
+			Where(squirrel.Eq{"user_id": userID,
+				"short_url": shortURL}).
+			PlaceholderFormat(squirrel.Dollar).
+			RunWith(r.db)
+
+		_, err = sb.ExecContext(ctx)
+		return err
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "repository.DeleteUserURL")
+	}
+
+	return nil
+}

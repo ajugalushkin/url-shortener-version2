@@ -149,8 +149,12 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 		return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
 	}
 
-	if redirect != "" {
-		return validate.Redirect(s.ctx, echoCtx, redirect)
+	if redirect.IsDeleted == true {
+		return validate.AddError(s.ctx, echoCtx, "", http.StatusGone, 0)
+	}
+
+	if redirect.OriginalURL != "" {
+		return validate.Redirect(s.ctx, echoCtx, redirect.OriginalURL)
 	}
 
 	log := logger.LogFromContext(s.ctx)

@@ -18,6 +18,7 @@ type PutGetter interface {
 	Get(ctx context.Context, shortURL string) (*dto.Shortening, error)
 	GetListByUser(ctx context.Context, userID string) (*dto.ShorteningList, error)
 	PutList(ctx context.Context, list dto.ShorteningList) error
+	DeleteUserURL(ctx context.Context, shortURL string, userID int) error
 }
 
 type Service struct {
@@ -42,6 +43,7 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 		OriginalURL:   input.OriginalURL,
 		CorrelationID: input.CorrelationID,
 		UserID:        input.UserID,
+		IsDeleted:     input.IsDeleted,
 	}
 
 	shortening, err := s.storage.Put(ctx, newShortening)
@@ -74,18 +76,18 @@ func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (
 	return &shorteningList, nil
 }
 
-func (s *Service) Redirect(ctx context.Context, identifier string) (string, error) {
+func (s *Service) Redirect(ctx context.Context, identifier string) (*dto.Shortening, error) {
 	log := logger.LogFromContext(ctx)
 
 	shortening, err := s.storage.Get(ctx, identifier)
 	if err != nil {
 		log.Info("service.Redirect ERROR", zap.Error(err))
-		return "", err
+		return shortening, err
 	}
 
 	log.Info("service.Redirect OK", zap.String("URL", shortening.OriginalURL))
 
-	return shortening.OriginalURL, nil
+	return shortening, nil
 }
 
 func (s *Service) GetUserURLS(ctx context.Context, userID int) (*dto.ShorteningList, error) {
@@ -97,4 +99,15 @@ func (s *Service) GetUserURLS(ctx context.Context, userID int) (*dto.ShorteningL
 		return &dto.ShorteningList{}, err
 	}
 	return shortening, nil
+}
+
+func (s *Service) DeleteUserURL(ctx context.Context, shortURL string, userID int) error {
+	log := logger.LogFromContext(ctx)
+
+	err := s.storage.DeleteUserURL(ctx, shortURL, userID)
+	if err != nil {
+		log.Info("service.DeleteUserURLS ERROR", zap.Error(err))
+		return err
+	}
+	return nil
 }

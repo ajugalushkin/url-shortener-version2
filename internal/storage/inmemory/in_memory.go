@@ -50,3 +50,7 @@ func (r *InMemory) Get(ctx context.Context, identifier string) (*dto.Shortening,
 func (r *InMemory) GetListByUser(ctx context.Context, userID string) (*dto.ShorteningList, error) {
 	return &dto.ShorteningList{}, nil
 }
+
+func (r *InMemory) DeleteUserURL(ctx context.Context, shortURL string, userID int) error {
+	return nil
+}

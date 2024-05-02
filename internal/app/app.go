@@ -46,6 +46,8 @@ func Run(ctx context.Context) error {
 	server.GET("/ping", newHandler.HandlePing)
 	server.GET("/api/user/urls", newHandler.HandleUserUrls)
 
+	server.DELETE("/api/user/urls", newHandler.HandleUserUrlsDelete)
+
 	//Swagger
 	server.GET("/swagger/*", echoSwagger.WrapHandler)
 
