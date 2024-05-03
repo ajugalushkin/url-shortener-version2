@@ -223,7 +223,7 @@ func easyjsonC80ae7adDecodeGithubComAjugalushkinUrlShortenerVersion2InternalDto2
 		in.Delim('[')
 		if *out == nil {
 			if !in.IsDelim(']') {
-				*out = make(ShorteningList, 0, 1)
+				*out = make(ShorteningList, 0, 0)
 			} else {
 				*out = ShorteningList{}
 			}
@@ -236,6 +236,7 @@ func easyjsonC80ae7adDecodeGithubComAjugalushkinUrlShortenerVersion2InternalDto2
 				ShortURL      string `json:"short_url" db:"short_url"`
 				OriginalURL   string `json:"original_url" db:"original_url"`
 				UserID        string `json:"user_id" db:"user_id"`
+				IsDeleted     bool   `json:"is_deleted" db:"is_deleted"`
 			}
 			easyjsonC80ae7adDecode1(in, &v4)
 			*out = append(*out, v4)
@@ -290,6 +291,7 @@ func easyjsonC80ae7adDecode1(in *jlexer.Lexer, out *struct {
 	ShortURL      string `json:"short_url" db:"short_url"`
 	OriginalURL   string `json:"original_url" db:"original_url"`
 	UserID        string `json:"user_id" db:"user_id"`
+	IsDeleted     bool   `json:"is_deleted" db:"is_deleted"`
 }) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
@@ -317,6 +319,8 @@ func easyjsonC80ae7adDecode1(in *jlexer.Lexer, out *struct {
 			out.OriginalURL = string(in.String())
 		case "user_id":
 			out.UserID = string(in.String())
+		case "is_deleted":
+			out.IsDeleted = bool(in.Bool())
 		default:
 			in.SkipRecursive()
 		}
@@ -332,6 +336,7 @@ func easyjsonC80ae7adEncode1(out *jwriter.Writer, in struct {
 	ShortURL      string `json:"short_url" db:"short_url"`
 	OriginalURL   string `json:"original_url" db:"original_url"`
 	UserID        string `json:"user_id" db:"user_id"`
+	IsDeleted     bool   `json:"is_deleted" db:"is_deleted"`
 }) {
 	out.RawByte('{')
 	first := true
@@ -355,6 +360,11 @@ func easyjsonC80ae7adEncode1(out *jwriter.Writer, in struct {
 		const prefix string = ",\"user_id\":"
 		out.RawString(prefix)
 		out.String(string(in.UserID))
+	}
+	{
+		const prefix string = ",\"is_deleted\":"
+		out.RawString(prefix)
+		out.Bool(bool(in.IsDeleted))
 	}
 	out.RawByte('}')
 }
@@ -385,6 +395,8 @@ func easyjsonC80ae7adDecodeGithubComAjugalushkinUrlShortenerVersion2InternalDto3
 			out.OriginalURL = string(in.String())
 		case "user_id":
 			out.UserID = string(in.String())
+		case "is_deleted":
+			out.IsDeleted = bool(in.Bool())
 		default:
 			in.SkipRecursive()
 		}
@@ -418,6 +430,11 @@ func easyjsonC80ae7adEncodeGithubComAjugalushkinUrlShortenerVersion2InternalDto3
 		const prefix string = ",\"user_id\":"
 		out.RawString(prefix)
 		out.String(string(in.UserID))
+	}
+	{
+		const prefix string = ",\"is_deleted\":"
+		out.RawString(prefix)
+		out.Bool(bool(in.IsDeleted))
 	}
 	out.RawByte('}')
 }
