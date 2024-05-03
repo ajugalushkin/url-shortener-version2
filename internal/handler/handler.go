@@ -149,7 +149,7 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 		return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
 	}
 
-	if redirect.IsDeleted == true {
+	if redirect.IsDeleted {
 		return validate.AddError(s.ctx, echoCtx, "", http.StatusGone, 0)
 	}
 
