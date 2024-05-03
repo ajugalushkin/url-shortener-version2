@@ -38,27 +38,20 @@ func (s Handler) HandleUserUrlsDelete(echoCtx echo.Context) error {
 		return err
 	}
 
-	doneCh := make(chan struct{})
-	defer close(doneCh)
-
-	inputCh := generator(doneCh, URLs)
+	inputCh := generator(URLs)
 	s.deleteURL(inputCh)
 
 	return validate.AddMessageOK(s.ctx, echoCtx, "", http.StatusAccepted, 0)
 }
 
-func generator(doneCh chan struct{}, input []string) chan string {
+func generator(input []string) chan string {
 	inputCh := make(chan string)
 
 	go func() {
 		defer close(inputCh)
 
 		for _, data := range input {
-			select {
-			case <-doneCh:
-				return
-			case inputCh <- data:
-			}
+			inputCh <- data
 		}
 	}()
 
