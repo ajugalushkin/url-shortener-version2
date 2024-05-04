@@ -150,7 +150,7 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 	}
 
 	if redirect.IsDeleted {
-		return validate.AddError(s.ctx, echoCtx, "", http.StatusGone, 0)
+		return validate.AddError(s.ctx, echoCtx, "URL was delete!", http.StatusGone, 0)
 	}
 
 	if redirect.OriginalURL != "" {

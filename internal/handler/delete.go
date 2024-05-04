@@ -3,14 +3,11 @@ package handler
 import (
 	"encoding/json"
 	"github.com/ajugalushkin/url-shortener-version2/internal/cookies"
-	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
 	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
 )
-
-var userID int
 
 func (s Handler) HandleUserUrlsDelete(echoCtx echo.Context) error {
 	if echoCtx.Request().Method != http.MethodDelete {
@@ -24,46 +21,21 @@ func (s Handler) HandleUserUrlsDelete(echoCtx echo.Context) error {
 
 	cookieIn, err := cookies.Read(echoCtx, "user")
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, "", http.StatusUnauthorized, 0)
+		return validate.AddError(s.ctx, echoCtx, "Not found cookies fo user", http.StatusUnauthorized, 0)
 	}
 
-	userID = cookies.GetUserID(s.ctx, cookieIn)
+	userID := cookies.GetUserID(s.ctx, cookieIn)
 	if userID == 0 {
-		return validate.AddError(s.ctx, echoCtx, "", http.StatusUnauthorized, 0)
+		return validate.AddError(s.ctx, echoCtx, "Not found UserID for user", http.StatusUnauthorized, 0)
 	}
 
 	var URLs []string
 	err = json.Unmarshal(body, &URLs)
 	if err != nil {
-		return err
+		return validate.AddError(s.ctx, echoCtx, "Error parse input json", http.StatusUnauthorized, 0)
 	}
 
-	inputCh := generator(URLs)
-	s.deleteURL(inputCh)
+	s.servAPI.DeleteUserURL(s.ctx, URLs, userID)
 
-	return validate.AddMessageOK(s.ctx, echoCtx, "", http.StatusAccepted, 0)
-}
-
-func generator(input []string) chan string {
-	inputCh := make(chan string)
-
-	go func() {
-		defer close(inputCh)
-
-		for _, data := range input {
-			inputCh <- data
-		}
-	}()
-
-	return inputCh
-}
-
-func (s Handler) deleteURL(inputCh chan string) {
-	log := logger.LogFromContext(s.ctx)
-	for URL := range inputCh {
-		err := s.servAPI.DeleteUserURL(s.ctx, URL, userID)
-		if err != nil {
-			log.Error(err.Error())
-		}
-	}
+	return validate.AddMessageOK(s.ctx, echoCtx, "URLS Delete OK", http.StatusAccepted, 0)
 }

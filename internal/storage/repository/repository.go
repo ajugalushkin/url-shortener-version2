@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/ajugalushkin/url-shortener-version2/internal/database"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
@@ -15,6 +14,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"runtime"
+	"strconv"
+	"sync"
 )
 
 func NewRepository(db *sqlx.DB) *Repo {
@@ -78,19 +80,16 @@ func (r *Repo) Get(ctx context.Context, shortURL string) (*dto.Shortening, error
 	})
 	log := logger.LogFromContext(ctx)
 	if err != nil {
-		log.Info("repository.Get", zap.Error(err))
+		log.Debug("repository.Get", zap.Error(err))
 		return nil, errors.Wrap(err, "repository.Get")
 	}
 
 	if len(shorteningList) == 0 {
-		log.Info("repository.Get", zap.Error(sql.ErrNoRows))
+		log.Debug("repository.Get", zap.Error(sql.ErrNoRows))
 		return nil, errors.Wrap(sql.ErrNoRows, "repository.Get")
 	}
 
 	shortening := shorteningList[0]
-
-	log.Info("repository.Get OK", zap.String("Original URL", shortening.OriginalURL))
-
 	return &shortening, nil
 }
 
@@ -188,24 +187,117 @@ func (r *Repo) GetListByUser(ctx context.Context, userID string) (*dto.Shortenin
 	return &shorteningList, nil
 }
 
-func (r *Repo) DeleteUserURL(ctx context.Context, shortURL string, userID int) error {
-	var err error
-	err = database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
-		sb := squirrel.StatementBuilder.
+func (r *Repo) DeleteUserURL(ctx context.Context, shortList []string, userID int) {
+	doneCh := make(chan struct{})
+	defer close(doneCh)
+
+	inputCh := generator(doneCh, shortList)
+	channels := r.fanOut(ctx, doneCh, inputCh)
+	resultCh := fanIn(doneCh, channels...)
+
+	database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
+		toSql, _, err := squirrel.StatementBuilder.
 			Update("shorten_urls").
 			Set("is_deleted", true).
-			Where(squirrel.Eq{"user_id": userID,
-				"short_url": shortURL}).
+			Where(squirrel.And{
+				squirrel.Eq{"user_id": ""},
+				squirrel.Eq{"short_url": ""}}).
 			PlaceholderFormat(squirrel.Dollar).
-			RunWith(r.db)
+			ToSql()
 
-		_, err = sb.ExecContext(ctx)
-		return err
+		stmt, err := r.db.PrepareContext(ctx, toSql)
+		if err != nil {
+			return err
+		}
+		defer stmt.Close()
+
+		log := logger.LogFromContext(ctx)
+		for Shortening := range resultCh {
+			_, err = stmt.ExecContext(ctx, true, strconv.Itoa(userID), Shortening.ShortURL)
+			if err != nil {
+				log.Debug("repository.DeleteUserUrl Error", zap.Error(err))
+			}
+		}
+		return nil
 	})
+}
 
-	if err != nil {
-		return errors.Wrap(err, "repository.DeleteUserURL")
+func generator(doneCh chan struct{}, input []string) chan string {
+	inputCh := make(chan string)
+
+	go func() {
+		defer close(inputCh)
+
+		for _, data := range input {
+			select {
+			case <-doneCh:
+				return
+			case inputCh <- data:
+			}
+		}
+	}()
+
+	return inputCh
+}
+
+func (r *Repo) searchURLs(ctx context.Context, doneCh chan struct{}, inputCh chan string) chan *dto.Shortening {
+	addRes := make(chan *dto.Shortening)
+
+	go func() {
+		defer close(addRes)
+
+		for shortUrl := range inputCh {
+			shortening, _ := r.Get(ctx, shortUrl)
+
+			select {
+			case <-doneCh:
+				return
+			case addRes <- shortening:
+			}
+		}
+	}()
+	return addRes
+}
+
+func (r *Repo) fanOut(ctx context.Context, doneCh chan struct{}, inputCh chan string) []chan *dto.Shortening {
+	numWorkers := runtime.NumCPU()
+	channels := make([]chan *dto.Shortening, numWorkers)
+
+	for i := 0; i < numWorkers; i++ {
+		addResultCh := r.searchURLs(ctx, doneCh, inputCh)
+		channels[i] = addResultCh
 	}
 
-	return nil
+	return channels
+}
+
+func fanIn(doneCh chan struct{}, resultChs ...chan *dto.Shortening) chan *dto.Shortening {
+	finalCh := make(chan *dto.Shortening)
+
+	var wg sync.WaitGroup
+
+	for _, ch := range resultChs {
+		chClosure := ch
+
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			for data := range chClosure {
+				select {
+				case <-doneCh:
+					return
+				case finalCh <- data:
+				}
+			}
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(finalCh)
+	}()
+
+	return finalCh
 }
