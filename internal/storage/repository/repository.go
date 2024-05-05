@@ -205,6 +205,10 @@ func (r *Repo) DeleteUserURL(ctx context.Context, shortList []string, userID int
 			PlaceholderFormat(squirrel.Dollar).
 			ToSql()
 
+		if err != nil {
+			return err
+		}
+
 		stmt, err := r.db.PrepareContext(ctx, toSQL)
 		if err != nil {
 			return err
