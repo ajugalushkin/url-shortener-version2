@@ -74,5 +74,5 @@ func Read(echoCtx echo.Context, name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(cookie.Value), nil
+	return cookie.Value, nil
 }

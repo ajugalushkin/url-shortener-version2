@@ -14,7 +14,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"runtime"
 	"strconv"
 	"sync"
 )
@@ -65,7 +64,7 @@ func (r *Repo) Get(ctx context.Context, shortURL string) (*dto.Shortening, error
 	var shorteningList []dto.Shortening
 
 	err := database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
-		sb := squirrel.Select("short_url", "correlation_id", "original_url", "user_id").
+		sb := squirrel.Select("short_url", "correlation_id", "original_url", "user_id", "is_deleted").
 			From("shorten_urls").
 			PlaceholderFormat(squirrel.Dollar).
 			Where(squirrel.Eq{"short_url": []string{shortURL}}).
@@ -191,12 +190,13 @@ func (r *Repo) DeleteUserURL(ctx context.Context, shortList []string, userID int
 	doneCh := make(chan struct{})
 	defer close(doneCh)
 
-	inputCh := generator(doneCh, shortList)
-	channels := r.fanOut(ctx, doneCh, inputCh)
-	resultCh := fanIn(doneCh, channels...)
+	inputCh := prepareList(doneCh, shortList)
+	channels := r.split(ctx, doneCh, inputCh)
+	resultCh := merge(doneCh, channels...)
 
-	database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
-		toSql, _, err := squirrel.StatementBuilder.
+	log := logger.LogFromContext(ctx)
+	err := database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
+		toSQL, _, err := squirrel.StatementBuilder.
 			Update("shorten_urls").
 			Set("is_deleted", true).
 			Where(squirrel.And{
@@ -205,13 +205,12 @@ func (r *Repo) DeleteUserURL(ctx context.Context, shortList []string, userID int
 			PlaceholderFormat(squirrel.Dollar).
 			ToSql()
 
-		stmt, err := r.db.PrepareContext(ctx, toSql)
+		stmt, err := r.db.PrepareContext(ctx, toSQL)
 		if err != nil {
 			return err
 		}
 		defer stmt.Close()
 
-		log := logger.LogFromContext(ctx)
 		for Shortening := range resultCh {
 			_, err = stmt.ExecContext(ctx, true, strconv.Itoa(userID), Shortening.ShortURL)
 			if err != nil {
@@ -220,9 +219,12 @@ func (r *Repo) DeleteUserURL(ctx context.Context, shortList []string, userID int
 		}
 		return nil
 	})
+	if err != nil {
+		log.Debug("repository.DeleteUserUrl Error", zap.Error(err))
+	}
 }
 
-func generator(doneCh chan struct{}, input []string) chan string {
+func prepareList(doneCh chan struct{}, input []string) <-chan string {
 	inputCh := make(chan string)
 
 	go func() {
@@ -240,14 +242,14 @@ func generator(doneCh chan struct{}, input []string) chan string {
 	return inputCh
 }
 
-func (r *Repo) searchURLs(ctx context.Context, doneCh chan struct{}, inputCh chan string) chan *dto.Shortening {
+func (r *Repo) searchURLs(ctx context.Context, doneCh chan struct{}, inputCh <-chan string) <-chan *dto.Shortening {
 	addRes := make(chan *dto.Shortening)
 
 	go func() {
 		defer close(addRes)
 
-		for shortUrl := range inputCh {
-			shortening, _ := r.Get(ctx, shortUrl)
+		for shortURL := range inputCh {
+			shortening, _ := r.Get(ctx, shortURL)
 
 			select {
 			case <-doneCh:
@@ -259,9 +261,9 @@ func (r *Repo) searchURLs(ctx context.Context, doneCh chan struct{}, inputCh cha
 	return addRes
 }
 
-func (r *Repo) fanOut(ctx context.Context, doneCh chan struct{}, inputCh chan string) []chan *dto.Shortening {
-	numWorkers := runtime.NumCPU()
-	channels := make([]chan *dto.Shortening, numWorkers)
+func (r *Repo) split(ctx context.Context, doneCh chan struct{}, inputCh <-chan string) []<-chan *dto.Shortening {
+	numWorkers := 100
+	channels := make([]<-chan *dto.Shortening, numWorkers)
 
 	for i := 0; i < numWorkers; i++ {
 		addResultCh := r.searchURLs(ctx, doneCh, inputCh)
@@ -271,7 +273,7 @@ func (r *Repo) fanOut(ctx context.Context, doneCh chan struct{}, inputCh chan st
 	return channels
 }
 
-func fanIn(doneCh chan struct{}, resultChs ...chan *dto.Shortening) chan *dto.Shortening {
+func merge(doneCh chan struct{}, resultChs ...<-chan *dto.Shortening) <-chan *dto.Shortening {
 	finalCh := make(chan *dto.Shortening)
 
 	var wg sync.WaitGroup

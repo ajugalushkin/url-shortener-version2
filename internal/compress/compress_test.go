@@ -71,36 +71,4 @@ func TestGzipMiddleware(t *testing.T) {
 			}
 		}
 	})
-
-	//t.Run("accepts_gzip", func(t *testing.T) {
-	//	buf := bytes.NewBufferString(requestBody)
-	//
-	//	r := httptest.NewRequest("POST", srv.URL, buf)
-	//	r.RequestURI = ""
-	//	r.Header.Set("Accept-Encoding", "gzip")
-	//
-	//	server := echo.New()
-	//
-	//	request := httptest.NewRequest(http.MethodGet, "http://localhost:8080/rIHY5pi", buf)
-	//	request.RequestURI = ""
-	//	request.Header.Set("Content-Encoding", "gzip")
-	//	request.Header.Set("Accept-Encoding", "")
-	//
-	//	recorder := httptest.NewRecorder()
-	//
-	//	context := server.NewContext(request, recorder)
-	//	storageAPI := storage.NewInMemory()
-	//	_, err = storageAPI.Put(model.Shortening{
-	//		Key: "rIHY5pi",
-	//		URL: "http://localhost:8080/rIHY5pi",
-	//	})
-	//	if assert.NoError(t, err) {
-	//		middlewareGzip := GzipMiddleware(handler.NewHandler(service.NewService(storageAPI), &config.Config{}).HandleRedirect)
-	//
-	//		// Assertions
-	//		if assert.NoError(t, middlewareGzip(context)) {
-	//			assert.Equal(t, http.StatusTemporaryRedirect, recorder.Code)
-	//		}
-	//	}
-	//})
 }

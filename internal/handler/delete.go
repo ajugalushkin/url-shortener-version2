@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"encoding/json"
 	"github.com/ajugalushkin/url-shortener-version2/internal/cookies"
+	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
 	"github.com/labstack/echo/v4"
 	"io"
@@ -29,8 +29,8 @@ func (s Handler) HandleUserUrlsDelete(echoCtx echo.Context) error {
 		return validate.AddError(s.ctx, echoCtx, "Not found UserID for user", http.StatusUnauthorized, 0)
 	}
 
-	var URLs []string
-	err = json.Unmarshal(body, &URLs)
+	var URLs dto.URLs
+	err = URLs.UnmarshalJSON(body)
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, "Error parse input json", http.StatusUnauthorized, 0)
 	}

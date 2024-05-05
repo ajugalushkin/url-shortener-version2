@@ -56,3 +56,6 @@ type UserURLList []struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
+
+//easyjson:json
+type URLs []string

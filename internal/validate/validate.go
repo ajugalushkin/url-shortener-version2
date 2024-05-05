@@ -14,7 +14,6 @@ const (
 	WrongTypeRequest = "Wrong type request"
 	URLParseError    = "URL parse error"
 	URLMissing       = "URL parameter is missing"
-	URLNotShortening = "URL not shortening"
 	FailedToSend     = "Failed to send URL"
 	JSONParseError   = "JSON parse error"
 	JSONNotCreate    = "JSON not create"
