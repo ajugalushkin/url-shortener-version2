@@ -22,7 +22,7 @@ func GetStorage(ctx context.Context) service.PutGetter {
 			log.Error("storage.GetStorage Error:", zap.Error(err))
 			return nil
 		}
-		log.Info("storage.GetStorage Set PostgreSQL")
+		log.Info("storage.GetStorage Set PostgresSQL")
 		return repository.NewRepository(db)
 	} else if flags.FileStoragePath != "" {
 		log.Info("storage.GetStorage Set File")

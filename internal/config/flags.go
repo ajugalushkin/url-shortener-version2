@@ -12,6 +12,7 @@ type Config struct {
 	FlagLogLevel    string `env:"LOG_LEVEL"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	DataBaseDsn     string `env:"DATABASE_DSN"`
+	SecretKey       string `env:"SECRET_KEY"`
 }
 
 func NewConfig() *Config {
@@ -28,24 +29,24 @@ func ParseFlags(config *Config) {
 		"DB path for connect")
 	flag.Parse()
 
-	if envRunAddr := os.Getenv("RUN_ADDR"); envRunAddr != "" {
-		config.RunAddr = envRunAddr
+	config.RunAddr = getEnv("RUN_ADDR", config.RunAddr)
+	config.BaseURL = getEnv("BASE_URL", config.BaseURL)
+	config.FlagLogLevel = getEnv("LOG_LEVEL", config.FlagLogLevel)
+	config.FileStoragePath = getEnv("FILE_STORAGE_PATH", config.FileStoragePath)
+	config.DataBaseDsn = getEnv("DATABASE_DSN", config.DataBaseDsn)
+
+	config.SecretKey = getEnv("SECRET_KEY", config.SecretKey)
+	if config.SecretKey == "" {
+		config.SecretKey = "SecretKey"
 	}
-	if envBaseURL := os.Getenv("BASE_URL"); envBaseURL != "" {
-		config.BaseURL = envBaseURL
+}
+
+func getEnv(key string, defaultVal string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
 	}
 
-	if envLogLevel := os.Getenv("LOG_LEVEL"); envLogLevel != "" {
-		config.FlagLogLevel = envLogLevel
-	}
-
-	if envStoragePath := os.Getenv("FILE_STORAGE_PATH"); envStoragePath != "" {
-		config.FileStoragePath = envStoragePath
-	}
-
-	if envDataBaseDsn := os.Getenv("DATABASE_DSN"); envDataBaseDsn != "" {
-		config.DataBaseDsn = envDataBaseDsn
-	}
+	return defaultVal
 }
 
 type ctxConfig struct{}

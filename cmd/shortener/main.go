@@ -6,6 +6,7 @@ import (
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/app"
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"github.com/joho/godotenv"
 )
 
 // @title shortener-url API
@@ -22,6 +23,12 @@ func main() {
 	ctx := config.ContextWithFlags(context.Background(), flagConfig)
 
 	if err := app.Run(ctx); err != nil {
+		fmt.Println(err)
+	}
+}
+
+func init() {
+	if err := godotenv.Load(); err != nil {
 		fmt.Println(err)
 	}
 }

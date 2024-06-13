@@ -22,15 +22,15 @@ func NewStorage(path string) *Storage {
 	return &storage
 }
 
-func (s *Storage) Put(ctx context.Context, shortening dto.Shortening) (*dto.Shortening, error) {
-	if _, exists := s.m.Load(shortening.ShortURL); exists {
+func (r *Storage) Put(ctx context.Context, shortening dto.Shortening) (*dto.Shortening, error) {
+	if _, exists := r.m.Load(shortening.ShortURL); exists {
 		return nil, errors.New("identifier already exists")
 	}
 
-	s.m.Store(shortening.ShortURL, shortening)
+	r.m.Store(shortening.ShortURL, shortening)
 
 	flags := config.FlagsFromContext(ctx)
-	err := save(flags.FileStoragePath, &s.m)
+	err := save(flags.FileStoragePath, &r.m)
 	if err != nil {
 		return nil, err
 	}
@@ -38,9 +38,9 @@ func (s *Storage) Put(ctx context.Context, shortening dto.Shortening) (*dto.Shor
 	return &shortening, nil
 }
 
-func (s *Storage) PutList(ctx context.Context, list dto.ShorteningList) error {
+func (r *Storage) PutList(ctx context.Context, list dto.ShorteningList) error {
 	for _, shortening := range list {
-		_, err := s.Put(ctx, shortening)
+		_, err := r.Put(ctx, shortening)
 		if err != nil {
 			return err
 		}
@@ -48,8 +48,8 @@ func (s *Storage) PutList(ctx context.Context, list dto.ShorteningList) error {
 	return nil
 }
 
-func (s *Storage) Get(ctx context.Context, identifier string) (*dto.Shortening, error) {
-	v, ok := s.m.Load(identifier)
+func (r *Storage) Get(ctx context.Context, identifier string) (*dto.Shortening, error) {
+	v, ok := r.m.Load(identifier)
 	if !ok {
 		return nil, errors.New("not found")
 	}
@@ -57,6 +57,13 @@ func (s *Storage) Get(ctx context.Context, identifier string) (*dto.Shortening, 
 	shortening := v.(dto.Shortening)
 
 	return &shortening, nil
+}
+
+func (r *Storage) GetListByUser(ctx context.Context, userID string) (*dto.ShorteningList, error) {
+	return &dto.ShorteningList{}, nil
+}
+
+func (r *Storage) DeleteUserURL(ctx context.Context, shortURL []string, userID int) {
 }
 
 func save(fileName string, urls *sync.Map) error {

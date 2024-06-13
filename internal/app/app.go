@@ -2,8 +2,6 @@ package app
 
 import (
 	"context"
-	"strings"
-
 	_ "github.com/ajugalushkin/url-shortener-version2/docs"
 	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
@@ -14,6 +12,9 @@ import (
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"go.uber.org/zap"
+	"net/http"
+	_ "net/http/pprof"
+	"strings"
 )
 
 func Run(ctx context.Context) error {
@@ -33,7 +34,8 @@ func Run(ctx context.Context) error {
 	server.Use(logger.MiddlewareLogger(ctx))
 	server.Use(compress.GzipWithConfig(compress.GzipConfig{
 		Skipper: func(c echo.Context) bool {
-			return strings.Contains(c.Request().URL.Path, "swagger")
+			return strings.Contains(c.Request().URL.Path, "swagger") ||
+				strings.Contains(c.Request().URL.Path, "debug")
 		},
 	}))
 
@@ -44,9 +46,15 @@ func Run(ctx context.Context) error {
 
 	server.GET("/:id", newHandler.HandleRedirect)
 	server.GET("/ping", newHandler.HandlePing)
+	server.GET("/api/user/urls", newHandler.HandleUserUrls)
+
+	server.DELETE("/api/user/urls", newHandler.HandleUserUrlsDelete)
 
 	//Swagger
 	server.GET("/swagger/*", echoSwagger.WrapHandler)
+
+	// Регистрация pprof-обработчиков
+	server.GET("/debug/*", echo.WrapHandler(http.DefaultServeMux))
 
 	log.Info("Running server", zap.String("address", flags.RunAddr))
 	err = server.Start(flags.RunAddr)

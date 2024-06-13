@@ -7,10 +7,18 @@ type Shortening struct {
 	CorrelationID string `json:"correlation_id" db:"correlation_id" `
 	ShortURL      string `json:"short_url" db:"short_url"`
 	OriginalURL   string `json:"original_url" db:"original_url"`
+	UserID        string `json:"user_id" db:"user_id"`
+	IsDeleted     bool   `json:"is_deleted" db:"is_deleted"`
 }
 
 //easyjson:json
-type ShorteningList []Shortening
+type ShorteningList []struct {
+	CorrelationID string `json:"correlation_id" db:"correlation_id" `
+	ShortURL      string `json:"short_url" db:"short_url"`
+	OriginalURL   string `json:"original_url" db:"original_url"`
+	UserID        string `json:"user_id" db:"user_id"`
+	IsDeleted     bool   `json:"is_deleted" db:"is_deleted"`
+}
 
 //easyjson:json
 type ShortenInput struct {
@@ -36,3 +44,18 @@ type ShortenListOutputLine struct {
 
 //easyjson:json
 type ShortenListOutput []ShortenListOutputLine
+
+//easyjson:json
+type UserURLListLine struct {
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
+}
+
+//easyjson:json
+type UserURLList []struct {
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
+}
+
+//easyjson:json
+type URLs []string

@@ -16,19 +16,19 @@ func NewInMemory() *InMemory {
 	return &InMemory{}
 }
 
-func (s *InMemory) Put(ctx context.Context, shortening dto.Shortening) (*dto.Shortening, error) {
-	if _, exists := s.m.Load(shortening.ShortURL); exists {
+func (r *InMemory) Put(ctx context.Context, shortening dto.Shortening) (*dto.Shortening, error) {
+	if _, exists := r.m.Load(shortening.ShortURL); exists {
 		return nil, errors.New("identifier already exists")
 	}
 
-	s.m.Store(shortening.ShortURL, shortening)
+	r.m.Store(shortening.ShortURL, shortening)
 
 	return &shortening, nil
 }
 
-func (s *InMemory) PutList(ctx context.Context, list dto.ShorteningList) error {
+func (r *InMemory) PutList(ctx context.Context, list dto.ShorteningList) error {
 	for _, shortening := range list {
-		_, err := s.Put(ctx, shortening)
+		_, err := r.Put(ctx, shortening)
 		if err != nil {
 			return err
 		}
@@ -36,8 +36,8 @@ func (s *InMemory) PutList(ctx context.Context, list dto.ShorteningList) error {
 	return nil
 }
 
-func (s *InMemory) Get(ctx context.Context, identifier string) (*dto.Shortening, error) {
-	v, ok := s.m.Load(identifier)
+func (r *InMemory) Get(ctx context.Context, identifier string) (*dto.Shortening, error) {
+	v, ok := r.m.Load(identifier)
 	if !ok {
 		return nil, errors.New("not found")
 	}
@@ -45,4 +45,11 @@ func (s *InMemory) Get(ctx context.Context, identifier string) (*dto.Shortening,
 	shortening := v.(dto.Shortening)
 
 	return &shortening, nil
+}
+
+func (r *InMemory) GetListByUser(ctx context.Context, userID string) (*dto.ShorteningList, error) {
+	return &dto.ShorteningList{}, nil
+}
+
+func (r *InMemory) DeleteUserURL(ctx context.Context, shortURL []string, userID int) {
 }

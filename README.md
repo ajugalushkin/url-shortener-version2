@@ -1,4 +1,4 @@
-# go-musthave-shortener-tpl
+# go-must-have-shortener-tpl
 
 Шаблон репозитория для трека «Сервис сокращения URL».
 
