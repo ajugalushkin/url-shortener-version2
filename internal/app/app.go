@@ -2,6 +2,14 @@ package app
 
 import (
 	"context"
+	"net/http"
+	_ "net/http/pprof"
+	"strings"
+
+	"github.com/labstack/echo/v4"
+	echoSwagger "github.com/swaggo/echo-swagger"
+	"go.uber.org/zap"
+
 	_ "github.com/ajugalushkin/url-shortener-version2/docs"
 	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
@@ -9,12 +17,6 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
-	"github.com/labstack/echo/v4"
-	echoSwagger "github.com/swaggo/echo-swagger"
-	"go.uber.org/zap"
-	"net/http"
-	_ "net/http/pprof"
-	"strings"
 )
 
 func Run(ctx context.Context) error {
@@ -24,6 +26,14 @@ func Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	log.Debug("initializing env")
+	log.Debug("env ServerAddress", zap.String("ServerAddress", flags.ServerAddress))
+	log.Debug("env FlagLogLevel", zap.String("FlagLogLevel", flags.FlagLogLevel))
+	log.Debug("env BaseURL", zap.String("BaseURL", flags.BaseURL))
+	log.Debug("env DataBaseDsn", zap.String("DataBaseDsn", flags.DataBaseDsn))
+	log.Debug("env FileStoragePathRunAddr", zap.String("FileStoragePath", flags.FileStoragePath))
+	log.Debug("env SecretKey", zap.String("SecretKey", flags.SecretKey))
 
 	ctx = logger.ContextWithLogger(ctx, log)
 
@@ -56,8 +66,8 @@ func Run(ctx context.Context) error {
 	// Регистрация pprof-обработчиков
 	server.GET("/debug/*", echo.WrapHandler(http.DefaultServeMux))
 
-	log.Info("Running server", zap.String("address", flags.RunAddr))
-	err = server.Start(flags.RunAddr)
+	log.Info("Running server", zap.String("address", flags.ServerAddress))
+	err = server.Start(flags.ServerAddress)
 	if err != nil {
 		return err
 	}

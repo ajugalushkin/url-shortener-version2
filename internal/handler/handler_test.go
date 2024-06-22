@@ -7,17 +7,18 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage/inmemory"
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
 )
 
-var newConfig = config.Config{
-	RunAddr: "localhost:8080",
-	BaseURL: "http://localhost:8080",
+var newConfig = config.AppConfig{
+	ServerAddress: "localhost:8080",
+	BaseURL:       "http://localhost:8080",
 }
 
 var ctx = config.ContextWithFlags(context.Background(), &newConfig)
