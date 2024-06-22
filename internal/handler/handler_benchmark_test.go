@@ -56,7 +56,10 @@ func BenchmarkHandler_HandleShorten(b *testing.B) {
 			rec := httptest.NewRecorder()
 			echoContext := e.NewContext(req, rec)
 
-			h.HandleShorten(echoContext)
+			err := h.HandleShorten(echoContext)
+			if err != nil {
+				return
+			}
 		}
 	})
 }
@@ -82,7 +85,10 @@ func BenchmarkHandler_HandleShortenBatch(b *testing.B) {
 			rec := httptest.NewRecorder()
 			echoContext := e.NewContext(req, rec)
 
-			h.HandleShorten(echoContext)
+			err := h.HandleShorten(echoContext)
+			if err != nil {
+				return
+			}
 		}
 	})
 }
@@ -101,11 +107,14 @@ func BenchmarkHandler_HandleRedirect(b *testing.B) {
 
 			shortenOut := dto.ShortenOutput{}
 
-			client.R().
+			_, err := client.R().
 				SetHeader(echo.HeaderContentType, echo.MIMEApplicationJSON).
 				SetBody(json).
 				SetResult(&shortenOut).
 				Post(config.FlagsFromContext(ctx).BaseURL + "/api/shorten")
+			if err != nil {
+				return
+			}
 
 			// Redirect
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -115,7 +124,10 @@ func BenchmarkHandler_HandleRedirect(b *testing.B) {
 			echoContext.SetParamNames("id")
 			echoContext.SetParamValues(shortenOut.Result)
 
-			h.HandleShorten(echoContext)
+			err = h.HandleShorten(echoContext)
+			if err != nil {
+				return
+			}
 		}
 	})
 }
@@ -130,10 +142,13 @@ func BenchmarkHandler_HandleUserUrls(b *testing.B) {
 			client := resty.New()
 
 			for i := 0; i < 10; i++ {
-				client.R().
+				_, err := client.R().
 					SetHeader(echo.HeaderContentType, echo.MIMETextPlain).
 					SetBody([]byte(gofakeit.URL())).
 					Post(config.FlagsFromContext(ctx).BaseURL + "/")
+				if err != nil {
+					continue
+				}
 			}
 
 			// Get
@@ -141,7 +156,10 @@ func BenchmarkHandler_HandleUserUrls(b *testing.B) {
 			rec := httptest.NewRecorder()
 			echoContext := e.NewContext(req, rec)
 
-			h.HandleShorten(echoContext)
+			err := h.HandleShorten(echoContext)
+			if err != nil {
+				return
+			}
 		}
 	})
 }
@@ -156,10 +174,13 @@ func BenchmarkHandler_HandleUserUrlsDelete(b *testing.B) {
 			client := resty.New()
 
 			for i := 0; i < 10; i++ {
-				client.R().
+				_, err := client.R().
 					SetHeader(echo.HeaderContentType, echo.MIMETextPlain).
 					SetBody([]byte(gofakeit.URL())).
 					Post(config.FlagsFromContext(ctx).BaseURL + "/")
+				if err != nil {
+					continue
+				}
 			}
 
 			// Get
@@ -167,7 +188,10 @@ func BenchmarkHandler_HandleUserUrlsDelete(b *testing.B) {
 			rec := httptest.NewRecorder()
 			echoContext := e.NewContext(req, rec)
 
-			h.HandleShorten(echoContext)
+			err := h.HandleShorten(echoContext)
+			if err != nil {
+				return
+			}
 		}
 	})
 }
