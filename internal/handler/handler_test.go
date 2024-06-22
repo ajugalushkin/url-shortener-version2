@@ -17,8 +17,8 @@ import (
 )
 
 var newConfig = config.AppConfig{
-	ServerAddress: "localhost:8080",
-	BaseURL:       "http://localhost:8080",
+	RunAddress: "localhost:8080",
+	BaseURL:    "http://localhost:8080",
 }
 
 var ctx = config.ContextWithFlags(context.Background(), &newConfig)

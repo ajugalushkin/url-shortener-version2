@@ -11,7 +11,7 @@ import (
 )
 
 type AppConfig struct {
-	ServerAddress   string `env:"SERVER_ADDRESS"`
+	RunAddress      string `env:"RUN_ADDR"`
 	BaseURL         string `env:"BASE_URL"`
 	FlagLogLevel    string `env:"LOG_LEVEL"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
@@ -25,7 +25,7 @@ func init() {
 		log.Debug("Error loading .env file", "error", err)
 	}
 
-	viper.SetDefault("Server_Address", "")
+	viper.SetDefault("Run_Addr", "")
 	viper.SetDefault("Base_URL", "")
 	viper.SetDefault("Log_Level", "Info")
 	viper.SetDefault("File_Storage_PATH", "/tmp/")
@@ -35,7 +35,7 @@ func init() {
 }
 
 func bindToEnv() {
-	_ = viper.BindEnv("Server_Address")
+	_ = viper.BindEnv("Run_Addr")
 	_ = viper.BindEnv("Base_URL")
 	_ = viper.BindEnv("Log_Level")
 	_ = viper.BindEnv("File_Storage_PATH")
@@ -60,7 +60,7 @@ func ReadConfig() *AppConfig {
 	bindToEnv()
 
 	result := &AppConfig{
-		ServerAddress:   viper.GetString("Server_Address"),
+		RunAddress:      viper.GetString("Run_Addr"),
 		BaseURL:         viper.GetString("Base_URL"),
 		FlagLogLevel:    viper.GetString("Log_Level"),
 		FileStoragePath: viper.GetString("File_Storage_PATH"),

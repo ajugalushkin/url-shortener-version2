@@ -33,7 +33,10 @@ func BenchmarkHandler_HandleSave(b *testing.B) {
 			rec := httptest.NewRecorder()
 			echoContext := e.NewContext(req, rec)
 
-			h.HandleSave(echoContext)
+			err := h.HandleSave(echoContext)
+			if err != nil {
+				return
+			}
 		}
 	})
 }

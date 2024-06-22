@@ -13,7 +13,7 @@ services:
     ports:
       - 8080:8080
     environment:
-      SERVER_ADDRESS: ${SERVER_ADDRESS:?Please configure RUN_ADDRESS in the .env file}
+      RUN_ADDR: ${RUN_ADDR:?Please configure RUN_ADDRESS in the .env file}
       BASE_URL: ${BASE_URL:?Please configure LOG_LEVEL in the .env file}
       LOG_LEVEL: ${LOG_LEVEL:?Please configure LOG_LEVEL in the .env file}
       FILE_STORAGE_PATH: ${FILE_STORAGE_PATH:?Please configure LOG_LEVEL in the .env file}

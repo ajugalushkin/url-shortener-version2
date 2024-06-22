@@ -28,7 +28,7 @@ func Run(ctx context.Context) error {
 	}
 
 	log.Debug("initializing env")
-	log.Debug("env ServerAddress", zap.String("ServerAddress", flags.ServerAddress))
+	log.Debug("env ServerAddress", zap.String("ServerAddress", flags.RunAddress))
 	log.Debug("env FlagLogLevel", zap.String("FlagLogLevel", flags.FlagLogLevel))
 	log.Debug("env BaseURL", zap.String("BaseURL", flags.BaseURL))
 	log.Debug("env DataBaseDsn", zap.String("DataBaseDsn", flags.DataBaseDsn))
@@ -66,8 +66,8 @@ func Run(ctx context.Context) error {
 	// Регистрация pprof-обработчиков
 	server.GET("/debug/*", echo.WrapHandler(http.DefaultServeMux))
 
-	log.Info("Running server", zap.String("address", flags.ServerAddress))
-	err = server.Start(flags.ServerAddress)
+	log.Info("Running server", zap.String("address", flags.RunAddress))
+	err = server.Start(flags.RunAddress)
 	if err != nil {
 		return err
 	}
