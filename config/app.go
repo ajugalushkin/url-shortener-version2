@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/gommon/log"
@@ -44,7 +45,10 @@ func bindToEnv() {
 
 func ReadConfig() *AppConfig {
 	bindToEnv()
-	cmd.Execute()
+	err := cmd.Execute()
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	result := &AppConfig{
 		ServerAddress:   viper.GetString("Server_Address"),
