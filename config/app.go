@@ -2,12 +2,12 @@ package config
 
 import (
 	"context"
-	"flag"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/gommon/log"
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+
+	"github.com/ajugalushkin/url-shortener-version2/cmd"
 )
 
 type AppConfig struct {
@@ -25,13 +25,12 @@ func init() {
 		log.Debug("Error loading .env file", "error", err)
 	}
 
-	viper.SetDefault("Server_Address", "localhost:8080")
-	viper.SetDefault("Base_URL", "http://localhost:8080")
+	viper.SetDefault("Server_Address", "localhost:8888")
+	viper.SetDefault("Base_URL", "http://localhost:8888")
 	viper.SetDefault("Log_Level", "Info")
 	viper.SetDefault("File_Storage_PATH", "")
 	viper.SetDefault("DataBase_Dsn", "")
 	viper.SetDefault("Secret_Key", "")
-
 }
 
 func bindToEnv() {
@@ -43,20 +42,8 @@ func bindToEnv() {
 	_ = viper.BindEnv("Secret_Key")
 }
 
-func bindToFlag() {
-	flag.String("a", "", "address and port to run server")
-	flag.String("b", "", "Base URL for POST request")
-	flag.String("l", "", "Log level")
-	flag.String("f", "/tmp/short-url-db.json", "full name of the file where data in JSON format is saved")
-	flag.String("d", "", "DB path for connect")
-
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	pflag.Parse()
-	_ = viper.BindPFlags(pflag.CommandLine)
-}
-
 func ReadConfig() *AppConfig {
-	bindToFlag()
+	cmd.Execute()
 	bindToEnv()
 
 	result := &AppConfig{

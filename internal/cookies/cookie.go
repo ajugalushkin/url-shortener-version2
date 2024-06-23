@@ -3,12 +3,14 @@ package cookies
 import (
 	"context"
 	"crypto/rand"
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/labstack/echo/v4"
 	"math/big"
 	"net/http"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/labstack/echo/v4"
+
+	"github.com/ajugalushkin/url-shortener-version2/config"
 )
 
 type Claims struct {

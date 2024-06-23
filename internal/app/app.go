@@ -10,9 +10,9 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"go.uber.org/zap"
 
+	"github.com/ajugalushkin/url-shortener-version2/config"
 	_ "github.com/ajugalushkin/url-shortener-version2/docs"
 	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"

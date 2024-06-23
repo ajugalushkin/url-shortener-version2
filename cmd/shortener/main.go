@@ -6,8 +6,8 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/app"
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 )
 
 // @title shortener-url API

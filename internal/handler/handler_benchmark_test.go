@@ -11,7 +11,7 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/go-resty/resty/v2"
 
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"

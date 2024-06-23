@@ -5,12 +5,13 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
+
+	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/shorten"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 type PutGetter interface {

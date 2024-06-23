@@ -3,14 +3,15 @@ package storage
 import (
 	"context"
 
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"go.uber.org/zap"
+
+	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/database"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage/file"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage/inmemory"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage/repository"
-	"go.uber.org/zap"
 )
 
 func GetStorage(ctx context.Context) service.PutGetter {
