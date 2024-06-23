@@ -25,8 +25,8 @@ func init() {
 		log.Debug("Error loading .env file", "error", err)
 	}
 
-	viper.SetDefault("Server_Address", "localhost:8888")
-	viper.SetDefault("Base_URL", "http://localhost:8888")
+	viper.SetDefault("Server_Address", "localhost:8080")
+	viper.SetDefault("Base_URL", "http://localhost:8080")
 	viper.SetDefault("Log_Level", "Info")
 	viper.SetDefault("File_Storage_PATH", "")
 	viper.SetDefault("DataBase_Dsn", "")
@@ -43,8 +43,8 @@ func bindToEnv() {
 }
 
 func ReadConfig() *AppConfig {
-	cmd.Execute()
 	bindToEnv()
+	cmd.Execute()
 
 	result := &AppConfig{
 		ServerAddress:   viper.GetString("Server_Address"),
