@@ -25,11 +25,11 @@ func init() {
 		log.Debug("Error loading .env file", "error", err)
 	}
 
-	viper.SetDefault("Server_Address", ":8080")
+	viper.SetDefault("Server_Address", "localhost:8080")
 	viper.SetDefault("Base_URL", "http://localhost:8080")
 	viper.SetDefault("Log_Level", "Info")
-	viper.SetDefault("File_Storage_PATH", "/tmp/")
-	viper.SetDefault("DataBase_Dsn", "postgres://praktikum:pass@postgres:5432/shortenurls")
+	viper.SetDefault("File_Storage_PATH", "")
+	viper.SetDefault("DataBase_Dsn", "")
 	viper.SetDefault("Secret_Key", "")
 
 }
@@ -46,8 +46,8 @@ func bindToEnv() {
 func bindToFlag() {
 	flag.String("a", "", "address and port to run server")
 	flag.String("b", "", "Base URL for POST request")
-	flag.String("l", "info", "Log level")
-	flag.String("f", "", "full name of the file where data in JSON format is saved")
+	flag.String("l", "", "Log level")
+	flag.String("f", "/tmp/short-url-db.json", "full name of the file where data in JSON format is saved")
 	flag.String("d", "", "DB path for connect")
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
