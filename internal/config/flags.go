@@ -11,7 +11,7 @@ import (
 )
 
 type AppConfig struct {
-	RunAddress      string `env:"RUN_ADDR"`
+	ServerAddress   string `env:"SERVER_ADDRESS"`
 	BaseURL         string `env:"BASE_URL"`
 	FlagLogLevel    string `env:"LOG_LEVEL"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
@@ -25,17 +25,17 @@ func init() {
 		log.Debug("Error loading .env file", "error", err)
 	}
 
-	viper.SetDefault("Run_Addr", "")
-	viper.SetDefault("Base_URL", "")
+	viper.SetDefault("Server_Address", ":8080")
+	viper.SetDefault("Base_URL", "http://localhost:8080")
 	viper.SetDefault("Log_Level", "Info")
 	viper.SetDefault("File_Storage_PATH", "/tmp/")
-	viper.SetDefault("DataBase_Dsn", "")
+	viper.SetDefault("DataBase_Dsn", "postgres://praktikum:pass@postgres:5432/shortenurls")
 	viper.SetDefault("Secret_Key", "")
 
 }
 
 func bindToEnv() {
-	_ = viper.BindEnv("Run_Addr")
+	_ = viper.BindEnv("Server_Address")
 	_ = viper.BindEnv("Base_URL")
 	_ = viper.BindEnv("Log_Level")
 	_ = viper.BindEnv("File_Storage_PATH")
@@ -60,7 +60,7 @@ func ReadConfig() *AppConfig {
 	bindToEnv()
 
 	result := &AppConfig{
-		RunAddress:      viper.GetString("Run_Addr"),
+		ServerAddress:   viper.GetString("Server_Address"),
 		BaseURL:         viper.GetString("Base_URL"),
 		FlagLogLevel:    viper.GetString("Log_Level"),
 		FileStoragePath: viper.GetString("File_Storage_PATH"),
