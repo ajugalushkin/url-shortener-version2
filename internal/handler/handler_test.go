@@ -2,20 +2,27 @@ package handler
 
 import (
 	"context"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
-
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/ajugalushkin/url-shortener-version2/config"
-	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
-	"github.com/ajugalushkin/url-shortener-version2/internal/service"
-	"github.com/ajugalushkin/url-shortener-version2/internal/storage/inmemory"
 )
 
+// import (
+//
+//	"context"
+//	"net/http"
+//	"net/http/httptest"
+//	"strings"
+//	"testing"
+//
+//	"github.com/labstack/echo/v4"
+//	"github.com/stretchr/testify/assert"
+//
+//	"github.com/ajugalushkin/url-shortener-version2/config"
+//	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+//	"github.com/ajugalushkin/url-shortener-version2/internal/service"
+//	"github.com/ajugalushkin/url-shortener-version2/internal/storage/inmemory"
+//
+// )
 var newConfig = config.AppConfig{
 	ServerAddress: "localhost:8080",
 	BaseURL:       "http://localhost:8080",
@@ -317,4 +324,4 @@ var ctx = config.ContextWithFlags(context.Background(), &newConfig)
 //			}
 //		})
 //	}
-}
+//}
