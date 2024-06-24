@@ -93,7 +93,8 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 		return err
 	}
 
-	return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusCreated)
+	//return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusCreated)
+	return echoCtx.String(http.StatusCreated, shortenURL.ShortURL)
 }
 
 // HandleShorten @Summary ShortenJSON
@@ -120,7 +121,9 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 		return err
 	}
 
-	return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusCreated)
+	//return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusCreated)
+
+	return echoCtx.JSON(http.StatusCreated, dto.ShortenOutput{Result: shortenURL.ShortURL})
 }
 
 func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
@@ -138,19 +141,20 @@ func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 		return err
 	}
 
-	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	echoCtx.Response().Status = http.StatusCreated
+	//echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	//echoCtx.Response().Status = http.StatusCreated
 
-	body, err := parse.SetJSONDataToBody(s.ctx, echoCtx, shortList)
-	if err != nil {
-		return err
-	}
-
-	sizeBody, err := echoCtx.Response().Write(body)
-	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
-	}
-	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
+	//body, err := parse.SetJSONDataToBody(s.ctx, echoCtx, shortList)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//sizeBody, err := echoCtx.Response().Write(body)
+	//if err != nil {
+	//	return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
+	//}
+	//return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
+	return echoCtx.JSON(http.StatusCreated, shortList)
 }
 
 // HandleRedirect @Summary Redirect
@@ -193,6 +197,15 @@ func (s Handler) HandlePing(echoCtx echo.Context) error {
 
 func (s Handler) HandleUserUrls(c echo.Context) error {
 	echoCtx := c.(*CustomContext)
+	//cookieIn, err := cookies.Read(echoCtx, "user")
+	//if err != nil {
+	//	return validate.AddError(s.ctx, echoCtx, "", http.StatusUnauthorized, 0)
+	//}
+
+	//userID := cookies.GetUserID(s.ctx, cookieIn)
+	//if userID == 0 {
+	//	return validate.AddError(s.ctx, echoCtx, "", http.StatusUnauthorized, 0)
+	//}
 
 	shortList, err := s.servAPI.GetUserURLS(s.ctx, echoCtx.user.UserID)
 	if err != nil {
@@ -219,6 +232,16 @@ func (s Handler) HandleUserUrlsDelete(c echo.Context) error {
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, validate.URLParseError, http.StatusBadRequest, 0)
 	}
+
+	//cookieIn, err := cookies.Read(echoCtx, "user")
+	//if err != nil {
+	//	return validate.AddError(s.ctx, echoCtx, "Not found cookies fo user", http.StatusUnauthorized, 0)
+	//}
+
+	//userID := cookies.GetUserID(s.ctx, cookieIn)
+	//if userID == 0 {
+	//	return validate.AddError(s.ctx, echoCtx, "Not found UserID for user", http.StatusUnauthorized, 0)
+	//}
 
 	var URLs dto.URLs
 	err = URLs.UnmarshalJSON(body)
