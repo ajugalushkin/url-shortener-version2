@@ -41,8 +41,8 @@ func Run(ctx context.Context) error {
 	server.POST("/api/shorten/batch", newHandler.HandleShortenBatch)
 	server.GET("/:id", newHandler.HandleRedirect)
 	server.GET("/ping", newHandler.HandlePing)
-	server.GET("/api/user/urls", newHandler.Authorized(newHandler.HandleUserUrls))
-	server.DELETE("/api/user/urls", newHandler.Authorized(newHandler.HandleUserUrlsDelete))
+	server.GET("/api/user/urls", newHandler.HandleUserUrls)
+	server.DELETE("/api/user/urls", newHandler.HandleUserUrlsDelete)
 
 	//Swagger
 	server.GET("/swagger/*", echoSwagger.WrapHandler)

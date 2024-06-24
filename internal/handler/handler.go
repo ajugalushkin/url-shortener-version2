@@ -41,24 +41,24 @@ type CustomContext struct {
 	echo.Context
 }
 
-func (s Handler) Authorized(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(echoCtx echo.Context) error {
-		cookie, err := echoCtx.Cookie(cookieName)
-		if err != nil {
-			return echoCtx.JSON(http.StatusUnauthorized, err.Error())
-		}
-
-		if _, ok := s.cache[cookie.Value]; !ok {
-			return echoCtx.JSON(http.StatusUnauthorized, "")
-		}
-
-		user := cookies.GetUser(s.ctx, cookie.Value)
-
-		newContext := &CustomContext{user: user, Context: echoCtx}
-
-		return next(newContext)
-	}
-}
+//func (s Handler) Authorized(next echo.HandlerFunc) echo.HandlerFunc {
+//	return func(echoCtx echo.Context) error {
+//		cookie, err := echoCtx.Cookie(cookieName)
+//		if err != nil {
+//			return echoCtx.JSON(http.StatusUnauthorized, err.Error())
+//		}
+//
+//		if _, ok := s.cache[cookie.Value]; !ok {
+//			return echoCtx.JSON(http.StatusUnauthorized, "")
+//		}
+//
+//		user := cookies.GetUser(s.ctx, cookie.Value)
+//
+//		newContext := &CustomContext{user: user, Context: echoCtx}
+//
+//		return next(newContext)
+//	}
+//}
 
 // HandleSave @Summary Shorten
 // @Description Short URL
