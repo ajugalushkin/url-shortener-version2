@@ -27,14 +27,6 @@ func Run(ctx context.Context) error {
 		return err
 	}
 
-	log.Debug("initializing env")
-	log.Debug("env ServerAddress", zap.String("ServerAddress", flags.ServerAddress))
-	log.Debug("env FlagLogLevel", zap.String("FlagLogLevel", flags.FlagLogLevel))
-	log.Debug("env BaseURL", zap.String("BaseURL", flags.BaseURL))
-	log.Debug("env DataBaseDsn", zap.String("DataBaseDsn", flags.DataBaseDsn))
-	log.Debug("env FileStoragePathRunAddr", zap.String("FileStoragePath", flags.FileStoragePath))
-	log.Debug("env SecretKey", zap.String("SecretKey", flags.SecretKey))
-
 	ctx = logger.ContextWithLogger(ctx, log)
 
 	server := echo.New()

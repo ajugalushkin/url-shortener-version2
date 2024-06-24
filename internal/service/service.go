@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"github.com/ajugalushkin/url-shortener-version2/config"
@@ -32,11 +31,11 @@ func NewService(storage PutGetter) *Service {
 
 func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Shortening, error) {
 	var (
-		id         = uuid.New().ID()
+		//id         = shorten.Shorten(input.ShortURL)
 		identifier = input.ShortURL
 	)
 	if identifier == "" {
-		identifier = shorten.Shorten(id)
+		identifier = shorten.Shorten(input.ShortURL)
 	}
 
 	newShortening := dto.Shortening{
@@ -48,6 +47,8 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 	}
 
 	shortening, err := s.storage.Put(ctx, newShortening)
+	logger.LogFromContext(ctx).Info("Short URL: " + shortening.ShortURL)
+	logger.LogFromContext(ctx).Info("Base URL: " + config.FlagsFromContext(ctx).BaseURL)
 	shortening.ShortURL, _ = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
 
 	if err != nil {
@@ -61,7 +62,7 @@ func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (
 	var shorteningList dto.ShorteningList
 	for _, item := range input {
 		newShortening := dto.Shortening{
-			ShortURL:      shorten.Shorten(uuid.New().ID()),
+			ShortURL:      shorten.Shorten(item.OriginalURL),
 			OriginalURL:   item.OriginalURL,
 			CorrelationID: item.CorrelationID,
 		}
