@@ -3,19 +3,21 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"strconv"
+	"sync"
+
 	"github.com/Masterminds/squirrel"
-	"github.com/ajugalushkin/url-shortener-version2/internal/database"
-	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
-	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
-	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"strconv"
-	"sync"
+
+	"github.com/ajugalushkin/url-shortener-version2/internal/database"
+	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
+	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 )
 
 func NewRepository(db *sqlx.DB) *Repo {
@@ -77,7 +79,7 @@ func (r *Repo) Get(ctx context.Context, shortURL string) (*dto.Shortening, error
 
 		return r.db.SelectContext(ctx, &shorteningList, query, args...)
 	})
-	log := logger.LogFromContext(ctx)
+	log := logger.GetSingleton(ctx).GetLogger()
 	if err != nil {
 		log.Debug("repository.Get", zap.Error(err))
 		return nil, errors.Wrap(err, "repository.Get")
@@ -109,20 +111,20 @@ func (r *Repo) GetByURL(ctx context.Context, originURL string) (*dto.Shortening,
 
 		return r.db.SelectContext(ctx, &shorteningList, query, args...)
 	})
-	log := logger.LogFromContext(ctx)
+	log := logger.GetSingleton(ctx).GetLogger()
 	if err != nil {
-		log.Info("repository.Get", zap.Error(err))
+		log.Debug("repository.Get", zap.Error(err))
 		return nil, errors.Wrap(err, "repository.Get")
 	}
 
 	if len(shorteningList) == 0 {
-		log.Info("repository.Get", zap.Error(sql.ErrNoRows))
+		log.Debug("repository.Get", zap.Error(sql.ErrNoRows))
 		return nil, errors.Wrap(sql.ErrNoRows, "repository.Get")
 	}
 
 	shortening := shorteningList[0]
 
-	log.Info("repository.Get OK", zap.String("Original URL", shortening.OriginalURL))
+	log.Debug("repository.Get OK", zap.String("Original URL", shortening.OriginalURL))
 
 	return &shortening, nil
 }
@@ -173,14 +175,14 @@ func (r *Repo) GetListByUser(ctx context.Context, userID string) (*dto.Shortenin
 
 		return r.db.SelectContext(ctx, &shorteningList, query, args...)
 	})
-	log := logger.LogFromContext(ctx)
+	log := logger.GetSingleton(ctx).GetLogger()
 	if err != nil {
-		log.Info("repository.GetListByUser", zap.Error(err))
+		log.Debug("repository.GetListByUser", zap.Error(err))
 		return nil, errors.Wrap(err, "repository.GetListByUser")
 	}
 
 	if len(shorteningList) == 0 {
-		log.Info("repository.GetListByUser", zap.Error(sql.ErrNoRows))
+		log.Debug("repository.GetListByUser", zap.Error(sql.ErrNoRows))
 		return nil, errors.Wrap(sql.ErrNoRows, "repository.GetListByUser")
 	}
 	return &shorteningList, nil
@@ -194,7 +196,7 @@ func (r *Repo) DeleteUserURL(ctx context.Context, shortList []string, userID int
 	channels := r.split(ctx, doneCh, inputCh)
 	resultCh := merge(doneCh, channels...)
 
-	log := logger.LogFromContext(ctx)
+	log := logger.GetSingleton(ctx).GetLogger()
 	err := database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
 		toSQL, _, err := squirrel.StatementBuilder.
 			Update("shorten_urls").

@@ -2,23 +2,39 @@ package logger
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+
+	"github.com/ajugalushkin/url-shortener-version2/config"
 )
 
-type ctxLogger struct{}
-
-func ContextWithLogger(ctx context.Context, logger *zap.Logger) context.Context {
-	return context.WithValue(ctx, ctxLogger{}, logger)
+type singleInstance struct {
+	logger *zap.Logger
 }
 
-func LogFromContext(ctx context.Context) *zap.Logger {
-	if logger, ok := ctx.Value(ctxLogger{}).(*zap.Logger); ok {
-		return logger
-	}
-	return zap.L()
+func (i singleInstance) GetLogger() *zap.Logger {
+	return i.logger
+}
+
+var (
+	singleton *singleInstance
+	once      sync.Once
+)
+
+func GetSingleton(ctx context.Context) *singleInstance {
+	once.Do(
+		func() {
+			logger, err := Initialize(config.FlagsFromContext(ctx).FlagLogLevel)
+			if err != nil {
+				logger = zap.L()
+			}
+			singleton = &singleInstance{logger: logger}
+		})
+
+	return singleton
 }
 
 func Initialize(level string) (*zap.Logger, error) {
@@ -49,7 +65,7 @@ func MiddlewareLogger(ctx context.Context) func(echo.HandlerFunc) echo.HandlerFu
 
 			duration := time.Since(start)
 
-			log := LogFromContext(ctx)
+			log := GetSingleton(ctx).logger
 			log.Debug("got incoming HTTP request",
 				zap.String("method", context.Request().Method),
 				zap.String("path", context.Request().URL.Path),

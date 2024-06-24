@@ -26,9 +26,6 @@ func base58Encoded(bytes []byte) string {
 }
 
 func Shorten(initialURL string) string {
-	//hash, _ := sqids.New()
-	//id, _ := hash.Encode([]uint64{uint64(number)})
-	//return id
 	urlHashBytes := sha256Of(initialURL)
 	generatedNumber := new(big.Int).SetBytes(urlHashBytes).Uint64()
 	finalString := base58Encoded([]byte(fmt.Sprintf("%d", generatedNumber)))

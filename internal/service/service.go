@@ -31,7 +31,6 @@ func NewService(storage PutGetter) *Service {
 
 func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Shortening, error) {
 	var (
-		//id         = shorten.Shorten(input.ShortURL)
 		identifier = input.ShortURL
 	)
 	if identifier == "" {
@@ -47,13 +46,11 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 	}
 
 	shortening, err := s.storage.Put(ctx, newShortening)
-	logger.LogFromContext(ctx).Info("Short URL: " + shortening.ShortURL)
-	logger.LogFromContext(ctx).Info("Base URL: " + config.FlagsFromContext(ctx).BaseURL)
-	shortening.ShortURL, _ = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
-
 	if err != nil {
 		return shortening, err
 	}
+
+	shortening.ShortURL, _ = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
 
 	return shortening, nil
 }
@@ -79,7 +76,7 @@ func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (
 }
 
 func (s *Service) Redirect(ctx context.Context, identifier string) (*dto.Shortening, error) {
-	log := logger.LogFromContext(ctx)
+	log := logger.GetSingleton(ctx).GetLogger()
 
 	shortening, err := s.storage.Get(ctx, identifier)
 	if err != nil {
@@ -90,7 +87,7 @@ func (s *Service) Redirect(ctx context.Context, identifier string) (*dto.Shorten
 }
 
 func (s *Service) GetUserURLS(ctx context.Context, userID int) (*dto.ShorteningList, error) {
-	log := logger.LogFromContext(ctx)
+	log := logger.GetSingleton(ctx).GetLogger()
 
 	shortening, err := s.storage.GetListByUser(ctx, strconv.Itoa(userID))
 	if err != nil {

@@ -9,7 +9,6 @@ require (
 	github.com/brianvoe/gofakeit/v7 v7.0.4
 	github.com/go-resty/resty/v2 v2.13.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
-	github.com/google/uuid v1.6.0
 	github.com/itchyny/base58-go v0.2.2
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgx/v5 v5.5.5
@@ -22,6 +21,7 @@ require (
 	github.com/pressly/goose/v3 v3.20.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
+	github.com/sqids/sqids-go v0.4.1
 	github.com/stretchr/testify v1.9.0
 	github.com/swaggo/echo-swagger v1.4.1
 	github.com/swaggo/swag v1.16.3

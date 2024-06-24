@@ -16,7 +16,7 @@ import (
 
 func GetStorage(ctx context.Context) service.PutGetter {
 	flags := config.FlagsFromContext(ctx)
-	log := logger.LogFromContext(ctx)
+	log := logger.GetSingleton(ctx).GetLogger()
 	if flags.DataBaseDsn != "" {
 		db, err := database.NewConnection("pgx", flags.DataBaseDsn)
 		if err != nil {
