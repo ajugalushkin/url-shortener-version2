@@ -2,6 +2,10 @@ package dto
 
 //go:generate easyjson -all json.go
 
+type User struct {
+	UserID int
+}
+
 //easyjson:json
 type Shortening struct {
 	CorrelationID string `json:"correlation_id" db:"correlation_id" `

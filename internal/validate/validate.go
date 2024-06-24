@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+
+	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 )
 
 const (
@@ -25,7 +26,7 @@ const (
 )
 
 func AddError(ctx context.Context, echoCtx echo.Context, message string, httpStatus int, size int) error {
-	log := logger.LogFromContext(ctx)
+	log := logger.GetSingleton(ctx).GetLogger()
 	log.Debug(message,
 		zap.String(Status, strconv.Itoa(httpStatus)),
 		zap.String(Size, strconv.Itoa(size)),
@@ -35,7 +36,7 @@ func AddError(ctx context.Context, echoCtx echo.Context, message string, httpSta
 }
 
 func AddMessageOK(ctx context.Context, echoCtx echo.Context, message string, httpStatus int, size int) error {
-	log := logger.LogFromContext(ctx)
+	log := logger.GetSingleton(ctx).GetLogger()
 	log.Debug(message,
 		zap.String(Status, strconv.Itoa(httpStatus)),
 		zap.String(Size, strconv.Itoa(size)),
@@ -45,7 +46,7 @@ func AddMessageOK(ctx context.Context, echoCtx echo.Context, message string, htt
 }
 
 func Redirect(ctx context.Context, echoCtx echo.Context, redirect string) error {
-	log := logger.LogFromContext(ctx)
+	log := logger.GetSingleton(ctx).GetLogger()
 	log.Debug(URLSent,
 		zap.String(Status, strconv.Itoa(http.StatusTemporaryRedirect)),
 		zap.String(Size, strconv.Itoa(len(redirect))),

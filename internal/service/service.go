@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"github.com/ajugalushkin/url-shortener-version2/config"
@@ -32,11 +31,10 @@ func NewService(storage PutGetter) *Service {
 
 func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Shortening, error) {
 	var (
-		id         = uuid.New().ID()
 		identifier = input.ShortURL
 	)
 	if identifier == "" {
-		identifier = shorten.Shorten(id)
+		identifier = shorten.Shorten(input.ShortURL)
 	}
 
 	newShortening := dto.Shortening{
@@ -48,11 +46,11 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 	}
 
 	shortening, err := s.storage.Put(ctx, newShortening)
-	shortening.ShortURL, _ = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
-
 	if err != nil {
 		return shortening, err
 	}
+
+	shortening.ShortURL, _ = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
 
 	return shortening, nil
 }
@@ -61,7 +59,7 @@ func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (
 	var shorteningList dto.ShorteningList
 	for _, item := range input {
 		newShortening := dto.Shortening{
-			ShortURL:      shorten.Shorten(uuid.New().ID()),
+			ShortURL:      shorten.Shorten(item.OriginalURL),
 			OriginalURL:   item.OriginalURL,
 			CorrelationID: item.CorrelationID,
 		}
@@ -78,7 +76,7 @@ func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (
 }
 
 func (s *Service) Redirect(ctx context.Context, identifier string) (*dto.Shortening, error) {
-	log := logger.LogFromContext(ctx)
+	log := logger.GetSingleton(ctx).GetLogger()
 
 	shortening, err := s.storage.Get(ctx, identifier)
 	if err != nil {
@@ -89,7 +87,7 @@ func (s *Service) Redirect(ctx context.Context, identifier string) (*dto.Shorten
 }
 
 func (s *Service) GetUserURLS(ctx context.Context, userID int) (*dto.ShorteningList, error) {
-	log := logger.LogFromContext(ctx)
+	log := logger.GetSingleton(ctx).GetLogger()
 
 	shortening, err := s.storage.GetListByUser(ctx, strconv.Itoa(userID))
 	if err != nil {

@@ -21,15 +21,43 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
 )
 
+const cookieName string = "User"
+
 type Handler struct {
 	ctx     context.Context
+	cache   map[string]dto.User
 	servAPI *service.Service
 }
 
 func NewHandler(ctx context.Context, servAPI *service.Service) *Handler {
 	return &Handler{
 		ctx:     ctx,
+		cache:   make(map[string]dto.User),
 		servAPI: servAPI}
+}
+
+type CustomContext struct {
+	user *dto.User
+	echo.Context
+}
+
+func (s Handler) Authorized(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(echoCtx echo.Context) error {
+		cookie, err := echoCtx.Cookie(cookieName)
+		if err != nil {
+			return echoCtx.JSON(http.StatusUnauthorized, err.Error())
+		}
+
+		if _, ok := s.cache[cookie.Value]; !ok {
+			return echoCtx.JSON(http.StatusUnauthorized, "")
+		}
+
+		user := cookies.GetUser(s.ctx, cookie.Value)
+
+		newContext := &CustomContext{user: user, Context: echoCtx}
+
+		return next(newContext)
+	}
 }
 
 // HandleSave @Summary Shorten
@@ -41,23 +69,22 @@ func NewHandler(ctx context.Context, servAPI *service.Service) *Handler {
 // @Failure 400 {integer} integer 1
 // @Router / [post]
 func (s Handler) HandleSave(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodPost {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
-
 	parseURL, err := parse.GetURL(s.ctx, echoCtx)
 	if err != nil {
 		return err
 	}
 
-	cookieValue, err := cookies.Read(echoCtx, "user")
+	cookie, err := echoCtx.Cookie(cookieName)
 	if err != nil {
-		cookieValue = cookies.Write(s.ctx, echoCtx, "user")
+		cookie = cookies.Create(s.ctx, cookieName)
+		echoCtx.SetCookie(cookie)
 	}
+
+	user := cookies.GetUser(s.ctx, cookie.Value)
 
 	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{
 		OriginalURL: parseURL,
-		UserID:      strconv.Itoa(cookies.GetUserID(s.ctx, cookieValue))})
+		UserID:      strconv.Itoa(user.UserID)})
 	if errors.Is(err, userErr.ErrorDuplicateURL) {
 		return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
 	}
@@ -79,10 +106,6 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 // @Failure 400 {integer} integer 1
 // @Router /api/shorten [post]
 func (s Handler) HandleShorten(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodPost {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
-
 	parseURL, err := parse.GetURL(s.ctx, echoCtx)
 	if err != nil {
 		return err
@@ -101,10 +124,6 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 }
 
 func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodPost {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
-
 	if ctType := echoCtx.Request().Header.Get(echo.HeaderContentType); ctType != echo.MIMEApplicationJSON {
 		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
 	}
@@ -143,10 +162,6 @@ func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 // @Failure 400 {integer} integer 1
 // @Router / [get]
 func (s Handler) HandleRedirect(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodGet {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
-
 	redirect, err := s.servAPI.Redirect(s.ctx, strings.Replace(echoCtx.Request().URL.Path, "/", "", -1))
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
@@ -160,16 +175,12 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 		return validate.Redirect(s.ctx, echoCtx, redirect.OriginalURL)
 	}
 
-	log := logger.LogFromContext(s.ctx)
+	log := logger.GetSingleton(s.ctx).GetLogger()
 	log.Error(validate.URLNotFound)
 	return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
 }
 
 func (s Handler) HandlePing(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodGet {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
-
 	flags := config.FlagsFromContext(s.ctx)
 	db, err := sql.Open("pgx", flags.DataBaseDsn)
 	if err != nil {
@@ -180,22 +191,10 @@ func (s Handler) HandlePing(echoCtx echo.Context) error {
 	return validate.AddMessageOK(s.ctx, echoCtx, "", http.StatusOK, 0)
 }
 
-func (s Handler) HandleUserUrls(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodGet {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
+func (s Handler) HandleUserUrls(c echo.Context) error {
+	echoCtx := c.(*CustomContext)
 
-	cookieIn, err := cookies.Read(echoCtx, "user")
-	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, "", http.StatusUnauthorized, 0)
-	}
-
-	userID := cookies.GetUserID(s.ctx, cookieIn)
-	if userID == 0 {
-		return validate.AddError(s.ctx, echoCtx, "", http.StatusUnauthorized, 0)
-	}
-
-	shortList, err := s.servAPI.GetUserURLS(s.ctx, userID)
+	shortList, err := s.servAPI.GetUserURLS(s.ctx, echoCtx.user.UserID)
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
 	}
@@ -213,24 +212,12 @@ func (s Handler) HandleUserUrls(echoCtx echo.Context) error {
 	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
 }
 
-func (s Handler) HandleUserUrlsDelete(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodDelete {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
+func (s Handler) HandleUserUrlsDelete(c echo.Context) error {
+	echoCtx := c.(*CustomContext)
 
 	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, validate.URLParseError, http.StatusBadRequest, 0)
-	}
-
-	cookieIn, err := cookies.Read(echoCtx, "user")
-	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, "Not found cookies fo user", http.StatusUnauthorized, 0)
-	}
-
-	userID := cookies.GetUserID(s.ctx, cookieIn)
-	if userID == 0 {
-		return validate.AddError(s.ctx, echoCtx, "Not found UserID for user", http.StatusUnauthorized, 0)
 	}
 
 	var URLs dto.URLs
@@ -239,7 +226,7 @@ func (s Handler) HandleUserUrlsDelete(echoCtx echo.Context) error {
 		return validate.AddError(s.ctx, echoCtx, "Error parse input json", http.StatusUnauthorized, 0)
 	}
 
-	s.servAPI.DeleteUserURL(s.ctx, URLs, userID)
+	s.servAPI.DeleteUserURL(s.ctx, URLs, echoCtx.user.UserID)
 
 	return validate.AddMessageOK(s.ctx, echoCtx, "URLS Delete OK", http.StatusAccepted, 0)
 }

@@ -1,6 +1,6 @@
 module github.com/ajugalushkin/url-shortener-version2
 
-go 1.22
+go 1.22.0
 
 toolchain go1.22.3
 
@@ -9,7 +9,7 @@ require (
 	github.com/brianvoe/gofakeit/v7 v7.0.4
 	github.com/go-resty/resty/v2 v2.13.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
-	github.com/google/uuid v1.6.0
+	github.com/itchyny/base58-go v0.2.2
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/jmoiron/sqlx v1.4.0
