@@ -48,8 +48,26 @@ func (r *InMemory) Get(ctx context.Context, identifier string) (*dto.Shortening,
 }
 
 func (r *InMemory) GetListByUser(ctx context.Context, userID string) (*dto.ShorteningList, error) {
-	return &dto.ShorteningList{}, nil
+	list := dto.ShorteningList{}
+	r.m.Range(func(k, v interface{}) bool {
+		item := v.(dto.Shortening)
+		if item.UserID == userID {
+			list = append(list, item)
+		}
+		return true
+	})
+	return &list, nil
 }
 
 func (r *InMemory) DeleteUserURL(ctx context.Context, shortURL []string, userID int) {
+	for _, value := range shortURL {
+		v, ok := r.m.Load(value)
+		if !ok {
+			continue
+		}
+		newShortening := v.(dto.Shortening)
+		newShortening.IsDeleted = true
+
+		r.m.CompareAndSwap(value, v.(dto.Shortening), newShortening)
+	}
 }

@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ajugalushkin/url-shortener-version2/internal/app"
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/joho/godotenv"
+
+	"github.com/ajugalushkin/url-shortener-version2/config"
+	"github.com/ajugalushkin/url-shortener-version2/internal/app"
 )
 
 // @title shortener-url API
@@ -17,10 +18,8 @@ import (
 // @BasePath /
 // @schemes http
 func main() {
-	flagConfig := config.NewConfig()
-	config.ParseFlags(flagConfig)
-
-	ctx := config.ContextWithFlags(context.Background(), flagConfig)
+	cfg := config.ReadConfig()
+	ctx := config.ContextWithFlags(context.Background(), cfg)
 
 	if err := app.Run(ctx); err != nil {
 		fmt.Println(err)

@@ -5,12 +5,12 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"go.uber.org/zap"
+
+	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/shorten"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 type PutGetter interface {
@@ -31,11 +31,10 @@ func NewService(storage PutGetter) *Service {
 
 func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Shortening, error) {
 	var (
-		id         = uuid.New().ID()
 		identifier = input.ShortURL
 	)
 	if identifier == "" {
-		identifier = shorten.Shorten(id)
+		identifier = shorten.Shorten(input.ShortURL)
 	}
 
 	newShortening := dto.Shortening{
@@ -60,7 +59,7 @@ func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (
 	var shorteningList dto.ShorteningList
 	for _, item := range input {
 		newShortening := dto.Shortening{
-			ShortURL:      shorten.Shorten(uuid.New().ID()),
+			ShortURL:      shorten.Shorten(item.OriginalURL),
 			OriginalURL:   item.OriginalURL,
 			CorrelationID: item.CorrelationID,
 		}
