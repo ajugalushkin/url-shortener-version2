@@ -86,7 +86,7 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 
 	shorten := dto.ShortenInput{}
 	err = shorten.UnmarshalJSON(body)
-	if err != nil {
+	if err != nil || shorten.URL == "" {
 		return echoCtx.String(http.StatusBadRequest, validate.JSONParseError)
 	}
 
