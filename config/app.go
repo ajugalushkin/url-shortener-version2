@@ -28,7 +28,7 @@ func init() {
 
 	viper.SetDefault("Server_Address", "localhost:8080")
 	viper.SetDefault("Base_URL", "http://localhost:8080")
-	viper.SetDefault("Log_Level", "Info")
+	viper.SetDefault("Log_Level", "Debug")
 	viper.SetDefault("File_Storage_PATH", "")
 	viper.SetDefault("DataBase_Dsn", "")
 	viper.SetDefault("Secret_Key", "")

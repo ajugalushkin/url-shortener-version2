@@ -33,9 +33,16 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 	var (
 		identifier = input.ShortURL
 	)
+
+	logger.LogFromContext(ctx).Debug("Service.Shorten",
+		zap.String("Origin URL", input.OriginalURL))
+
 	if identifier == "" {
-		identifier = shorten.Shorten(input.ShortURL)
+		identifier = shorten.Shorten(input.OriginalURL)
 	}
+
+	logger.LogFromContext(ctx).Debug("Service.Shorten",
+		zap.String("Short URL", identifier))
 
 	newShortening := dto.Shortening{
 		ShortURL:      identifier,
@@ -46,12 +53,21 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 	}
 
 	shortening, err := s.storage.Put(ctx, newShortening)
-	shortening.ShortURL, _ = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
-
 	if err != nil {
+		logger.LogFromContext(ctx).Debug("Service.Shorten Put Error",
+			zap.Error(err))
 		return shortening, err
 	}
 
+	shortening.ShortURL, err = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
+	if err != nil {
+		logger.LogFromContext(ctx).Debug("Service.Shorten Join Path Error",
+			zap.Error(err))
+		return shortening, err
+	}
+
+	logger.LogFromContext(ctx).Debug("Service.Shorten Ok",
+		zap.String("Shorten URL", shortening.ShortURL))
 	return shortening, nil
 }
 

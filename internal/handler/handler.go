@@ -79,25 +79,26 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 // @Failure 400 {integer} integer 1
 // @Router /api/shorten [post]
 func (s Handler) HandleShorten(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodPost {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
-
-	parseURL, err := parse.GetURL(s.ctx, echoCtx)
+	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil {
-		return err
+		return echoCtx.String(http.StatusBadRequest, validate.URLParseError)
 	}
 
-	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{OriginalURL: parseURL})
-	if errors.Is(err, userErr.ErrorDuplicateURL) {
-		return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
-	}
-
+	shorten := dto.ShortenInput{}
+	err = shorten.UnmarshalJSON(body)
 	if err != nil {
-		return err
+		return echoCtx.String(http.StatusBadRequest, validate.JSONParseError)
 	}
 
-	return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusCreated)
+	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{OriginalURL: shorten.URL})
+	if err != nil {
+		if errors.Is(err, userErr.ErrorDuplicateURL) {
+			return echoCtx.JSON(http.StatusConflict, dto.ShortenOutput{Result: shortenURL.ShortURL})
+		}
+		return echoCtx.String(http.StatusBadRequest, err.Error())
+	}
+
+	return echoCtx.JSON(http.StatusCreated, dto.ShortenOutput{Result: shortenURL.ShortURL})
 }
 
 func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {

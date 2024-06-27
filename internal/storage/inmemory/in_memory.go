@@ -5,7 +5,10 @@ import (
 	"errors"
 	"sync"
 
+	"go.uber.org/zap"
+
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 )
 
 type InMemory struct {
@@ -18,11 +21,15 @@ func NewInMemory() *InMemory {
 
 func (r *InMemory) Put(ctx context.Context, shortening dto.Shortening) (*dto.Shortening, error) {
 	if _, exists := r.m.Load(shortening.ShortURL); exists {
-		return nil, errors.New("identifier already exists")
+		err := errors.New("identifier already exists")
+		logger.LogFromContext(ctx).Debug("InMemory.Put Load Error",
+			zap.Error(err))
+		return nil, err
 	}
 
 	r.m.Store(shortening.ShortURL, shortening)
 
+	logger.LogFromContext(ctx).Debug("InMemory.Put Store Success")
 	return &shortening, nil
 }
 
