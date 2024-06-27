@@ -41,13 +41,9 @@ func NewHandler(ctx context.Context, servAPI *service.Service) *Handler {
 // @Failure 400 {integer} integer 1
 // @Router / [post]
 func (s Handler) HandleSave(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodPost {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
-
 	parseURL, err := parse.GetURL(s.ctx, echoCtx)
 	if err != nil {
-		return err
+		return echoCtx.String(http.StatusBadRequest, err.Error())
 	}
 
 	cookieValue, err := cookies.Read(echoCtx, "user")
@@ -58,15 +54,17 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{
 		OriginalURL: parseURL,
 		UserID:      strconv.Itoa(cookies.GetUserID(s.ctx, cookieValue))})
-	if errors.Is(err, userErr.ErrorDuplicateURL) {
-		return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
-	}
 
 	if err != nil {
-		return err
+		if errors.Is(err, userErr.ErrorDuplicateURL) {
+			//return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
+			return echoCtx.String(http.StatusConflict, shortenURL.ShortURL)
+		}
+		return echoCtx.String(http.StatusBadRequest, err.Error())
 	}
 
-	return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusCreated)
+	//return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusCreated)
+	return echoCtx.String(http.StatusCreated, shortenURL.ShortURL)
 }
 
 // HandleShorten @Summary ShortenJSON

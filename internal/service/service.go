@@ -54,6 +54,7 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 
 	shortening, err := s.storage.Put(ctx, newShortening)
 	if err != nil {
+		shortening.ShortURL, _ = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
 		logger.LogFromContext(ctx).Debug("Service.Shorten Put Error",
 			zap.Error(err))
 		return shortening, err
@@ -62,6 +63,8 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 	shortening.ShortURL, err = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
 	if err != nil {
 		logger.LogFromContext(ctx).Debug("Service.Shorten Join Path Error",
+			zap.String("BaseURL", config.FlagsFromContext(ctx).BaseURL),
+			zap.String("ShortURL", shortening.ShortURL),
 			zap.Error(err))
 		return shortening, err
 	}
