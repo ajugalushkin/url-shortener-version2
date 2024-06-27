@@ -23,16 +23,12 @@ func BenchmarkHandler_HandleSave(b *testing.B) {
 		h := NewHandler(ctx, service.NewService(storage.GetStorage(ctx)))
 
 		for i := 0; i < b.N; i++ {
-			req := httptest.NewRequest(
-				http.MethodPost,
-				"/",
-				strings.NewReader(gofakeit.URL()),
-			)
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(gofakeit.URL()))
 			req.Header.Set(echo.HeaderContentType, echo.MIMETextPlain)
 			rec := httptest.NewRecorder()
-			echoContext := e.NewContext(req, rec)
+			newContext := e.NewContext(req, rec)
 
-			err := h.HandleSave(echoContext)
+			err := h.HandleSave(newContext)
 			if err != nil {
 				return
 			}

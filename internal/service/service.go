@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"strconv"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/shorten"
 )
@@ -53,18 +55,13 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 	}
 
 	shortening, err := s.storage.Put(ctx, newShortening)
-	if err != nil {
+
+	if errors.Is(err, userErr.ErrorDuplicateURL) || shortening != nil {
 		shortening.ShortURL, _ = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
-		logger.LogFromContext(ctx).Debug("Service.Shorten Put Error",
-			zap.Error(err))
-		return shortening, err
 	}
 
-	shortening.ShortURL, err = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
 	if err != nil {
-		logger.LogFromContext(ctx).Debug("Service.Shorten Join Path Error",
-			zap.String("BaseURL", config.FlagsFromContext(ctx).BaseURL),
-			zap.String("ShortURL", shortening.ShortURL),
+		logger.LogFromContext(ctx).Debug("Service.Shorten Put Error",
 			zap.Error(err))
 		return shortening, err
 	}
