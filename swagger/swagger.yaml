@@ -1,0 +1,11 @@
+basePath: /
+host: localhost:8080
+info:
+  contact: {}
+  description: Shorting URL API
+  title: shortener-url API
+  version: "1.0"
+paths: {}
+schemes:
+- http
+swagger: "2.0"

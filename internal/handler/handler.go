@@ -57,13 +57,11 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 
 	if err != nil {
 		if errors.Is(err, userErr.ErrorDuplicateURL) {
-			//return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusConflict)
 			return echoCtx.String(http.StatusConflict, shortenURL.ShortURL)
 		}
 		return echoCtx.String(http.StatusBadRequest, err.Error())
 	}
 
-	//return parse.SetResponse(s.ctx, echoCtx, shortenURL.ShortURL, http.StatusCreated)
 	return echoCtx.String(http.StatusCreated, shortenURL.ShortURL)
 }
 
@@ -72,7 +70,7 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 // @ID shorten-json
 // @Accept json
 // @Produce json
-// @Param input body model.Shorten true "URL for shortening"
+// @Param input body dto.Shorten true "URL for shortening"
 // @Success 201 {integer} integer 1
 // @Failure 400 {integer} integer 1
 // @Router /api/shorten [post]
@@ -99,6 +97,15 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 	return echoCtx.JSON(http.StatusCreated, dto.ShortenOutput{Result: shortenURL.ShortURL})
 }
 
+// HandleShortenBatch ( @Summary ShortenBatch
+// @Description Short list of URLs in json format
+// @ID shorten-batch-json
+// @Accept json
+// @Produce json
+// @Param input body dto.ShortenListInput true "URL for shortening"
+// @Success 307 {integer} integer 1
+// @Failure 400 {integer} integer 1
+// @Router /api/shorten/batch [post]
 func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 	if echoCtx.Request().Method != http.MethodPost {
 		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
@@ -164,11 +171,15 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 	return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
 }
 
+// HandlePing ( @Summary Ping
+// @Description Ping Database for check connection
+// @ID ping
+// @Accept text/plain
+// @Produce text/plain; charset=utf-8
+// @Success 200 {integer} integer 1
+// @Failure 500 {integer} integer 1
+// @Router /ping [get]
 func (s Handler) HandlePing(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodGet {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
-
 	flags := config.FlagsFromContext(s.ctx)
 	db, err := sql.Open("pgx", flags.DataBaseDsn)
 	if err != nil {
@@ -179,6 +190,14 @@ func (s Handler) HandlePing(echoCtx echo.Context) error {
 	return validate.AddMessageOK(s.ctx, echoCtx, "", http.StatusOK, 0)
 }
 
+// HandleUserUrls ( @Summary UserURLS
+// @Description Retrive all short URLS for user
+// @ID user-urls-json
+// @Accept json
+// @Produce json
+// @Success 307 {integer} integer 1
+// @Failure 400 {integer} integer 1
+// @Router /api/user/urls [get]
 func (s Handler) HandleUserUrls(echoCtx echo.Context) error {
 	if echoCtx.Request().Method != http.MethodGet {
 		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
@@ -212,6 +231,14 @@ func (s Handler) HandleUserUrls(echoCtx echo.Context) error {
 	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
 }
 
+// HandleUserUrlsDelete ( @Summary UserURLSDelete
+// @Description Delete all short URLS for user
+// @ID user-urls-json
+// @Accept json
+// @Produce json
+// @Success 202 {integer} integer 1
+// @Failure 400 {integer} integer 1
+// @Router /api/user/urls [delete]
 func (s Handler) HandleUserUrlsDelete(echoCtx echo.Context) error {
 	if echoCtx.Request().Method != http.MethodDelete {
 		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)

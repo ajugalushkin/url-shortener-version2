@@ -10,8 +10,9 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"go.uber.org/zap"
 
+	_ "github.com/ajugalushkin/url-shortener-version2/swagger"
+
 	"github.com/ajugalushkin/url-shortener-version2/config"
-	_ "github.com/ajugalushkin/url-shortener-version2/docs"
 	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
@@ -19,6 +20,9 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
 )
 
+// Run является основным местом запуска сервиса.
+// В методе происходит инициализация контекста, логгера и
+// происходит привязка обработчиков к запросам.
 func Run(ctx context.Context) error {
 	flags := config.FlagsFromContext(ctx)
 
