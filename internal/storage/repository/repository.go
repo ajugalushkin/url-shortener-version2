@@ -3,19 +3,21 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"strconv"
+	"sync"
+
 	"github.com/Masterminds/squirrel"
-	"github.com/ajugalushkin/url-shortener-version2/internal/database"
-	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
-	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
-	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"strconv"
-	"sync"
+
+	"github.com/ajugalushkin/url-shortener-version2/internal/database"
+	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
+	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 )
 
 func NewRepository(db *sqlx.DB) *Repo {

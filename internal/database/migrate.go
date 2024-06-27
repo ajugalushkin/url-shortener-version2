@@ -6,8 +6,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/ajugalushkin/url-shortener-version2/migrations"
 	"github.com/pressly/goose/v3"
+
+	"github.com/ajugalushkin/url-shortener-version2/migrations"
 )
 
 func Migrate(dataSourceName string) {

@@ -2,15 +2,17 @@ package service
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"strconv"
 
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"go.uber.org/zap"
+
+	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/shorten"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 type PutGetter interface {
@@ -31,12 +33,18 @@ func NewService(storage PutGetter) *Service {
 
 func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Shortening, error) {
 	var (
-		id         = uuid.New().ID()
 		identifier = input.ShortURL
 	)
+
+	logger.LogFromContext(ctx).Debug("Service.Shorten",
+		zap.String("Origin URL", input.OriginalURL))
+
 	if identifier == "" {
-		identifier = shorten.Shorten(id)
+		identifier = shorten.Shorten(input.OriginalURL)
 	}
+
+	logger.LogFromContext(ctx).Debug("Service.Shorten",
+		zap.String("Short URL", identifier))
 
 	newShortening := dto.Shortening{
 		ShortURL:      identifier,
@@ -47,12 +55,19 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 	}
 
 	shortening, err := s.storage.Put(ctx, newShortening)
-	shortening.ShortURL, _ = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
+
+	if errors.Is(err, userErr.ErrorDuplicateURL) || shortening != nil {
+		shortening.ShortURL, _ = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
+	}
 
 	if err != nil {
+		logger.LogFromContext(ctx).Debug("Service.Shorten Put Error",
+			zap.Error(err))
 		return shortening, err
 	}
 
+	logger.LogFromContext(ctx).Debug("Service.Shorten Ok",
+		zap.String("Shorten URL", shortening.ShortURL))
 	return shortening, nil
 }
 
@@ -60,7 +75,7 @@ func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (
 	var shorteningList dto.ShorteningList
 	for _, item := range input {
 		newShortening := dto.Shortening{
-			ShortURL:      shorten.Shorten(uuid.New().ID()),
+			ShortURL:      shorten.Shorten(item.OriginalURL),
 			OriginalURL:   item.OriginalURL,
 			CorrelationID: item.CorrelationID,
 		}

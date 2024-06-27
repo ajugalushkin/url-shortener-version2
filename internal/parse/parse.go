@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"github.com/labstack/echo/v4"
+
+	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
-	"github.com/labstack/echo/v4"
 )
 
 func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
@@ -36,27 +37,6 @@ func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
 	}
 
 	return parseURL, nil
-}
-
-func SetResponse(ctx context.Context, echoCtx echo.Context, parseURL string, httpStatus int) error {
-	contentType := echoCtx.Request().Header.Get(echo.HeaderContentType)
-
-	echoCtx.Response().Header().Set(echo.HeaderContentType, contentType)
-	echoCtx.Response().Status = httpStatus
-
-	var newBody []byte
-	if contentType != echo.MIMEApplicationJSON {
-		newBody = []byte(parseURL)
-	} else {
-		shortenResult := dto.ShortenOutput{Result: parseURL}
-		newBody, _ = shortenResult.MarshalJSON()
-	}
-
-	sizeBody, err := echoCtx.Response().Write(newBody)
-	if err != nil {
-		return validate.AddError(ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
-	}
-	return validate.AddMessageOK(ctx, echoCtx, validate.URLSent, httpStatus, sizeBody)
 }
 
 func GetJSONDataFromBatch(ctx context.Context, echoCtx echo.Context) (dto.ShortenListInput, error) {
