@@ -8,32 +8,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage/inmemory"
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-// import (
-//
-//	"bytes"
-//	"compress/gzip"
-//	"github.com/ajugalushkin/url-shortener-version2/internal/config"
-//	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
-//	"github.com/ajugalushkin/url-shortener-version2/internal/model"
-//	"github.com/ajugalushkin/url-shortener-version2/internal/service"
-//	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
-//	"github.com/labstack/echo/v4"
-//	"github.com/stretchr/testify/assert"
-//	"github.com/stretchr/testify/require"
-//	"net/http"
-//	"net/http/httptest"
-//	"testing"
-//
-// )
 func TestGzipMiddleware(t *testing.T) {
 	requestBody := `https://practicum.yandex.ru/`
 

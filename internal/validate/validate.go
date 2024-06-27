@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+
+	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 )
 
 const (
