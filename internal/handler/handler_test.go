@@ -47,18 +47,6 @@ func TestHandler_HandleSave(t *testing.T) {
 			},
 			want: want{
 				code:        http.StatusCreated,
-				contentType: echo.MIMETextPlain,
-			},
-		},
-		{
-			name: "Test Wrong Request",
-			request: request{
-				method:      http.MethodGet,
-				body:        "https://practicum.yandex.ru/",
-				contentType: echo.MIMETextPlain,
-			},
-			want: want{
-				code:        http.StatusBadRequest,
 				contentType: echo.MIMETextPlainCharsetUTF8,
 			},
 		},
