@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// структура для root уровня.
 var (
 	rootCmd = &cobra.Command{
 		Use:   "cobra-cli",
@@ -13,10 +14,13 @@ var (
 	}
 )
 
+// Execute позволяет вызывать root.Execute из другого пакета.
 func Execute() error {
 	return rootCmd.Execute()
 }
 
+// init функция позволяет считать параметры запуска из флагов,
+// для чтения используется cobra + viper.
 func init() {
 	cobra.OnInitialize()
 

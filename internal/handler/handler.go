@@ -70,7 +70,7 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 // @ID shorten-json
 // @Accept json
 // @Produce json
-// @Param input body dto.Shorten true "URL for shortening"
+// @Param input body dto.ShortenInput true "URL for shortening"
 // @Success 201 {integer} integer 1
 // @Failure 400 {integer} integer 1
 // @Router /api/shorten [post]

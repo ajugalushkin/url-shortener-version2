@@ -1,11 +1,148 @@
-basePath: /
-host: localhost:8080
+definitions:
+  dto.ShortenInput:
+    properties:
+      url:
+        type: string
+    type: object
 info:
   contact: {}
-  description: Shorting URL API
-  title: shortener-url API
-  version: "1.0"
-paths: {}
-schemes:
-- http
+paths:
+  /:
+    get:
+      consumes:
+      - text/plain
+      description: Redirect to origin URL by short URL
+      operationId: redirect
+      produces:
+      - text/html; charset=utf-8
+      responses:
+        "307":
+          description: Temporary Redirect
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+    post:
+      consumes:
+      - text/plain
+      description: Short URL
+      operationId: shorten
+      produces:
+      - text/plain
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+  /api/shorten:
+    post:
+      consumes:
+      - application/json
+      description: Short URL in json format
+      operationId: shorten-json
+      parameters:
+      - description: URL for shortening
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ShortenInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+  /api/shorten/batch:
+    post:
+      consumes:
+      - application/json
+      description: Short list of URLs in json format
+      operationId: shorten-batch-json
+      parameters:
+      - description: URL for shortening
+        in: body
+        name: input
+        required: true
+        schema:
+          items:
+            properties:
+              correlation_id:
+                type: string
+              original_url:
+                type: string
+            type: object
+          type: array
+      produces:
+      - application/json
+      responses:
+        "307":
+          description: Temporary Redirect
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+  /api/user/urls:
+    delete:
+      consumes:
+      - application/json
+      description: Delete all short URLS for user
+      operationId: user-urls-json
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+    get:
+      consumes:
+      - application/json
+      description: Retrive all short URLS for user
+      operationId: user-urls-json
+      produces:
+      - application/json
+      responses:
+        "307":
+          description: Temporary Redirect
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+  /ping:
+    get:
+      consumes:
+      - text/plain
+      description: Ping Database for check connection
+      operationId: ping
+      produces:
+      - text/plain; charset=utf-8
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            type: integer
 swagger: "2.0"

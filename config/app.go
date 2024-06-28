@@ -11,6 +11,7 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/cmd"
 )
 
+// AppConfig структура параметров заауска.
 type AppConfig struct {
 	ServerAddress   string `env:"SERVER_ADDRESS"`
 	BaseURL         string `env:"BASE_URL"`
@@ -20,6 +21,7 @@ type AppConfig struct {
 	SecretKey       string `env:"SECRET_KEY"`
 }
 
+// init функция инициализации начальных значений для параметров запуска.
 func init() {
 	err := godotenv.Load("/docker/.env")
 	if err != nil {
@@ -34,6 +36,7 @@ func init() {
 	viper.SetDefault("Secret_Key", "")
 }
 
+// bindToEnv функция для маппинга полей из ENV с полями структуры.
 func bindToEnv() {
 	_ = viper.BindEnv("Server_Address")
 	_ = viper.BindEnv("Base_URL")
@@ -43,6 +46,7 @@ func bindToEnv() {
 	_ = viper.BindEnv("Secret_Key")
 }
 
+// ReadConfig функция для чтения конфига.
 func ReadConfig() *AppConfig {
 	bindToEnv()
 	err := cmd.Execute()
@@ -63,10 +67,12 @@ func ReadConfig() *AppConfig {
 
 type ctxConfig struct{}
 
+// ContextWithFlags функция позволяет сохранить конфиг в контекст.
 func ContextWithFlags(ctx context.Context, config *AppConfig) context.Context {
 	return context.WithValue(ctx, ctxConfig{}, config)
 }
 
+// FlagsFromContext функция позволяет получить конфиг из контекста.
 func FlagsFromContext(ctx context.Context) *AppConfig {
 	if config, ok := ctx.Value(ctxConfig{}).(*AppConfig); ok {
 		return config
