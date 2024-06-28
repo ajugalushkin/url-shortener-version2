@@ -11,14 +11,17 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 )
 
+// InMemory структура репозитория.
 type InMemory struct {
 	m sync.Map
 }
 
+// NewInMemory конструктор.
 func NewInMemory() *InMemory {
 	return &InMemory{}
 }
 
+// Put метод сохраняет данные в память.
 func (r *InMemory) Put(ctx context.Context, shortening dto.Shortening) (*dto.Shortening, error) {
 	if _, exists := r.m.Load(shortening.ShortURL); exists {
 		err := errors.New("identifier already exists")
@@ -33,6 +36,7 @@ func (r *InMemory) Put(ctx context.Context, shortening dto.Shortening) (*dto.Sho
 	return &shortening, nil
 }
 
+// PutList метод сохраняет список данных в память.
 func (r *InMemory) PutList(ctx context.Context, list dto.ShorteningList) error {
 	for _, shortening := range list {
 		_, err := r.Put(ctx, shortening)
@@ -43,6 +47,7 @@ func (r *InMemory) PutList(ctx context.Context, list dto.ShorteningList) error {
 	return nil
 }
 
+// Get метод позволяет получить данные по короткому URL
 func (r *InMemory) Get(ctx context.Context, identifier string) (*dto.Shortening, error) {
 	v, ok := r.m.Load(identifier)
 	if !ok {
@@ -54,6 +59,7 @@ func (r *InMemory) Get(ctx context.Context, identifier string) (*dto.Shortening,
 	return &shortening, nil
 }
 
+// GetListByUser метод позволяет получить список URL для конкретного пользователя
 func (r *InMemory) GetListByUser(ctx context.Context, userID string) (*dto.ShorteningList, error) {
 	list := dto.ShorteningList{}
 	r.m.Range(func(k, v interface{}) bool {
@@ -66,6 +72,7 @@ func (r *InMemory) GetListByUser(ctx context.Context, userID string) (*dto.Short
 	return &list, nil
 }
 
+// DeleteUserURL метод позволяет удалить список URL для конкретного пользователя
 func (r *InMemory) DeleteUserURL(ctx context.Context, shortURL []string, userID int) {
 	for _, value := range shortURL {
 		v, ok := r.m.Load(value)

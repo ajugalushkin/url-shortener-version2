@@ -20,12 +20,14 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 )
 
+// NewRepository Конструктор
 func NewRepository(db *sqlx.DB) *Repo {
 	return &Repo{
 		db: db,
 	}
 }
 
+// Repo структура репозитория
 type Repo struct {
 	db *sqlx.DB
 }
