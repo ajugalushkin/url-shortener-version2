@@ -30,6 +30,7 @@ type Repo struct {
 	db *sqlx.DB
 }
 
+// Put метод сохраняет данные URL в базу данных.
 func (r *Repo) Put(ctx context.Context, shorteningInput dto.Shortening) (*dto.Shortening, error) {
 	var err error
 	err = database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
@@ -62,6 +63,7 @@ func (r *Repo) Put(ctx context.Context, shorteningInput dto.Shortening) (*dto.Sh
 	return &shorteningInput, nil
 }
 
+// Get метод позволяет получить оригинальный URL по сокращенному.
 func (r *Repo) Get(ctx context.Context, shortURL string) (*dto.Shortening, error) {
 	var shorteningList []dto.Shortening
 
@@ -94,6 +96,7 @@ func (r *Repo) Get(ctx context.Context, shortURL string) (*dto.Shortening, error
 	return &shortening, nil
 }
 
+// GetByURL метод позволяет получить данные URL по оригинальному URL.
 func (r *Repo) GetByURL(ctx context.Context, originURL string) (*dto.Shortening, error) {
 	var shorteningList []dto.Shortening
 
@@ -129,6 +132,7 @@ func (r *Repo) GetByURL(ctx context.Context, originURL string) (*dto.Shortening,
 	return &shortening, nil
 }
 
+// PutList метод позволяет сохранить список URL в базу данных.
 func (r *Repo) PutList(ctx context.Context, list dto.ShorteningList) error {
 	var err error
 	err = database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
@@ -158,6 +162,7 @@ func (r *Repo) PutList(ctx context.Context, list dto.ShorteningList) error {
 	return nil
 }
 
+// GetListByUser метод получает все сокращенные URL для конкретного пользователя.
 func (r *Repo) GetListByUser(ctx context.Context, userID string) (*dto.ShorteningList, error) {
 	var shorteningList dto.ShorteningList
 
@@ -188,6 +193,7 @@ func (r *Repo) GetListByUser(ctx context.Context, userID string) (*dto.Shortenin
 	return &shorteningList, nil
 }
 
+// DeleteUserURL метод удаляет все сокращенные URL для конкретного пользователя.
 func (r *Repo) DeleteUserURL(ctx context.Context, shortList []string, userID int) {
 	doneCh := make(chan struct{})
 	defer close(doneCh)
@@ -230,6 +236,7 @@ func (r *Repo) DeleteUserURL(ctx context.Context, shortList []string, userID int
 	}
 }
 
+// prepareList функция реализует Fan-Out позволяет передавать входящий список URL в список каналов.
 func prepareList(doneCh chan struct{}, input []string) <-chan string {
 	inputCh := make(chan string)
 
@@ -248,6 +255,7 @@ func prepareList(doneCh chan struct{}, input []string) <-chan string {
 	return inputCh
 }
 
+// searchURLs метод используется для поиска данных URL, используется в рамках Fan-Out
 func (r *Repo) searchURLs(ctx context.Context, doneCh chan struct{}, inputCh <-chan string) <-chan *dto.Shortening {
 	addRes := make(chan *dto.Shortening)
 
@@ -267,6 +275,7 @@ func (r *Repo) searchURLs(ctx context.Context, doneCh chan struct{}, inputCh <-c
 	return addRes
 }
 
+// split метод реализует Fan-Out позволяет назначмть воркеров для обработки входящих данных через канал.
 func (r *Repo) split(ctx context.Context, doneCh chan struct{}, inputCh <-chan string) []<-chan *dto.Shortening {
 	numWorkers := 100
 	channels := make([]<-chan *dto.Shortening, numWorkers)
@@ -279,6 +288,7 @@ func (r *Repo) split(ctx context.Context, doneCh chan struct{}, inputCh <-chan s
 	return channels
 }
 
+// merge функция реализует Fan-In позволяет получить итоговый результат из канала.
 func merge(doneCh chan struct{}, resultChs ...<-chan *dto.Shortening) <-chan *dto.Shortening {
 	finalCh := make(chan *dto.Shortening)
 
