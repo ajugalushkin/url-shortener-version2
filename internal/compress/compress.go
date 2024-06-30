@@ -10,14 +10,17 @@ import (
 )
 
 type (
+	// Skipper функция для пропуска сжатия для swagger.
 	Skipper func(c echo.Context) bool
 
+	// GzipConfig структура для пропуска сжатия для swagger.
 	GzipConfig struct {
 		Skipper Skipper
 	}
 )
 
 var (
+	// DefaultGzipConfig структура по умолчанию для отключения сжатия.
 	DefaultGzipConfig = GzipConfig{
 		Skipper: func(c echo.Context) bool {
 			return false
@@ -25,11 +28,13 @@ var (
 	}
 )
 
+// compressWriter структура компрессии.
 type compressWriter struct {
 	w  http.ResponseWriter
 	zw *gzip.Writer
 }
 
+// newCompressWriter конструктор.
 func newCompressWriter(w http.ResponseWriter) *compressWriter {
 	return &compressWriter{
 		w:  w,
@@ -37,14 +42,17 @@ func newCompressWriter(w http.ResponseWriter) *compressWriter {
 	}
 }
 
+// Header реализация вызова Header.
 func (c *compressWriter) Header() http.Header {
 	return c.w.Header()
 }
 
+// Write запись.
 func (c *compressWriter) Write(p []byte) (int, error) {
 	return c.zw.Write(p)
 }
 
+// WriteHeader запись заголовка.
 func (c *compressWriter) WriteHeader(statusCode int) {
 	if statusCode < 300 {
 		c.w.Header().Set("Content-Encoding", "gzip")
@@ -64,6 +72,7 @@ type compressReader struct {
 	zr *gzip.Reader
 }
 
+// newCompressReader конструктор.
 func newCompressReader(r io.ReadCloser) (*compressReader, error) {
 	zr, err := gzip.NewReader(r)
 	if err != nil {
@@ -76,10 +85,12 @@ func newCompressReader(r io.ReadCloser) (*compressReader, error) {
 	}, nil
 }
 
+// Read чтение.
 func (c compressReader) Read(p []byte) (n int, err error) {
 	return c.zr.Read(p)
 }
 
+// Close закрытие.
 func (c *compressReader) Close() error {
 	if err := c.r.Close(); err != nil {
 		return err
@@ -91,6 +102,7 @@ func Gzip() echo.MiddlewareFunc {
 	return GzipWithConfig(DefaultGzipConfig)
 }
 
+// GzipWithConfig функция middleware
 func GzipWithConfig(config GzipConfig) echo.MiddlewareFunc {
 	if config.Skipper == nil {
 		config.Skipper = DefaultGzipConfig.Skipper
