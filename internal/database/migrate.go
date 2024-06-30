@@ -11,6 +11,7 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/migrations"
 )
 
+// Migrate функция запускает миграцию
 func Migrate(dataSourceName string) {
 	db, err := sql.Open("pgx", dataSourceName)
 	if err != nil {

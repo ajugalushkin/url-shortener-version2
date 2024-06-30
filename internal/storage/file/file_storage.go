@@ -12,16 +12,19 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 )
 
+// Storage структура репозитория.
 type Storage struct {
 	m sync.Map
 }
 
+// NewStorage конструктор.
 func NewStorage(path string) *Storage {
 	storage := Storage{}
 	_ = load(&storage.m, path)
 	return &storage
 }
 
+// Put метод сохраняет данные в файл.
 func (r *Storage) Put(ctx context.Context, shortening dto.Shortening) (*dto.Shortening, error) {
 	if _, exists := r.m.Load(shortening.ShortURL); exists {
 		return nil, errors.New("identifier already exists")
@@ -38,6 +41,7 @@ func (r *Storage) Put(ctx context.Context, shortening dto.Shortening) (*dto.Shor
 	return &shortening, nil
 }
 
+// PutList метод сохраняет список данных в файл.
 func (r *Storage) PutList(ctx context.Context, list dto.ShorteningList) error {
 	for _, shortening := range list {
 		_, err := r.Put(ctx, shortening)
@@ -48,6 +52,7 @@ func (r *Storage) PutList(ctx context.Context, list dto.ShorteningList) error {
 	return nil
 }
 
+// Get метод получает данные по сокращенному URL.
 func (r *Storage) Get(ctx context.Context, identifier string) (*dto.Shortening, error) {
 	v, ok := r.m.Load(identifier)
 	if !ok {
@@ -59,13 +64,16 @@ func (r *Storage) Get(ctx context.Context, identifier string) (*dto.Shortening, 
 	return &shortening, nil
 }
 
+// GetListByUser метод позволяет получить список URL для конкретного пользователя.
 func (r *Storage) GetListByUser(ctx context.Context, userID string) (*dto.ShorteningList, error) {
 	return &dto.ShorteningList{}, nil
 }
 
+// DeleteUserURL метод позволяет удалить список URL для конкретного пользователя.
 func (r *Storage) DeleteUserURL(ctx context.Context, shortURL []string, userID int) {
 }
 
+// save функция сохраняет файл.
 func save(fileName string, urls *sync.Map) error {
 	var byteFile []byte
 	urls.Range(func(k, v interface{}) bool {
@@ -97,6 +105,7 @@ func save(fileName string, urls *sync.Map) error {
 	return os.WriteFile(fileName, byteFile, 0666)
 }
 
+// load функция загружает файл.
 func load(files *sync.Map, fileName string) error {
 	data, err := os.ReadFile(fileName)
 	if err != nil {
