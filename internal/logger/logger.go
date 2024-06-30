@@ -8,12 +8,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// ctxLogger структура контекста
 type ctxLogger struct{}
 
+// ContextWithLogger функция сохраняет логгер в контекст
 func ContextWithLogger(ctx context.Context, logger *zap.Logger) context.Context {
 	return context.WithValue(ctx, ctxLogger{}, logger)
 }
 
+// LogFromContext функция получает логгер из контекста.
 func LogFromContext(ctx context.Context) *zap.Logger {
 	if logger, ok := ctx.Value(ctxLogger{}).(*zap.Logger); ok {
 		return logger
@@ -21,6 +24,7 @@ func LogFromContext(ctx context.Context) *zap.Logger {
 	return zap.L()
 }
 
+// Initialize функция инициализации
 func Initialize(level string) (*zap.Logger, error) {
 	lvl, err := zap.ParseAtomicLevel(level)
 	if err != nil {
@@ -38,6 +42,7 @@ func Initialize(level string) (*zap.Logger, error) {
 	return zl, nil
 }
 
+// MiddlewareLogger функция middleware
 func MiddlewareLogger(ctx context.Context) func(echo.HandlerFunc) echo.HandlerFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		fn := func(context echo.Context) error {

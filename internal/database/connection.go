@@ -6,6 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// NewConnection функция для получения соединения с базой данных
 func NewConnection(driver, dsn string) (*sqlx.DB, error) {
 	db, err := sqlx.Open(driver, dsn)
 	if err != nil {

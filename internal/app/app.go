@@ -2,21 +2,27 @@ package app
 
 import (
 	"context"
-	_ "github.com/ajugalushkin/url-shortener-version2/docs"
+	"net/http"
+	_ "net/http/pprof"
+	"strings"
+
+	"github.com/labstack/echo/v4"
+	echoSwagger "github.com/swaggo/echo-swagger"
+	"go.uber.org/zap"
+
+	_ "github.com/ajugalushkin/url-shortener-version2/swagger"
+
+	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
-	"github.com/labstack/echo/v4"
-	echoSwagger "github.com/swaggo/echo-swagger"
-	"go.uber.org/zap"
-	"net/http"
-	_ "net/http/pprof"
-	"strings"
 )
 
+// Run является основным местом запуска сервиса.
+// В методе происходит инициализация контекста, логгера и
+// происходит привязка обработчиков к запросам.
 func Run(ctx context.Context) error {
 	flags := config.FlagsFromContext(ctx)
 
@@ -56,8 +62,8 @@ func Run(ctx context.Context) error {
 	// Регистрация pprof-обработчиков
 	server.GET("/debug/*", echo.WrapHandler(http.DefaultServeMux))
 
-	log.Info("Running server", zap.String("address", flags.RunAddr))
-	err = server.Start(flags.RunAddr)
+	log.Info("Running server", zap.String("address", flags.ServerAddress))
+	err = server.Start(flags.ServerAddress)
 	if err != nil {
 		return err
 	}
