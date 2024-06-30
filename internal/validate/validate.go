@@ -11,6 +11,7 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 )
 
+// блок констант
 const (
 	WrongTypeRequest = "Wrong type request"
 	URLParseError    = "URL parse error"
@@ -25,6 +26,7 @@ const (
 	Size   = "size"
 )
 
+// AddError функция добавления ошибки
 func AddError(ctx context.Context, echoCtx echo.Context, message string, httpStatus int, size int) error {
 	log := logger.LogFromContext(ctx)
 	log.Debug(message,
@@ -35,6 +37,7 @@ func AddError(ctx context.Context, echoCtx echo.Context, message string, httpSta
 	return echoCtx.String(httpStatus, message)
 }
 
+// AddMessageOK функция добавления сообщения
 func AddMessageOK(ctx context.Context, echoCtx echo.Context, message string, httpStatus int, size int) error {
 	log := logger.LogFromContext(ctx)
 	log.Debug(message,
@@ -45,6 +48,7 @@ func AddMessageOK(ctx context.Context, echoCtx echo.Context, message string, htt
 	return echoCtx.String(httpStatus, "")
 }
 
+// Redirect функция редиректа
 func Redirect(ctx context.Context, echoCtx echo.Context, redirect string) error {
 	log := logger.LogFromContext(ctx)
 	log.Debug(URLSent,

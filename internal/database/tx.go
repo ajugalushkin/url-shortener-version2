@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// WithTxFunc описание функции.
 type WithTxFunc func(ctx context.Context, tx *sqlx.Tx) error
 
 // WithTx функция реализует логику транзакции

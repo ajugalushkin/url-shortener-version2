@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// описание типов
 type (
 	// Skipper функция для пропуска сжатия для swagger.
 	Skipper func(c echo.Context) bool
@@ -19,6 +20,7 @@ type (
 	}
 )
 
+// объявление переменных
 var (
 	// DefaultGzipConfig структура по умолчанию для отключения сжатия.
 	DefaultGzipConfig = GzipConfig{
@@ -98,6 +100,7 @@ func (c *compressReader) Close() error {
 	return c.zr.Close()
 }
 
+// Gzip объявление функции middleware
 func Gzip() echo.MiddlewareFunc {
 	return GzipWithConfig(DefaultGzipConfig)
 }

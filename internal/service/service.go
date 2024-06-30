@@ -15,6 +15,7 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/shorten"
 )
 
+// PutGetter интерфейс для хранилища
 type PutGetter interface {
 	Put(ctx context.Context, shortening dto.Shortening) (*dto.Shortening, error)
 	Get(ctx context.Context, shortURL string) (*dto.Shortening, error)
@@ -23,14 +24,17 @@ type PutGetter interface {
 	DeleteUserURL(ctx context.Context, shortURL []string, userID int)
 }
 
+// Service структура сервиса
 type Service struct {
 	storage PutGetter
 }
 
+// NewService конструктор
 func NewService(storage PutGetter) *Service {
 	return &Service{storage: storage}
 }
 
+// Shorten метод для получения сокращенного URL
 func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Shortening, error) {
 	var (
 		identifier = input.ShortURL
@@ -71,6 +75,7 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 	return shortening, nil
 }
 
+// ShortenList метод для получения сокращения списка URL
 func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (*dto.ShorteningList, error) {
 	var shorteningList dto.ShorteningList
 	for _, item := range input {
@@ -91,6 +96,7 @@ func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (
 	return &shorteningList, nil
 }
 
+// Redirect метод для перенаправления
 func (s *Service) Redirect(ctx context.Context, identifier string) (*dto.Shortening, error) {
 	log := logger.LogFromContext(ctx)
 
@@ -102,6 +108,7 @@ func (s *Service) Redirect(ctx context.Context, identifier string) (*dto.Shorten
 	return shortening, nil
 }
 
+// GetUserURLS метод для получения списка URL для конкретного пользователя.
 func (s *Service) GetUserURLS(ctx context.Context, userID int) (*dto.ShorteningList, error) {
 	log := logger.LogFromContext(ctx)
 
@@ -113,6 +120,7 @@ func (s *Service) GetUserURLS(ctx context.Context, userID int) (*dto.ShorteningL
 	return shortening, nil
 }
 
+// DeleteUserURL метод для удаления списка URL для конкретного пользователя.
 func (s *Service) DeleteUserURL(ctx context.Context, shortURL []string, userID int) {
 	s.storage.DeleteUserURL(ctx, shortURL, userID)
 }

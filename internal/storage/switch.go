@@ -14,6 +14,7 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage/repository"
 )
 
+// GetStorage функция определяет инстанцию хранилища в зависимости от конфигурации.
 func GetStorage(ctx context.Context) service.PutGetter {
 	flags := config.FlagsFromContext(ctx)
 	log := logger.LogFromContext(ctx)

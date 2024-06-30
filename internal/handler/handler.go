@@ -21,11 +21,13 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
 )
 
+// Handler структура Handler
 type Handler struct {
 	ctx     context.Context
 	servAPI *service.Service
 }
 
+// NewHandler конструктор
 func NewHandler(ctx context.Context, servAPI *service.Service) *Handler {
 	return &Handler{
 		ctx:     ctx,

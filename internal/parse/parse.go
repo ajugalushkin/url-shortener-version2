@@ -13,6 +13,7 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
 )
 
+// GetURL получение URL из контекста
 func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
 	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil {
@@ -39,6 +40,7 @@ func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
 	return parseURL, nil
 }
 
+// GetJSONDataFromBatch получение данных из контекста.
 func GetJSONDataFromBatch(ctx context.Context, echoCtx echo.Context) (dto.ShortenListInput, error) {
 	var shortList dto.ShortenListInput
 
@@ -55,6 +57,7 @@ func GetJSONDataFromBatch(ctx context.Context, echoCtx echo.Context) (dto.Shorte
 	return shortList, nil
 }
 
+// SetJSONDataToBody внесение данных в контекст.
 func SetJSONDataToBody(ctx context.Context, echoCtx echo.Context, list *dto.ShorteningList) ([]byte, error) {
 	var shortenListOut dto.ShortenListOutput
 	flag := config.FlagsFromContext(ctx)
@@ -77,6 +80,7 @@ func SetJSONDataToBody(ctx context.Context, echoCtx echo.Context, list *dto.Shor
 	return newBody, nil
 }
 
+// SetUserURLSToBody внесение данных в контекст.
 func SetUserURLSToBody(ctx context.Context, echoCtx echo.Context, list *dto.ShorteningList) ([]byte, error) {
 	var shortenListOut dto.UserURLList
 	flag := config.FlagsFromContext(ctx)

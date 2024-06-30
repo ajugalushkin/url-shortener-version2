@@ -13,12 +13,13 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/config"
 )
 
-// Claims структура для генерации токена
+// Claims структура для генерации токена.
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID int
 }
 
+// TokenExp храним срок истечения токена.
 const TokenExp = time.Hour * 3
 
 // buildJWTString функция генерации токена
