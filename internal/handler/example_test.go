@@ -29,5 +29,8 @@ func ExampleRedirectHandler() {
 	}
 
 	handler := NewHandler(ctx, service.NewService(storageAPI))
-	handler.HandleRedirect(echoCtx)
+	err = handler.HandleRedirect(echoCtx)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
 }
