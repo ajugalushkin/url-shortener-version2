@@ -7,9 +7,10 @@ toolchain go1.22.3
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/brianvoe/gofakeit/v7 v7.0.4
+	github.com/fatih/errwrap v1.6.0
 	github.com/go-resty/resty/v2 v2.13.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
-	github.com/hrharder/go-gas v1.0.1
+	github.com/gordonklaus/ineffassign v0.1.0
 	github.com/itchyny/base58-go v0.2.2
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgx/v5 v5.5.5
@@ -68,7 +69,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.24.0 // indirect
 	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20221208152030-732eee02a75a // indirect
+	golang.org/x/exp/typeparams v0.0.0-20240213143201-ec583247a57a // indirect
 	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect

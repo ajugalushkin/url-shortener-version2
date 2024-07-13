@@ -1,10 +1,12 @@
-package staticlint
+package main
 
 import (
 	"encoding/json"
 	"os"
 	"path/filepath"
 
+	"github.com/fatih/errwrap/errwrap"
+	"github.com/gordonklaus/ineffassign/pkg/ineffassign"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/multichecker"
 	"golang.org/x/tools/go/analysis/passes/asmdecl"
@@ -30,6 +32,8 @@ import (
 	"golang.org/x/tools/go/analysis/passes/unsafeptr"
 	"golang.org/x/tools/go/analysis/passes/unusedresult"
 	"honnef.co/go/tools/staticcheck"
+
+	"github.com/ajugalushkin/url-shortener-version2/checks/osexitcheck"
 )
 
 // Config — имя файла конфигурации.
@@ -55,7 +59,7 @@ func main() {
 	}
 
 	mychecks := []*analysis.Analyzer{
-		//ErrCheckAnalyzer,
+		// стандартные статические анализаторы пакета passes
 		asmdecl.Analyzer,
 		assign.Analyzer,
 		atomic.Analyzer,
@@ -78,6 +82,13 @@ func main() {
 		unsafeptr.Analyzer,
 		unusedresult.Analyzer,
 		shadow.Analyzer,
+
+		// публичные анализаторы
+		ineffassign.Analyzer,
+		errwrap.Analyzer,
+
+		// Кастомный линтер, проверяем на вызова os.Exit в main
+		osexitcheck.Analyzer,
 	}
 
 	checks := make(map[string]bool)
