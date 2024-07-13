@@ -10,9 +10,10 @@ import (
 
 // Analyzer структура анализатора
 var Analyzer = &analysis.Analyzer{
-	Name: "osexitlint",
-	Doc:  "prohibiting the use of a direct call to os.Exit",
-	Run:  run,
+	Name:     "osexitlint",
+	Doc:      "prohibiting the use of a direct call to os.Exit",
+	Run:      run,
+	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
 // run функция анализатора
@@ -40,7 +41,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		return false
 	}
 
-	i := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	inspector := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	nodeFilter := []ast.Node{
 		(*ast.File)(nil),
 		(*ast.FuncDecl)(nil),
@@ -49,7 +50,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 	mainInspecting := false
 
-	i.Preorder(nodeFilter, func(n ast.Node) {
+	inspector.Preorder(nodeFilter, func(n ast.Node) {
 		switch x := n.(type) {
 		case *ast.File:
 			// если пакет не main выходим
