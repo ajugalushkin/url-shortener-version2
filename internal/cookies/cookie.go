@@ -3,21 +3,26 @@ package cookies
 import (
 	"context"
 	"crypto/rand"
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/labstack/echo/v4"
 	"math/big"
 	"net/http"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/labstack/echo/v4"
+
+	"github.com/ajugalushkin/url-shortener-version2/config"
 )
 
+// Claims структура для генерации токена.
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID int
 }
 
+// TokenExp храним срок истечения токена.
 const TokenExp = time.Hour * 3
 
+// buildJWTString функция генерации токена
 func buildJWTString(ctx context.Context) (string, error) {
 	flags := config.FlagsFromContext(ctx)
 
@@ -42,6 +47,7 @@ func buildJWTString(ctx context.Context) (string, error) {
 	return tokenString, nil
 }
 
+// GetUserID функция для получения пользователя из токена
 func GetUserID(ctx context.Context, tokenString string) int {
 	flags := config.FlagsFromContext(ctx)
 	claims := &Claims{}
@@ -55,6 +61,7 @@ func GetUserID(ctx context.Context, tokenString string) int {
 	return claims.UserID
 }
 
+// createCookie функция для создания куки
 func createCookie(ctx context.Context, nameCookie string) *http.Cookie {
 	cookie := new(http.Cookie)
 	cookie.Name = nameCookie
@@ -63,12 +70,14 @@ func createCookie(ctx context.Context, nameCookie string) *http.Cookie {
 	return cookie
 }
 
+// Write функция записывает куки в контекст
 func Write(ctx context.Context, echoCtx echo.Context, nameCookie string) string {
 	cookie := createCookie(ctx, nameCookie)
 	echoCtx.SetCookie(cookie)
 	return cookie.Value
 }
 
+// Read функция читает куки из контекста
 func Read(echoCtx echo.Context, name string) (string, error) {
 	cookie, err := echoCtx.Cookie(name)
 	if err != nil {

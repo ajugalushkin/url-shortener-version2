@@ -2,17 +2,20 @@ package service
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"strconv"
 
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"go.uber.org/zap"
+
+	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/shorten"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
+// PutGetter интерфейс для хранилища
 type PutGetter interface {
 	Put(ctx context.Context, shortening dto.Shortening) (*dto.Shortening, error)
 	Get(ctx context.Context, shortURL string) (*dto.Shortening, error)
@@ -21,22 +24,31 @@ type PutGetter interface {
 	DeleteUserURL(ctx context.Context, shortURL []string, userID int)
 }
 
+// Service структура сервиса
 type Service struct {
 	storage PutGetter
 }
 
+// NewService конструктор
 func NewService(storage PutGetter) *Service {
 	return &Service{storage: storage}
 }
 
+// Shorten метод для получения сокращенного URL
 func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Shortening, error) {
 	var (
-		id         = uuid.New().ID()
 		identifier = input.ShortURL
 	)
+
+	logger.LogFromContext(ctx).Debug("Service.Shorten",
+		zap.String("Origin URL", input.OriginalURL))
+
 	if identifier == "" {
-		identifier = shorten.Shorten(id)
+		identifier = shorten.Shorten(input.OriginalURL)
 	}
+
+	logger.LogFromContext(ctx).Debug("Service.Shorten",
+		zap.String("Short URL", identifier))
 
 	newShortening := dto.Shortening{
 		ShortURL:      identifier,
@@ -47,20 +59,28 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 	}
 
 	shortening, err := s.storage.Put(ctx, newShortening)
-	shortening.ShortURL, _ = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
+
+	if errors.Is(err, userErr.ErrorDuplicateURL) || shortening != nil {
+		shortening.ShortURL, _ = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
+	}
 
 	if err != nil {
+		logger.LogFromContext(ctx).Debug("Service.Shorten Put Error",
+			zap.Error(err))
 		return shortening, err
 	}
 
+	logger.LogFromContext(ctx).Debug("Service.Shorten Ok",
+		zap.String("Shorten URL", shortening.ShortURL))
 	return shortening, nil
 }
 
+// ShortenList метод для получения сокращения списка URL
 func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (*dto.ShorteningList, error) {
 	var shorteningList dto.ShorteningList
 	for _, item := range input {
 		newShortening := dto.Shortening{
-			ShortURL:      shorten.Shorten(uuid.New().ID()),
+			ShortURL:      shorten.Shorten(item.OriginalURL),
 			OriginalURL:   item.OriginalURL,
 			CorrelationID: item.CorrelationID,
 		}
@@ -76,6 +96,7 @@ func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (
 	return &shorteningList, nil
 }
 
+// Redirect метод для перенаправления
 func (s *Service) Redirect(ctx context.Context, identifier string) (*dto.Shortening, error) {
 	log := logger.LogFromContext(ctx)
 
@@ -87,6 +108,7 @@ func (s *Service) Redirect(ctx context.Context, identifier string) (*dto.Shorten
 	return shortening, nil
 }
 
+// GetUserURLS метод для получения списка URL для конкретного пользователя.
 func (s *Service) GetUserURLS(ctx context.Context, userID int) (*dto.ShorteningList, error) {
 	log := logger.LogFromContext(ctx)
 
@@ -98,6 +120,7 @@ func (s *Service) GetUserURLS(ctx context.Context, userID int) (*dto.ShorteningL
 	return shortening, nil
 }
 
+// DeleteUserURL метод для удаления списка URL для конкретного пользователя.
 func (s *Service) DeleteUserURL(ctx context.Context, shortURL []string, userID int) {
 	s.storage.DeleteUserURL(ctx, shortURL, userID)
 }

@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/ajugalushkin/url-shortener-version2/internal/config"
+	"github.com/labstack/echo/v4"
+
+	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
-	"github.com/labstack/echo/v4"
 )
 
+// GetURL получение URL из контекста
 func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
 	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil {
@@ -38,27 +40,7 @@ func GetURL(ctx context.Context, echoCtx echo.Context) (string, error) {
 	return parseURL, nil
 }
 
-func SetResponse(ctx context.Context, echoCtx echo.Context, parseURL string, httpStatus int) error {
-	contentType := echoCtx.Request().Header.Get(echo.HeaderContentType)
-
-	echoCtx.Response().Header().Set(echo.HeaderContentType, contentType)
-	echoCtx.Response().Status = httpStatus
-
-	var newBody []byte
-	if contentType != echo.MIMEApplicationJSON {
-		newBody = []byte(parseURL)
-	} else {
-		shortenResult := dto.ShortenOutput{Result: parseURL}
-		newBody, _ = shortenResult.MarshalJSON()
-	}
-
-	sizeBody, err := echoCtx.Response().Write(newBody)
-	if err != nil {
-		return validate.AddError(ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
-	}
-	return validate.AddMessageOK(ctx, echoCtx, validate.URLSent, httpStatus, sizeBody)
-}
-
+// GetJSONDataFromBatch получение данных из контекста.
 func GetJSONDataFromBatch(ctx context.Context, echoCtx echo.Context) (dto.ShortenListInput, error) {
 	var shortList dto.ShortenListInput
 
@@ -75,6 +57,7 @@ func GetJSONDataFromBatch(ctx context.Context, echoCtx echo.Context) (dto.Shorte
 	return shortList, nil
 }
 
+// SetJSONDataToBody внесение данных в контекст.
 func SetJSONDataToBody(ctx context.Context, echoCtx echo.Context, list *dto.ShorteningList) ([]byte, error) {
 	var shortenListOut dto.ShortenListOutput
 	flag := config.FlagsFromContext(ctx)
@@ -97,6 +80,7 @@ func SetJSONDataToBody(ctx context.Context, echoCtx echo.Context, list *dto.Shor
 	return newBody, nil
 }
 
+// SetUserURLSToBody внесение данных в контекст.
 func SetUserURLSToBody(ctx context.Context, echoCtx echo.Context, list *dto.ShorteningList) ([]byte, error) {
 	var shortenListOut dto.UserURLList
 	flag := config.FlagsFromContext(ctx)
