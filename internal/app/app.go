@@ -10,7 +10,7 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"go.uber.org/zap"
 
-	_ "github.com/ajugalushkin/url-shortener-version2/swagger"
+	_ "github.com/ajugalushkin/url-shortener-version2/api"
 
 	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
@@ -40,7 +40,7 @@ func Run(ctx context.Context) error {
 	server.Use(logger.MiddlewareLogger(ctx))
 	server.Use(compress.GzipWithConfig(compress.GzipConfig{
 		Skipper: func(c echo.Context) bool {
-			return strings.Contains(c.Request().URL.Path, "swagger") ||
+			return strings.Contains(c.Request().URL.Path, "api") ||
 				strings.Contains(c.Request().URL.Path, "debug")
 		},
 	}))
@@ -57,7 +57,7 @@ func Run(ctx context.Context) error {
 	server.DELETE("/api/user/urls", newHandler.HandleUserUrlsDelete)
 
 	//Swagger
-	server.GET("/swagger/*", echoSwagger.WrapHandler)
+	server.GET("/api/*", echoSwagger.WrapHandler)
 
 	// Регистрация pprof-обработчиков
 	server.GET("/debug/*", echo.WrapHandler(http.DefaultServeMux))

@@ -11,10 +11,10 @@ import (
 
 // описание типов
 type (
-	// Skipper функция для пропуска сжатия для swagger.
+	// Skipper функция для пропуска сжатия для api.
 	Skipper func(c echo.Context) bool
 
-	// GzipConfig структура для пропуска сжатия для swagger.
+	// GzipConfig структура для пропуска сжатия для api.
 	GzipConfig struct {
 		Skipper Skipper
 	}
