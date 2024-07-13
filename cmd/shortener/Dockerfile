@@ -6,9 +6,9 @@ RUN go mod download
 COPY . ./
 RUN CGO_ENABLED=0 GOOS=linux go build -gcflags="all=-N -l" -o /shortener-api ./cmd/shortener/main.go
 
-FROM alpine AS build-release-stage
+FROM alpine AS server
 WORKDIR /
-COPY --from=build-stage /shortener-api /shortener-api
+COPY --from=builder /shortener-api /shortener-api
 EXPOSE 8080
 USER nonroot:nonroot
 ENTRYPOINT ["/shortener-api"]
