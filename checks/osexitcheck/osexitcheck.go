@@ -8,12 +8,14 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+// Analyzer структура анализатора
 var Analyzer = &analysis.Analyzer{
 	Name: "osexitlint",
 	Doc:  "prohibiting the use of a direct call to os.Exit",
 	Run:  run,
 }
 
+// run функция анализатора
 func run(pass *analysis.Pass) (interface{}, error) {
 	isMainPackage := func(x *ast.File) bool {
 		return x.Name.Name == "main"
