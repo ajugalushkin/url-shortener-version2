@@ -24,7 +24,7 @@ import (
 // Handler структура Handler
 type Handler struct {
 	ctx     context.Context
-	cache   map[string]dto.User
+	cache   map[string]*dto.User
 	servAPI *service.Service
 }
 
@@ -34,6 +34,8 @@ func NewHandler(ctx context.Context, servAPI *service.Service) *Handler {
 		ctx:     ctx,
 		servAPI: servAPI}
 }
+
+const cookieName string = "User"
 
 // HandleSave @Summary Shorten
 // @Description Short URL
@@ -49,14 +51,15 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 		return echoCtx.String(http.StatusBadRequest, err.Error())
 	}
 
-	cookieValue, err := cookies.Read(echoCtx, "user")
+	cookieValue, err := cookies.Read(echoCtx, cookieName)
 	if err != nil {
-		cookieValue = cookies.Write(s.ctx, echoCtx, "user")
+		cookieValue = cookies.Write(s.ctx, echoCtx, cookieName)
+		s.cache[cookieValue] = cookies.GetUser(s.ctx, cookieValue)
 	}
 
 	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{
 		OriginalURL: string(body),
-		UserID:      strconv.Itoa(cookies.GetUserID(s.ctx, cookieValue).ID)})
+		UserID:      strconv.Itoa(cookies.GetUser(s.ctx, cookieValue).ID)})
 
 	if err != nil {
 		if errors.Is(err, userErr.ErrorDuplicateURL) {
@@ -185,8 +188,6 @@ func (s Handler) HandlePing(echoCtx echo.Context) error {
 	return echoCtx.String(http.StatusOK, validate.PingOk)
 }
 
-const cookieName string = "User"
-
 type CustomContext struct {
 	user *dto.User
 	echo.Context
@@ -203,7 +204,7 @@ func (s Handler) Authorized(next echo.HandlerFunc) echo.HandlerFunc {
 			return echoCtx.String(http.StatusUnauthorized, "")
 		}
 
-		user := cookies.GetUserID(s.ctx, cookie.Value)
+		user := cookies.GetUser(s.ctx, cookie.Value)
 
 		newContext := &CustomContext{user: user, Context: echoCtx}
 

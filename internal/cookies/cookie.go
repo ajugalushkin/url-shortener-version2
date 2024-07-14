@@ -48,8 +48,8 @@ func buildJWTString(ctx context.Context) (string, error) {
 	return tokenString, nil
 }
 
-// GetUserID функция для получения пользователя из токена
-func GetUserID(ctx context.Context, tokenString string) *dto.User {
+// GetUser функция для получения пользователя из токена
+func GetUser(ctx context.Context, tokenString string) *dto.User {
 	flags := config.FlagsFromContext(ctx)
 	claims := &Claims{}
 	_, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
