@@ -32,6 +32,7 @@ type Handler struct {
 func NewHandler(ctx context.Context, servAPI *service.Service) *Handler {
 	return &Handler{
 		ctx:     ctx,
+		cache:   make(map[string]*dto.User),
 		servAPI: servAPI}
 }
 
