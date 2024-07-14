@@ -131,11 +131,11 @@ func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 		return err
 	}
 
-	sizeBody, err := echoCtx.Response().Write(body)
+	_, err = echoCtx.Response().Write(body)
 	if err != nil {
 		return echoCtx.String(http.StatusBadRequest, validate.FailedToSend)
 	}
-	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
+	return echoCtx.String(http.StatusTemporaryRedirect, validate.URLSent)
 }
 
 // HandleRedirect @Summary Redirect

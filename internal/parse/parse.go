@@ -19,12 +19,12 @@ func GetJSONDataFromBatch(ctx context.Context, echoCtx echo.Context) (dto.Shorte
 
 	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil {
-		return shortList, validate.AddError(ctx, echoCtx, validate.URLParseError, http.StatusBadRequest, 0)
+		return shortList, echoCtx.String(http.StatusBadRequest, validate.URLParseError)
 	}
 
 	err = shortList.UnmarshalJSON(body)
 	if err != nil {
-		return shortList, validate.AddError(ctx, echoCtx, validate.JSONParseError, http.StatusBadRequest, 0)
+		return shortList, echoCtx.String(http.StatusBadRequest, validate.JSONParseError)
 	}
 
 	return shortList, nil
@@ -47,7 +47,7 @@ func SetJSONDataToBody(ctx context.Context, echoCtx echo.Context, list *dto.Shor
 
 	newBody, err := shortenListOut.MarshalJSON()
 	if err != nil {
-		return newBody, validate.AddError(ctx, echoCtx, validate.JSONNotCreate, http.StatusBadRequest, 0)
+		return newBody, echoCtx.String(http.StatusBadRequest, validate.JSONNotCreate)
 	}
 
 	return newBody, nil
@@ -70,7 +70,7 @@ func SetUserURLSToBody(ctx context.Context, echoCtx echo.Context, list *dto.Shor
 
 	newBody, err := shortenListOut.MarshalJSON()
 	if err != nil {
-		return newBody, validate.AddError(ctx, echoCtx, validate.JSONNotCreate, http.StatusBadRequest, 0)
+		return newBody, echoCtx.String(http.StatusBadRequest, validate.JSONNotCreate)
 	}
 
 	return newBody, nil
