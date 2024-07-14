@@ -52,9 +52,9 @@ func Run(ctx context.Context) error {
 
 	server.GET("/:id", newHandler.HandleRedirect)
 	server.GET("/ping", newHandler.HandlePing)
-	server.GET("/api/user/urls", newHandler.HandleUserUrls)
+	server.GET("/api/user/urls", newHandler.Authorized(newHandler.HandleUserUrls))
 
-	server.DELETE("/api/user/urls", newHandler.HandleUserUrlsDelete)
+	server.DELETE("/api/user/urls", newHandler.Authorized(newHandler.HandleUserUrlsDelete))
 
 	//Swagger
 	server.GET("/api/*", echoSwagger.WrapHandler)

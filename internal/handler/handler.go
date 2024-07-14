@@ -24,6 +24,7 @@ import (
 // Handler структура Handler
 type Handler struct {
 	ctx     context.Context
+	cache   map[string]dto.User
 	servAPI *service.Service
 }
 
@@ -55,7 +56,7 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 
 	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{
 		OriginalURL: string(body),
-		UserID:      strconv.Itoa(cookies.GetUserID(s.ctx, cookieValue))})
+		UserID:      strconv.Itoa(cookies.GetUserID(s.ctx, cookieValue).ID)})
 
 	if err != nil {
 		if errors.Is(err, userErr.ErrorDuplicateURL) {
@@ -184,6 +185,32 @@ func (s Handler) HandlePing(echoCtx echo.Context) error {
 	return echoCtx.String(http.StatusOK, validate.PingOk)
 }
 
+const cookieName string = "User"
+
+type CustomContext struct {
+	user *dto.User
+	echo.Context
+}
+
+func (s Handler) Authorized(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(echoCtx echo.Context) error {
+		cookie, err := echoCtx.Cookie(cookieName)
+		if err != nil {
+			return echoCtx.String(http.StatusUnauthorized, err.Error())
+		}
+
+		if _, ok := s.cache[cookie.Value]; !ok {
+			return echoCtx.String(http.StatusUnauthorized, "")
+		}
+
+		user := cookies.GetUserID(s.ctx, cookie.Value)
+
+		newContext := &CustomContext{user: user, Context: echoCtx}
+
+		return next(newContext)
+	}
+}
+
 // HandleUserUrls ( @Summary UserURLS
 // @Description Retrive all short URLS for user
 // @ID user-urls-json
@@ -192,18 +219,10 @@ func (s Handler) HandlePing(echoCtx echo.Context) error {
 // @Success 307 {integer} integer 1
 // @Failure 400 {integer} integer 1
 // @Router /api/user/urls [get]
-func (s Handler) HandleUserUrls(echoCtx echo.Context) error {
-	cookieIn, err := cookies.Read(echoCtx, "user")
-	if err != nil {
-		return echoCtx.String(http.StatusUnauthorized, "")
-	}
+func (s Handler) HandleUserUrls(c echo.Context) error {
+	echoCtx := c.(*CustomContext)
 
-	userID := cookies.GetUserID(s.ctx, cookieIn)
-	if userID == 0 {
-		return echoCtx.String(http.StatusUnauthorized, "")
-	}
-
-	shortList, err := s.servAPI.GetUserURLS(s.ctx, userID)
+	shortList, err := s.servAPI.GetUserURLS(s.ctx, echoCtx.user.ID)
 	if err != nil {
 		return echoCtx.String(http.StatusBadRequest, validate.URLNotFound)
 	}
@@ -229,20 +248,12 @@ func (s Handler) HandleUserUrls(echoCtx echo.Context) error {
 // @Success 202 {integer} integer 1
 // @Failure 400 {integer} integer 1
 // @Router /api/user/urls [delete]
-func (s Handler) HandleUserUrlsDelete(echoCtx echo.Context) error {
+func (s Handler) HandleUserUrlsDelete(c echo.Context) error {
+	echoCtx := c.(*CustomContext)
+
 	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil {
 		return echoCtx.String(http.StatusBadRequest, validate.URLParseError)
-	}
-
-	cookieIn, err := cookies.Read(echoCtx, "user")
-	if err != nil {
-		return echoCtx.String(http.StatusUnauthorized, "Not found cookies fo user")
-	}
-
-	userID := cookies.GetUserID(s.ctx, cookieIn)
-	if userID == 0 {
-		return echoCtx.String(http.StatusUnauthorized, "Not found UserID for user")
 	}
 
 	var URLs dto.URLs
@@ -251,7 +262,7 @@ func (s Handler) HandleUserUrlsDelete(echoCtx echo.Context) error {
 		return echoCtx.String(http.StatusInternalServerError, "Error parse input json")
 	}
 
-	s.servAPI.DeleteUserURL(s.ctx, URLs, userID)
+	s.servAPI.DeleteUserURL(s.ctx, URLs, echoCtx.user.ID)
 
 	return echoCtx.String(http.StatusAccepted, "URLS Delete OK")
 }

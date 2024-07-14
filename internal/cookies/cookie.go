@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/ajugalushkin/url-shortener-version2/config"
+	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 )
 
 // Claims структура для генерации токена.
@@ -48,17 +49,17 @@ func buildJWTString(ctx context.Context) (string, error) {
 }
 
 // GetUserID функция для получения пользователя из токена
-func GetUserID(ctx context.Context, tokenString string) int {
+func GetUserID(ctx context.Context, tokenString string) *dto.User {
 	flags := config.FlagsFromContext(ctx)
 	claims := &Claims{}
 	_, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
 		return []byte(flags.SecretKey), nil
 	})
 	if err != nil {
-		return 0
+		return &dto.User{}
 	}
 
-	return claims.UserID
+	return &dto.User{ID: claims.UserID}
 }
 
 // createCookie функция для создания куки
