@@ -2,6 +2,7 @@ package dto
 
 //go:generate easyjson -all json.go
 
+// User структура cookie
 type User struct {
 	ID int
 }
