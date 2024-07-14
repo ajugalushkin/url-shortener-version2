@@ -262,28 +262,6 @@ func TestHandler_HandleShortenBatch(t *testing.T) {
 			expectedHeader:   echo.MIMEApplicationJSON,
 			expectedCode:     http.StatusCreated,
 		},
-		//{
-		//	name: "Test Bad Request Type",
-		//	fields: fields{
-		//		ctx:     ctx,
-		//		servAPI: service.NewService(inmemory.NewInMemory())},
-		//	inputContentType: echo.MIMEApplicationJSON,
-		//	inputMethod:      http.MethodGet,
-		//	inputBody:        "[\n    {\n        \"correlation_id\": \"1\",\n        \"original_url\": \"https://vk.com/ajugalushkin\"\n    }\n]",
-		//	expectedHeader:   echo.MIMETextPlainCharsetUTF8,
-		//	expectedCode:     http.StatusBadRequest,
-		//},
-		//{
-		//	name: "Test Bad Content Type",
-		//	fields: fields{
-		//		ctx:     ctx,
-		//		servAPI: service.NewService(inmemory.NewInMemory())},
-		//	inputContentType: echo.MIMETextPlain,
-		//	inputMethod:      http.MethodPost,
-		//	inputBody:        "[\n    {\n        \"correlation_id\": \"1\",\n        \"original_url\": \"https://vk.com/ajugalushkin\"\n    }\n]",
-		//	expectedHeader:   echo.MIMETextPlainCharsetUTF8,
-		//	expectedCode:     http.StatusBadRequest,
-		//},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

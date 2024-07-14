@@ -110,7 +110,7 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 // @Router /api/shorten/batch [post]
 func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 	if ctType := echoCtx.Request().Header.Get(echo.HeaderContentType); ctType != echo.MIMEApplicationJSON {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
+		return echoCtx.String(http.StatusBadRequest, validate.WrongTypeRequest)
 	}
 
 	inputList, err := parse.GetJSONDataFromBatch(s.ctx, echoCtx)
@@ -133,7 +133,7 @@ func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 
 	sizeBody, err := echoCtx.Response().Write(body)
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
+		return echoCtx.String(http.StatusBadRequest, validate.FailedToSend)
 	}
 	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
 }
@@ -149,20 +149,20 @@ func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 	redirect, err := s.servAPI.Redirect(s.ctx, strings.Replace(echoCtx.Request().URL.Path, "/", "", -1))
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
+		return echoCtx.String(http.StatusBadRequest, validate.URLNotFound)
 	}
 
 	if redirect.IsDeleted {
-		return validate.AddError(s.ctx, echoCtx, "URL was delete!", http.StatusGone, 0)
+		return echoCtx.String(http.StatusGone, validate.URLWasDelete)
 	}
 
 	if redirect.OriginalURL != "" {
-		return validate.Redirect(s.ctx, echoCtx, redirect.OriginalURL)
+		return echoCtx.Redirect(http.StatusTemporaryRedirect, redirect.OriginalURL)
 	}
 
 	log := logger.LogFromContext(s.ctx)
 	log.Error(validate.URLNotFound)
-	return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
+	return echoCtx.String(http.StatusBadRequest, validate.URLNotFound)
 }
 
 // HandlePing ( @Summary Ping
@@ -177,11 +177,11 @@ func (s Handler) HandlePing(echoCtx echo.Context) error {
 	flags := config.FlagsFromContext(s.ctx)
 	db, err := sql.Open("pgx", flags.DataBaseDsn)
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, "", http.StatusInternalServerError, 0)
+		return echoCtx.String(http.StatusInternalServerError, validate.PingError)
 	}
 	defer db.Close()
 
-	return validate.AddMessageOK(s.ctx, echoCtx, "", http.StatusOK, 0)
+	return echoCtx.String(http.StatusOK, validate.PingOk)
 }
 
 // HandleUserUrls ( @Summary UserURLS
@@ -195,30 +195,30 @@ func (s Handler) HandlePing(echoCtx echo.Context) error {
 func (s Handler) HandleUserUrls(echoCtx echo.Context) error {
 	cookieIn, err := cookies.Read(echoCtx, "user")
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, "", http.StatusUnauthorized, 0)
+		return echoCtx.String(http.StatusUnauthorized, "")
 	}
 
 	userID := cookies.GetUserID(s.ctx, cookieIn)
 	if userID == 0 {
-		return validate.AddError(s.ctx, echoCtx, "", http.StatusUnauthorized, 0)
+		return echoCtx.String(http.StatusUnauthorized, "")
 	}
 
 	shortList, err := s.servAPI.GetUserURLS(s.ctx, userID)
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
+		return echoCtx.String(http.StatusBadRequest, validate.URLNotFound)
 	}
 
 	body, err := parse.SetUserURLSToBody(s.ctx, echoCtx, shortList)
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, "", http.StatusNoContent, 0)
+		return echoCtx.String(http.StatusNoContent, "")
 	}
 
 	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	sizeBody, err := echoCtx.Response().Write(body)
+	_, err = echoCtx.Response().Write(body)
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
+		return echoCtx.String(http.StatusBadRequest, validate.FailedToSend)
 	}
-	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
+	return echoCtx.String(http.StatusTemporaryRedirect, validate.URLSent)
 }
 
 // HandleUserUrlsDelete ( @Summary UserURLSDelete
@@ -232,26 +232,26 @@ func (s Handler) HandleUserUrls(echoCtx echo.Context) error {
 func (s Handler) HandleUserUrlsDelete(echoCtx echo.Context) error {
 	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.URLParseError, http.StatusBadRequest, 0)
+		return echoCtx.String(http.StatusBadRequest, validate.URLParseError)
 	}
 
 	cookieIn, err := cookies.Read(echoCtx, "user")
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, "Not found cookies fo user", http.StatusUnauthorized, 0)
+		return echoCtx.String(http.StatusUnauthorized, "Not found cookies fo user")
 	}
 
 	userID := cookies.GetUserID(s.ctx, cookieIn)
 	if userID == 0 {
-		return validate.AddError(s.ctx, echoCtx, "Not found UserID for user", http.StatusUnauthorized, 0)
+		return echoCtx.String(http.StatusUnauthorized, "Not found UserID for user")
 	}
 
 	var URLs dto.URLs
 	err = URLs.UnmarshalJSON(body)
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, "Error parse input json", http.StatusUnauthorized, 0)
+		return echoCtx.String(http.StatusInternalServerError, "Error parse input json")
 	}
 
 	s.servAPI.DeleteUserURL(s.ctx, URLs, userID)
 
-	return validate.AddMessageOK(s.ctx, echoCtx, "URLS Delete OK", http.StatusAccepted, 0)
+	return echoCtx.String(http.StatusAccepted, "URLS Delete OK")
 }
