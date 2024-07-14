@@ -140,7 +140,7 @@ func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 	if err != nil {
 		return echoCtx.String(http.StatusBadRequest, validate.FailedToSend)
 	}
-	return echoCtx.String(http.StatusTemporaryRedirect, validate.URLSent)
+	return echoCtx.String(http.StatusTemporaryRedirect, "")
 }
 
 // HandleRedirect @Summary Redirect
