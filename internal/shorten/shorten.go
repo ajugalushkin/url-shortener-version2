@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math/big"
+	"os"
 
 	"github.com/itchyny/base58-go"
 )
@@ -16,10 +17,14 @@ func sha256Of(input string) []byte {
 }
 
 // base58Encoded функция шифрует массив байт
-func base58Encoded(bytes []byte) (string, error) {
+func base58Encoded(bytes []byte) string {
 	encoding := base58.BitcoinEncoding
-	encoded, _ := encoding.Encode(bytes)
-	return string(encoded), nil
+	encoded, err := encoding.Encode(bytes)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	return string(encoded)
 }
 
 // Shorten функция преобразует оригинальный URL в сокращенный
@@ -27,9 +32,6 @@ func Shorten(initialURL string) string {
 	urlHashBytes := sha256Of(initialURL)
 	generatedNumber := new(big.Int).SetBytes(urlHashBytes).Uint64()
 
-	finalString, err := base58Encoded([]byte(fmt.Sprintf("%d", generatedNumber)))
-	if err != nil {
-		return ""
-	}
+	finalString := base58Encoded([]byte(fmt.Sprintf("%d", generatedNumber)))
 	return finalString[:8]
 }

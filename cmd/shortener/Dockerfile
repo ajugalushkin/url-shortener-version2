@@ -10,5 +10,5 @@ FROM alpine AS server
 WORKDIR /
 COPY --from=builder /shortener-api /shortener-api
 EXPOSE 8080
-USER nonroot:nonroot
+#USER nonroot:nonroot
 ENTRYPOINT ["/shortener-api"]
