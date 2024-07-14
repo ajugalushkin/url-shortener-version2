@@ -43,7 +43,7 @@ func NewHandler(ctx context.Context, servAPI *service.Service) *Handler {
 // @Failure 400 {integer} integer 1
 // @Router / [post]
 func (s Handler) HandleSave(echoCtx echo.Context) error {
-	parseURL, err := parse.GetURL(s.ctx, echoCtx)
+	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil {
 		return echoCtx.String(http.StatusBadRequest, err.Error())
 	}
@@ -54,7 +54,7 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 	}
 
 	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{
-		OriginalURL: parseURL,
+		OriginalURL: string(body),
 		UserID:      strconv.Itoa(cookies.GetUserID(s.ctx, cookieValue))})
 
 	if err != nil {
@@ -109,10 +109,6 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 // @Failure 400 {integer} integer 1
 // @Router /api/shorten/batch [post]
 func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodPost {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
-
 	if ctType := echoCtx.Request().Header.Get(echo.HeaderContentType); ctType != echo.MIMEApplicationJSON {
 		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
 	}
@@ -151,10 +147,6 @@ func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 // @Failure 400 {integer} integer 1
 // @Router / [get]
 func (s Handler) HandleRedirect(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodGet {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
-
 	redirect, err := s.servAPI.Redirect(s.ctx, strings.Replace(echoCtx.Request().URL.Path, "/", "", -1))
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
@@ -201,10 +193,6 @@ func (s Handler) HandlePing(echoCtx echo.Context) error {
 // @Failure 400 {integer} integer 1
 // @Router /api/user/urls [get]
 func (s Handler) HandleUserUrls(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodGet {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
-
 	cookieIn, err := cookies.Read(echoCtx, "user")
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, "", http.StatusUnauthorized, 0)
@@ -242,10 +230,6 @@ func (s Handler) HandleUserUrls(echoCtx echo.Context) error {
 // @Failure 400 {integer} integer 1
 // @Router /api/user/urls [delete]
 func (s Handler) HandleUserUrlsDelete(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodDelete {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
-
 	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil {
 		return validate.AddError(s.ctx, echoCtx, validate.URLParseError, http.StatusBadRequest, 0)

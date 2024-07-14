@@ -36,6 +36,10 @@ func NewService(storage PutGetter) *Service {
 
 // Shorten метод для получения сокращенного URL
 func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Shortening, error) {
+	if input.OriginalURL == "" {
+		return nil, errors.New("URL is empty")
+	}
+
 	var (
 		identifier = input.ShortURL
 	)
