@@ -189,11 +189,13 @@ func (s Handler) HandlePing(echoCtx echo.Context) error {
 	return echoCtx.String(http.StatusOK, validate.PingOk)
 }
 
+// CustomContext структура расширяет echo.Context
 type CustomContext struct {
 	user *dto.User
 	echo.Context
 }
 
+// Authorized middleware для авторизация cookie
 func (s Handler) Authorized(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(echoCtx echo.Context) error {
 		cookie, err := echoCtx.Cookie(cookieName)
