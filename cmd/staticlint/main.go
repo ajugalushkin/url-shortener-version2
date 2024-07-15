@@ -37,7 +37,7 @@ import (
 )
 
 // Config — имя файла конфигурации.
-const Config = `staticcheck.conf`
+const Config = "staticcheck.conf"
 
 // ConfigData описывает структуру файла конфигурации.
 type ConfigData struct {
