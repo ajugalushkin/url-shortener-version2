@@ -2,7 +2,9 @@ package config
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/gommon/log"
@@ -20,6 +22,7 @@ type AppConfig struct {
 	DataBaseDsn     string `env:"DATABASE_DSN"`
 	SecretKey       string `env:"SECRET_KEY"`
 	EnableHTTPS     bool   `env:"ENABLE_HTTPS"`
+	Config          string `env:"CONFIG"`
 }
 
 // init функция инициализации начальных значений для параметров запуска.
@@ -36,6 +39,7 @@ func init() {
 	viper.SetDefault("DataBase_Dsn", "")
 	viper.SetDefault("Secret_Key", "")
 	viper.SetDefault("Enable_HTTPS", false)
+	viper.SetDefault("Config", "")
 }
 
 // bindToEnv функция для маппинга полей из ENV с полями структуры.
@@ -47,6 +51,28 @@ func bindToEnv() {
 	_ = viper.BindEnv("DataBase_Dsn")
 	_ = viper.BindEnv("Secret_Key")
 	_ = viper.BindEnv("Enable_HTTPS")
+	_ = viper.BindEnv("Config")
+}
+
+// LoadConfiguration function for read json config
+func LoadConfiguration(file string) AppConfig {
+	var config AppConfig
+	configFile, err := os.Open(file)
+	defer func(configFile *os.File) {
+		err := configFile.Close()
+		if err != nil {
+			log.Warn("Error closing file JSON config", "error", err)
+		}
+	}(configFile)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	jsonParser := json.NewDecoder(configFile)
+	err = jsonParser.Decode(&config)
+	if err != nil {
+		return AppConfig{}
+	}
+	return config
 }
 
 // ReadConfig функция для чтения конфига.
@@ -65,7 +91,35 @@ func ReadConfig() *AppConfig {
 		DataBaseDsn:     viper.GetString("DataBase_Dsn"),
 		SecretKey:       viper.GetString("Secret_Key"),
 		EnableHTTPS:     viper.GetBool("Enable_HTTPS"),
+		Config:          viper.GetString("Config"),
 	}
+
+	if result.Config != "" {
+		configJSON := LoadConfiguration(result.Config)
+
+		if result.ServerAddress == "" {
+			result.ServerAddress = configJSON.ServerAddress
+		}
+		if result.BaseURL == "" {
+			result.BaseURL = configJSON.BaseURL
+		}
+		if result.FlagLogLevel == "" {
+			result.FlagLogLevel = configJSON.FlagLogLevel
+		}
+		if result.FileStoragePath == "" {
+			result.FileStoragePath = configJSON.FileStoragePath
+		}
+		if result.DataBaseDsn == "" {
+			result.DataBaseDsn = configJSON.DataBaseDsn
+		}
+		if result.SecretKey == "" {
+			result.SecretKey = configJSON.SecretKey
+		}
+		if result.EnableHTTPS {
+			result.EnableHTTPS = configJSON.EnableHTTPS
+		}
+	}
+
 	return result
 }
 
