@@ -90,7 +90,8 @@ func TestHandler_HandleSave(t *testing.T) {
 
 			repoMemory := inmemory.NewInMemory()
 			for _, repositoryItem := range test.repository {
-				repoMemory.Put(ctx, repositoryItem)
+				_, err := repoMemory.Put(ctx, repositoryItem)
+				assert.Nil(t, err)
 			}
 			handler := NewHandler(ctx, service.NewService(repoMemory))
 
