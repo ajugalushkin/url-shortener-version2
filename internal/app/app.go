@@ -11,13 +11,13 @@ import (
 	"go.uber.org/zap"
 
 	_ "github.com/ajugalushkin/url-shortener-version2/api"
-
-	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
-	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
+
+	"github.com/ajugalushkin/url-shortener-version2/config"
+	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 )
 
 // Run является основным местом запуска сервиса.
@@ -34,6 +34,26 @@ func Run(ctx context.Context) error {
 	ctx = logger.ContextWithLogger(ctx, log)
 
 	server := echo.New()
+
+	setRouting(ctx, server)
+
+	log.Info("Running server", zap.String("address", flags.ServerAddress))
+	if flags.EnableHTTPS != true {
+		err = server.Start(flags.ServerAddress)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = server.StartAutoTLS(flags.ServerAddress)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func setRouting(ctx context.Context, server *echo.Echo) {
 	newHandler := handler.NewHandler(ctx, service.NewService(storage.GetStorage(ctx)))
 
 	//Middleware
@@ -62,11 +82,4 @@ func Run(ctx context.Context) error {
 	// Регистрация pprof-обработчиков
 	server.GET("/debug/*", echo.WrapHandler(http.DefaultServeMux))
 
-	log.Info("Running server", zap.String("address", flags.ServerAddress))
-	err = server.Start(flags.ServerAddress)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

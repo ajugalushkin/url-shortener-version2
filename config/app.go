@@ -19,6 +19,7 @@ type AppConfig struct {
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	DataBaseDsn     string `env:"DATABASE_DSN"`
 	SecretKey       string `env:"SECRET_KEY"`
+	EnableHTTPS     bool   `env:"ENABLE_HTTPS"`
 }
 
 // init функция инициализации начальных значений для параметров запуска.
@@ -34,6 +35,7 @@ func init() {
 	viper.SetDefault("File_Storage_PATH", "")
 	viper.SetDefault("DataBase_Dsn", "")
 	viper.SetDefault("Secret_Key", "")
+	viper.SetDefault("Enable_HTTPS", false)
 }
 
 // bindToEnv функция для маппинга полей из ENV с полями структуры.
@@ -44,6 +46,7 @@ func bindToEnv() {
 	_ = viper.BindEnv("File_Storage_PATH")
 	_ = viper.BindEnv("DataBase_Dsn")
 	_ = viper.BindEnv("Secret_Key")
+	_ = viper.BindEnv("Enable_HTTPS")
 }
 
 // ReadConfig функция для чтения конфига.
@@ -61,6 +64,7 @@ func ReadConfig() *AppConfig {
 		FileStoragePath: viper.GetString("File_Storage_PATH"),
 		DataBaseDsn:     viper.GetString("DataBase_Dsn"),
 		SecretKey:       viper.GetString("Secret_Key"),
+		EnableHTTPS:     viper.GetBool("Enable_HTTPS"),
 	}
 	return result
 }

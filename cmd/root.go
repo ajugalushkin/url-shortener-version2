@@ -29,10 +29,12 @@ func init() {
 	rootCmd.PersistentFlags().StringP("LogLevel", "l", "", "Log level")
 	rootCmd.PersistentFlags().StringP("FileStoragePATH", "f", "", "full name of the file where data in JSON format is saved")
 	rootCmd.PersistentFlags().StringP("DataBaseDsn", "d", "", "DB path for connect")
+	rootCmd.PersistentFlags().BoolP("EnableHTTPS", "s", false, "Enable HTTPS in the web server")
 
 	_ = viper.BindPFlag("Server_Address", rootCmd.PersistentFlags().Lookup("ServerAddress"))
 	_ = viper.BindPFlag("Base_URL", rootCmd.PersistentFlags().Lookup("BaseURL"))
 	_ = viper.BindPFlag("Log_Level", rootCmd.PersistentFlags().Lookup("LogLevel"))
 	_ = viper.BindPFlag("File_Storage_PATH", rootCmd.PersistentFlags().Lookup("FileStoragePATH"))
 	_ = viper.BindPFlag("DataBase_Dsn", rootCmd.PersistentFlags().Lookup("DataBaseDsn"))
+	_ = viper.BindPFlag("Enable_HTTPS", rootCmd.PersistentFlags().Lookup("EnableHTTPS"))
 }
