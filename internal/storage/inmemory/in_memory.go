@@ -2,12 +2,13 @@ package inmemory
 
 import (
 	"context"
-	"errors"
 	"sync"
 
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
+	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 )
 
@@ -28,6 +29,14 @@ func (r *InMemory) Put(ctx context.Context, shortening dto.Shortening) (*dto.Sho
 		logger.LogFromContext(ctx).Debug("InMemory.Put Load Error",
 			zap.Error(err))
 		return nil, err
+	}
+
+	urlStore, err := r.GetByURL(ctx, shortening.OriginalURL)
+	if err != nil {
+		return nil, err
+	}
+	if urlStore.OriginalURL == shortening.OriginalURL {
+		return &shortening, errors.Wrapf(userErr.ErrorDuplicateURL, "%s %s", userErr.ErrorDuplicateURL, shortening.OriginalURL)
 	}
 
 	r.m.Store(shortening.ShortURL, shortening)
@@ -57,6 +66,20 @@ func (r *InMemory) Get(ctx context.Context, identifier string) (*dto.Shortening,
 	shortening := v.(dto.Shortening)
 
 	return &shortening, nil
+}
+
+// GetByURL метод позволяет получить запись по оригинальному URL
+func (r *InMemory) GetByURL(ctx context.Context, originalURL string) (*dto.Shortening, error) {
+	item := dto.Shortening{}
+	r.m.Range(func(k, v interface{}) bool {
+		itemCurrent := v.(dto.Shortening)
+		if itemCurrent.OriginalURL == originalURL {
+			item = itemCurrent
+			return false
+		}
+		return true
+	})
+	return &item, nil
 }
 
 // GetListByUser метод позволяет получить список URL для конкретного пользователя

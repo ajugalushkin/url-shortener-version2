@@ -48,8 +48,8 @@ const cookieName string = "User"
 // @Router / [post]
 func (s Handler) HandleSave(echoCtx echo.Context) error {
 	body, err := io.ReadAll(echoCtx.Request().Body)
-	if err != nil {
-		return echoCtx.String(http.StatusBadRequest, err.Error())
+	if err != nil || len(body) == 0 {
+		return echoCtx.String(http.StatusBadRequest, "Body is empty or invalid")
 	}
 
 	cookieValue, err := cookies.Read(echoCtx, cookieName)

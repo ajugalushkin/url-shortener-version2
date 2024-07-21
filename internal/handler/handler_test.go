@@ -29,14 +29,16 @@ func TestHandler_HandleSave(t *testing.T) {
 		body        string
 		contentType string
 	}
+	type repository []dto.Shortening
 	type want struct {
 		code        int
 		contentType string
 	}
 	tests := []struct {
-		name    string
-		request request
-		want    want
+		name       string
+		request    request
+		repository repository
+		want       want
 	}{
 		{
 			name: "Test StatusCreated",
@@ -53,12 +55,25 @@ func TestHandler_HandleSave(t *testing.T) {
 		{
 			name: "Test Empty URL",
 			request: request{
-				method:      http.MethodGet,
+				method:      http.MethodPost,
 				body:        "",
 				contentType: echo.MIMETextPlain,
 			},
 			want: want{
 				code:        http.StatusBadRequest,
+				contentType: echo.MIMETextPlainCharsetUTF8,
+			},
+		},
+		{
+			name: "Test Duplicate URL",
+			request: request{
+				method:      http.MethodPost,
+				body:        "https://practicum.yandex.ru/",
+				contentType: echo.MIMETextPlain,
+			},
+			repository: repository{{OriginalURL: "https://practicum.yandex.ru/"}},
+			want: want{
+				code:        http.StatusConflict,
 				contentType: echo.MIMETextPlainCharsetUTF8,
 			},
 		},
@@ -73,7 +88,11 @@ func TestHandler_HandleSave(t *testing.T) {
 			rec := httptest.NewRecorder()
 			echoCtx := server.NewContext(req, rec)
 
-			handler := NewHandler(ctx, service.NewService(inmemory.NewInMemory()))
+			repoMemory := inmemory.NewInMemory()
+			for _, repositoryItem := range test.repository {
+				repoMemory.Put(ctx, repositoryItem)
+			}
+			handler := NewHandler(ctx, service.NewService(repoMemory))
 
 			// Assertions
 			if assert.NoError(t, handler.HandleSave(echoCtx)) {
@@ -145,10 +164,13 @@ func TestHandler_HandleRedirect(t *testing.T) {
 			echoCtx := server.NewContext(req, rec)
 
 			storageAPI := inmemory.NewInMemory()
-			_, err := storageAPI.Put(ctx, dto.Shortening{
-				ShortURL:    test.request.key,
-				OriginalURL: test.want.response,
-			})
+			var err error
+			if test.request.key != "" && test.want.response != "" {
+				_, err = storageAPI.Put(ctx, dto.Shortening{
+					ShortURL:    test.request.key,
+					OriginalURL: test.want.response,
+				})
+			}
 			if assert.NoError(t, err) {
 				handler := NewHandler(ctx, service.NewService(storageAPI))
 
