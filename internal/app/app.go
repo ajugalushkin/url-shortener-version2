@@ -38,7 +38,7 @@ func Run(ctx context.Context) error {
 	setRouting(ctx, server)
 
 	log.Info("Running server", zap.String("address", flags.ServerAddress))
-	if flags.EnableHTTPS != true {
+	if !flags.EnableHTTPS {
 		err = server.Start(flags.ServerAddress)
 		if err != nil {
 			return err
