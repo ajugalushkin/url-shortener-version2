@@ -2,9 +2,13 @@ package app
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	_ "net/http/pprof"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -34,20 +38,35 @@ func Run(ctx context.Context) error {
 	ctx = logger.ContextWithLogger(ctx, log)
 
 	server := echo.New()
-
 	setRouting(ctx, server)
 
-	log.Info("Running server", zap.String("address", flags.ServerAddress))
-	if !flags.EnableHTTPS {
-		err = server.Start(flags.ServerAddress)
-		if err != nil {
-			return err
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+	defer stop()
+
+	go func() {
+		log.Info("Running server", zap.String("address", flags.ServerAddress))
+
+		var err error
+		if !flags.EnableHTTPS {
+			err = server.Start(flags.ServerAddress)
+		} else {
+			err = server.StartAutoTLS(flags.ServerAddress)
 		}
-	} else {
-		err = server.StartAutoTLS(flags.ServerAddress)
-		if err != nil {
-			return err
+
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal("shutting down the server", zap.Error(err))
 		}
+	}()
+
+	<-ctx.Done()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal(err.Error(), zap.String("address", flags.ServerAddress))
 	}
 
 	return nil
