@@ -25,7 +25,7 @@ const TokenExp = time.Hour * 3
 
 // buildJWTString функция генерации токена
 func buildJWTString(ctx context.Context) (string, error) {
-	flags := config.FlagsFromContext(ctx)
+	flags := config.GetConfig()
 
 	rawUser, err := rand.Int(rand.Reader, big.NewInt(100))
 	if err != nil {
@@ -50,7 +50,7 @@ func buildJWTString(ctx context.Context) (string, error) {
 
 // GetUser функция для получения пользователя из токена
 func GetUser(ctx context.Context, tokenString string) *dto.User {
-	flags := config.FlagsFromContext(ctx)
+	flags := config.GetConfig()
 	claims := &Claims{}
 	_, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
 		return []byte(flags.SecretKey), nil

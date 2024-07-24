@@ -165,8 +165,7 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 		return echoCtx.Redirect(http.StatusTemporaryRedirect, redirect.OriginalURL)
 	}
 
-	log := logger.LogFromContext(s.ctx)
-	log.Error(validate.URLNotFound)
+	logger.GetLogger().Error(validate.URLNotFound)
 	return echoCtx.String(http.StatusBadRequest, validate.URLNotFound)
 }
 
@@ -179,7 +178,7 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 // @Failure 500 {integer} integer 1
 // @Router /ping [get]
 func (s Handler) HandlePing(echoCtx echo.Context) error {
-	flags := config.FlagsFromContext(s.ctx)
+	flags := config.GetConfig()
 	db, err := sql.Open("pgx", flags.DataBaseDsn)
 	if err != nil {
 		return echoCtx.String(http.StatusInternalServerError, validate.PingError)

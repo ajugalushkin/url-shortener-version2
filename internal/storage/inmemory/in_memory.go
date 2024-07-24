@@ -26,8 +26,7 @@ func NewInMemory() *InMemory {
 func (r *InMemory) Put(ctx context.Context, shortening dto.Shortening) (*dto.Shortening, error) {
 	if _, exists := r.m.Load(shortening.ShortURL); exists {
 		err := errors.New("identifier already exists")
-		logger.LogFromContext(ctx).Debug("InMemory.Put Load Error",
-			zap.Error(err))
+		logger.GetLogger().Debug("InMemory.Put Load Error", zap.Error(err))
 		return nil, err
 	}
 
@@ -41,7 +40,7 @@ func (r *InMemory) Put(ctx context.Context, shortening dto.Shortening) (*dto.Sho
 
 	r.m.Store(shortening.ShortURL, shortening)
 
-	logger.LogFromContext(ctx).Debug("InMemory.Put Store Success")
+	logger.GetLogger().Debug("InMemory.Put Store Success")
 	return &shortening, nil
 }
 

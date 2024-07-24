@@ -44,14 +44,14 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 		identifier = input.ShortURL
 	)
 
-	logger.LogFromContext(ctx).Debug("Service.Shorten",
+	logger.GetLogger().Debug("Service.Shorten",
 		zap.String("Origin URL", input.OriginalURL))
 
 	if identifier == "" {
 		identifier = shorten.Shorten(input.OriginalURL)
 	}
 
-	logger.LogFromContext(ctx).Debug("Service.Shorten",
+	logger.GetLogger().Debug("Service.Shorten",
 		zap.String("Short URL", identifier))
 
 	newShortening := dto.Shortening{
@@ -65,16 +65,16 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 	shortening, err := s.storage.Put(ctx, newShortening)
 
 	if errors.Is(err, userErr.ErrorDuplicateURL) || shortening != nil {
-		shortening.ShortURL, _ = url.JoinPath(config.FlagsFromContext(ctx).BaseURL, shortening.ShortURL)
+		shortening.ShortURL, _ = url.JoinPath(config.GetConfig().BaseURL, shortening.ShortURL)
 	}
 
 	if err != nil {
-		logger.LogFromContext(ctx).Debug("Service.Shorten Put Error",
+		logger.GetLogger().Debug("Service.Shorten Put Error",
 			zap.Error(err))
 		return shortening, err
 	}
 
-	logger.LogFromContext(ctx).Debug("Service.Shorten Ok",
+	logger.GetLogger().Debug("Service.Shorten Ok",
 		zap.String("Shorten URL", shortening.ShortURL))
 	return shortening, nil
 }
@@ -102,7 +102,7 @@ func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (
 
 // Redirect метод для перенаправления
 func (s *Service) Redirect(ctx context.Context, identifier string) (*dto.Shortening, error) {
-	log := logger.LogFromContext(ctx)
+	log := logger.GetLogger()
 
 	shortening, err := s.storage.Get(ctx, identifier)
 	if err != nil {
@@ -114,7 +114,7 @@ func (s *Service) Redirect(ctx context.Context, identifier string) (*dto.Shorten
 
 // GetUserURLS метод для получения списка URL для конкретного пользователя.
 func (s *Service) GetUserURLS(ctx context.Context, userID int) (*dto.ShorteningList, error) {
-	log := logger.LogFromContext(ctx)
+	log := logger.GetLogger()
 
 	shortening, err := s.storage.GetListByUser(ctx, strconv.Itoa(userID))
 	if err != nil {

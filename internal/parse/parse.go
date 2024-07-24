@@ -33,7 +33,7 @@ func GetJSONDataFromBatch(ctx context.Context, echoCtx echo.Context) (dto.Shorte
 // SetJSONDataToBody внесение данных в контекст.
 func SetJSONDataToBody(ctx context.Context, echoCtx echo.Context, list *dto.ShorteningList) ([]byte, error) {
 	var shortenListOut dto.ShortenListOutput
-	flag := config.FlagsFromContext(ctx)
+	flag := config.GetConfig()
 	for _, item := range *list {
 		shortWithHost, _ := url.JoinPath(flag.BaseURL, item.ShortURL)
 		shortenListOut = append(
@@ -56,7 +56,7 @@ func SetJSONDataToBody(ctx context.Context, echoCtx echo.Context, list *dto.Shor
 // SetUserURLSToBody внесение данных в контекст.
 func SetUserURLSToBody(ctx context.Context, echoCtx echo.Context, list *dto.ShorteningList) ([]byte, error) {
 	var shortenListOut dto.UserURLList
-	flag := config.FlagsFromContext(ctx)
+	flag := config.GetConfig()
 	for _, item := range *list {
 		shortWithHost, _ := url.JoinPath(flag.BaseURL, item.ShortURL)
 		shortenListOut = append(

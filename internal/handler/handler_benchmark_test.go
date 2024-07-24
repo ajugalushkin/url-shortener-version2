@@ -109,7 +109,7 @@ func BenchmarkHandler_HandleRedirect(b *testing.B) {
 				SetHeader(echo.HeaderContentType, echo.MIMEApplicationJSON).
 				SetBody(json).
 				SetResult(&shortenOut).
-				Post(config.FlagsFromContext(ctx).BaseURL + "/api/shorten")
+				Post(config.GetConfig().BaseURL + "/api/shorten")
 			if err != nil {
 				return
 			}
@@ -143,7 +143,7 @@ func BenchmarkHandler_HandleUserUrls(b *testing.B) {
 				_, err := client.R().
 					SetHeader(echo.HeaderContentType, echo.MIMETextPlain).
 					SetBody([]byte(gofakeit.URL())).
-					Post(config.FlagsFromContext(ctx).BaseURL + "/")
+					Post(config.GetConfig().BaseURL + "/")
 				if err != nil {
 					continue
 				}
@@ -175,7 +175,7 @@ func BenchmarkHandler_HandleUserUrlsDelete(b *testing.B) {
 				_, err := client.R().
 					SetHeader(echo.HeaderContentType, echo.MIMETextPlain).
 					SetBody([]byte(gofakeit.URL())).
-					Post(config.FlagsFromContext(ctx).BaseURL + "/")
+					Post(config.GetConfig().BaseURL + "/")
 				if err != nil {
 					continue
 				}

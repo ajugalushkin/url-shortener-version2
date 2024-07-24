@@ -21,7 +21,8 @@ var newConfig = config.AppConfig{
 	BaseURL:       "http://localhost:8080",
 }
 
-var ctx = config.ContextWithFlags(context.Background(), &newConfig)
+// var ctx = config.ContextWithFlags(context.Background(), &newConfig)
+var ctx = context.Background()
 
 func TestHandler_HandleSave(t *testing.T) {
 	type request struct {
@@ -309,3 +310,60 @@ func TestHandler_HandleShortenBatch(t *testing.T) {
 		})
 	}
 }
+
+//func TestHandler_HandlePing(t *testing.T) {
+//	setContext := func(dbPath string) context.Context {
+//		ctx := context.Background()
+//		newCfg := config.AppConfig{DataBaseDsn: dbPath}
+//		return config.ContextWithFlags(ctx, &newCfg)
+//	}
+//	type request struct {
+//		method string
+//		ctx    context.Context
+//	}
+//	type want struct {
+//		code int
+//	}
+//	tests := []struct {
+//		name    string
+//		request request
+//		want    want
+//	}{
+//		{
+//			name: "Test StatusOK",
+//			request: request{
+//				method: http.MethodPost,
+//				ctx:    setContext("postgres://praktikum:pass@postgres:5432/shortenurls"),
+//			},
+//			want: want{
+//				code: http.StatusOK,
+//			},
+//		},
+//	}
+//	for _, test := range tests {
+//		db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+//		if err != nil {
+//			t.Fatalf("err not expected while open a mock db, %v", err)
+//		}
+//		defer db.Close()
+//
+//		db.Ping()
+//
+//		t.Run(test.name, func(t *testing.T) {
+//			// Setup
+//			server := echo.New()
+//			req := httptest.NewRequest(test.request.method, "/", strings.NewReader(test.request.body))
+//			req.Header.Set(echo.HeaderContentType, test.request.contentType)
+//			rec := httptest.NewRecorder()
+//			echoCtx := server.NewContext(req, rec)
+//
+//			handler := NewHandler(ctx, service.NewService(inmemory.NewInMemory()))
+//
+//			// Assertions
+//			if assert.NoError(t, handler.HandleSave(echoCtx)) {
+//				assert.Equal(t, test.want.code, rec.Code)
+//				assert.Equal(t, test.want.contentType, rec.Header().Get(echo.HeaderContentType))
+//			}
+//		})
+//	}
+//}

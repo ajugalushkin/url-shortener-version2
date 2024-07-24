@@ -1,10 +1,10 @@
 package config
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/gommon/log"
@@ -54,8 +54,8 @@ func bindToEnv() {
 	_ = viper.BindEnv("Config")
 }
 
-// LoadConfiguration function for read json config
-func LoadConfiguration(file string) AppConfig {
+// loadConfiguration function for read json config
+func loadConfiguration(file string) AppConfig {
 	var config AppConfig
 	configFile, err := os.Open(file)
 	defer func(configFile *os.File) {
@@ -75,8 +75,8 @@ func LoadConfiguration(file string) AppConfig {
 	return config
 }
 
-// ReadConfig функция для чтения конфига.
-func ReadConfig() *AppConfig {
+// readConfig функция для чтения конфига.
+func readConfig() *AppConfig {
 	bindToEnv()
 	err := cmd.Execute()
 	if err != nil {
@@ -95,7 +95,7 @@ func ReadConfig() *AppConfig {
 	}
 
 	if result.Config != "" {
-		configJSON := LoadConfiguration(result.Config)
+		configJSON := loadConfiguration(result.Config)
 
 		if result.ServerAddress == "" {
 			result.ServerAddress = configJSON.ServerAddress
@@ -123,17 +123,19 @@ func ReadConfig() *AppConfig {
 	return result
 }
 
-type ctxConfig struct{}
+// переменные для генерации инстанции
+var (
+	cfg  *AppConfig
+	once sync.Once
+)
 
-// ContextWithFlags функция позволяет сохранить конфиг в контекст.
-func ContextWithFlags(ctx context.Context, config *AppConfig) context.Context {
-	return context.WithValue(ctx, ctxConfig{}, config)
-}
+// GetConfig получение инстанции
+func GetConfig() *AppConfig {
+	once.Do(
+		func() {
+			// инициализируем объект
+			cfg = readConfig()
+		})
 
-// FlagsFromContext функция позволяет получить конфиг из контекста.
-func FlagsFromContext(ctx context.Context) *AppConfig {
-	if config, ok := ctx.Value(ctxConfig{}).(*AppConfig); ok {
-		return config
-	}
-	return &AppConfig{}
+	return cfg
 }

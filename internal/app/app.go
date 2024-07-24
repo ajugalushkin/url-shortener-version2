@@ -11,16 +11,17 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"go.uber.org/zap"
 
 	_ "github.com/ajugalushkin/url-shortener-version2/api"
+	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
 
-	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 )
 
@@ -28,14 +29,7 @@ import (
 // В методе происходит инициализация контекста, логгера и
 // происходит привязка обработчиков к запросам.
 func Run(ctx context.Context) error {
-	flags := config.FlagsFromContext(ctx)
-
-	log, err := logger.Initialize(flags.FlagLogLevel)
-	if err != nil {
-		return err
-	}
-
-	ctx = logger.ContextWithLogger(ctx, log)
+	logger.GetLogger()
 
 	server := echo.New()
 	setRouting(ctx, server)
@@ -48,13 +42,13 @@ func Run(ctx context.Context) error {
 	defer stop()
 
 	go func() {
-		log.Info("Running server", zap.String("address", flags.ServerAddress))
+		log.Info("Running server", zap.String("address", config.GetConfig().ServerAddress))
 
 		var err error
-		if !flags.EnableHTTPS {
-			err = server.Start(flags.ServerAddress)
+		if !config.GetConfig().EnableHTTPS {
+			err = server.Start(config.GetConfig().ServerAddress)
 		} else {
-			err = server.StartAutoTLS(flags.ServerAddress)
+			err = server.StartAutoTLS(config.GetConfig().ServerAddress)
 		}
 
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -66,7 +60,7 @@ func Run(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatal(err.Error(), zap.String("address", flags.ServerAddress))
+		log.Fatal(err.Error(), zap.String("address", config.GetConfig().ServerAddress))
 	}
 
 	return nil

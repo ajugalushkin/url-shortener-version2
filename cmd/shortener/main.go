@@ -24,14 +24,13 @@ var (
 // @BasePath /
 // @schemes http
 func main() {
-	cfg := config.ReadConfig()
-	ctx := config.ContextWithFlags(context.Background(), cfg)
+	config.GetConfig()
 
 	fmt.Printf("Build version: %s\n", buildVersion)
 	fmt.Printf("Build date: %s\n", buildDate)
 	fmt.Printf("Build commit: %s\n", buildCommit)
 
-	if err := app.Run(ctx); err != nil {
+	if err := app.Run(context.Background()); err != nil {
 		fmt.Println(err)
 	}
 }
