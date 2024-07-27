@@ -406,7 +406,7 @@ func TestHandler_Authorized(t *testing.T) {
 
 		h := Handler{
 			ctx:     ctx,
-			cache:   make(map[string]*dto.User),
+			cache:   map[string]*dto.User{cookie.Value: cookies.GetUser(ctx, cookie.Value)},
 			servAPI: service.NewService(URLSInMem),
 		}
 
