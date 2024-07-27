@@ -313,6 +313,10 @@ func TestHandler_HandleShortenBatch(t *testing.T) {
 	}
 }
 
+func dummyHandler(c echo.Context) error {
+	return c.JSON(http.StatusOK, dto.UserURLList{})
+}
+
 func TestHandler_Authorized(t *testing.T) {
 	t.Run("Test Authorized", func(t *testing.T) {
 		// Setup
@@ -341,7 +345,7 @@ func TestHandler_Authorized(t *testing.T) {
 		}
 		c := e.NewContext(req, rec)
 
-		handler := h.Authorized(h.HandleUserUrls)
+		handler := h.Authorized(dummyHandler)
 
 		// Assertions
 		if assert.NoError(t, handler(c)) {
@@ -376,7 +380,7 @@ func TestHandler_Authorized(t *testing.T) {
 
 		c := e.NewContext(req, rec)
 
-		handler := h.Authorized(h.HandleUserUrls)
+		handler := h.Authorized(dummyHandler)
 
 		// Assertions
 		if assert.NoError(t, handler(c)) {
@@ -413,7 +417,7 @@ func TestHandler_Authorized(t *testing.T) {
 
 		c := e.NewContext(req, rec)
 
-		handler := h.Authorized(h.HandleUserUrls)
+		handler := h.Authorized(dummyHandler)
 
 		// Assertions
 		if assert.NoError(t, handler(c)) {
