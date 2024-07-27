@@ -83,7 +83,7 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 // @Router /api/shorten [post]
 func (s Handler) HandleShorten(echoCtx echo.Context) error {
 	body, err := io.ReadAll(echoCtx.Request().Body)
-	if err != nil {
+	if err != nil || len(body) == 0 {
 		return echoCtx.String(http.StatusBadRequest, validate.URLParseError)
 	}
 
