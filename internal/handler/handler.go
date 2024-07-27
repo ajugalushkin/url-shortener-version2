@@ -235,12 +235,13 @@ func (s Handler) HandleUserUrls(c echo.Context) error {
 		return echoCtx.String(http.StatusNoContent, "")
 	}
 
-	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	_, err = echoCtx.Response().Write(body)
-	if err != nil {
-		return echoCtx.String(http.StatusBadRequest, validate.FailedToSend)
-	}
-	return echoCtx.String(http.StatusTemporaryRedirect, "")
+	//echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	//_, err = echoCtx.Response().Write(body)
+	//if err != nil {
+	//	return echoCtx.String(http.StatusBadRequest, validate.FailedToSend)
+	//}
+	//return echoCtx.String(http.StatusTemporaryRedirect, "")
+	return echoCtx.JSON(http.StatusTemporaryRedirect, body)
 }
 
 // HandleUserUrlsDelete ( @Summary UserURLSDelete
