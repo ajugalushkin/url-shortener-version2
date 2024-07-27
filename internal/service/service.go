@@ -113,15 +113,33 @@ func (s *Service) Redirect(ctx context.Context, identifier string) (*dto.Shorten
 }
 
 // GetUserURLS метод для получения списка URL для конкретного пользователя.
-func (s *Service) GetUserURLS(ctx context.Context, userID int) (*dto.ShorteningList, error) {
+func (s *Service) GetUserURLS(ctx context.Context, userID int) (*dto.UserURLList, error) {
 	log := logger.GetLogger()
 
-	shortening, err := s.storage.GetListByUser(ctx, strconv.Itoa(userID))
+	shorteningList, err := s.storage.GetListByUser(ctx, strconv.Itoa(userID))
 	if err != nil {
 		log.Info("service.GetUserURLS ERROR", zap.Error(err))
-		return &dto.ShorteningList{}, err
+		return &dto.UserURLList{}, err
 	}
-	return shortening, nil
+
+	var shortenListOut dto.UserURLList
+	for _, item := range *shorteningList {
+		shortWithHost, _ := url.JoinPath(config.GetConfig().BaseURL, item.ShortURL)
+		shortenListOut = append(
+			shortenListOut,
+			dto.UserURLListLine{
+				ShortURL:    shortWithHost,
+				OriginalURL: item.OriginalURL,
+			},
+		)
+	}
+
+	//newBody, err := shortenListOut.MarshalJSON()
+	//if err != nil {
+	//	return newBody, echoCtx.String(http.StatusBadRequest, validate.JSONNotCreate)
+	//}
+
+	return &shortenListOut, nil
 }
 
 // DeleteUserURL метод для удаления списка URL для конкретного пользователя.

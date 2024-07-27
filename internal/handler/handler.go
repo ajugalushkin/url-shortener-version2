@@ -230,10 +230,10 @@ func (s Handler) HandleUserUrls(c echo.Context) error {
 		return echoCtx.String(http.StatusBadRequest, validate.URLNotFound)
 	}
 
-	body, err := parse.SetUserURLSToBody(s.ctx, echoCtx, shortList)
-	if err != nil {
-		return echoCtx.String(http.StatusNoContent, "")
-	}
+	//body, err := parse.SetUserURLSToBody(s.ctx, echoCtx, shortList)
+	//if err != nil {
+	//	return echoCtx.String(http.StatusNoContent, "")
+	//}
 
 	//echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	//_, err = echoCtx.Response().Write(body)
@@ -241,7 +241,7 @@ func (s Handler) HandleUserUrls(c echo.Context) error {
 	//	return echoCtx.String(http.StatusBadRequest, validate.FailedToSend)
 	//}
 	//return echoCtx.String(http.StatusTemporaryRedirect, "")
-	return echoCtx.JSON(http.StatusOK, body)
+	return echoCtx.JSON(http.StatusOK, shortList)
 }
 
 // HandleUserUrlsDelete ( @Summary UserURLSDelete
