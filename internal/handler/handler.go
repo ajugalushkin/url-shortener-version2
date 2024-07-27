@@ -226,7 +226,7 @@ func (s Handler) HandleUserUrls(c echo.Context) error {
 	echoCtx := c.(*CustomContext)
 
 	shortList, err := s.servAPI.GetUserURLS(s.ctx, echoCtx.user.ID)
-	if err != nil {
+	if err != nil || len(*shortList) == 0 {
 		return echoCtx.String(http.StatusBadRequest, validate.URLNotFound)
 	}
 
