@@ -62,8 +62,8 @@ func GetUser(ctx context.Context, tokenString string) *dto.User {
 	return &dto.User{ID: claims.UserID}
 }
 
-// createCookie функция для создания куки
-func createCookie(ctx context.Context, nameCookie string) *http.Cookie {
+// CreateCookie функция для создания куки
+func CreateCookie(ctx context.Context, nameCookie string) *http.Cookie {
 	cookie := new(http.Cookie)
 	cookie.Name = nameCookie
 	cookie.Value, _ = buildJWTString(ctx)
@@ -73,7 +73,7 @@ func createCookie(ctx context.Context, nameCookie string) *http.Cookie {
 
 // Write функция записывает куки в контекст
 func Write(ctx context.Context, echoCtx echo.Context, nameCookie string) string {
-	cookie := createCookie(ctx, nameCookie)
+	cookie := CreateCookie(ctx, nameCookie)
 	echoCtx.SetCookie(cookie)
 	return cookie.Value
 }

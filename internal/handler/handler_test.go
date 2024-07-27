@@ -4,12 +4,14 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ajugalushkin/url-shortener-version2/internal/cookies"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage/inmemory"
@@ -310,59 +312,111 @@ func TestHandler_HandleShortenBatch(t *testing.T) {
 	}
 }
 
-//func TestHandler_HandlePing(t *testing.T) {
-//	setContext := func(dbPath string) context.Context {
-//		ctx := context.Background()
-//		newCfg := config.AppConfig{DataBaseDsn: dbPath}
-//		return config.ContextWithFlags(ctx, &newCfg)
-//	}
-//	type request struct {
-//		method string
-//		ctx    context.Context
-//	}
-//	type want struct {
-//		code int
-//	}
-//	tests := []struct {
-//		name    string
-//		request request
-//		want    want
-//	}{
-//		{
-//			name: "Test StatusOK",
-//			request: request{
-//				method: http.MethodPost,
-//				ctx:    setContext("postgres://praktikum:pass@postgres:5432/shortenurls"),
-//			},
-//			want: want{
-//				code: http.StatusOK,
-//			},
-//		},
-//	}
-//	for _, test := range tests {
-//		db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-//		if err != nil {
-//			t.Fatalf("err not expected while open a mock db, %v", err)
-//		}
-//		defer db.Close()
-//
-//		db.Ping()
-//
-//		t.Run(test.name, func(t *testing.T) {
-//			// Setup
-//			server := echo.New()
-//			req := httptest.NewRequest(test.request.method, "/", strings.NewReader(test.request.body))
-//			req.Header.Set(echo.HeaderContentType, test.request.contentType)
-//			rec := httptest.NewRecorder()
-//			echoCtx := server.NewContext(req, rec)
-//
-//			handler := NewHandler(ctx, service.NewService(inmemory.NewInMemory()))
-//
-//			// Assertions
-//			if assert.NoError(t, handler.HandleSave(echoCtx)) {
-//				assert.Equal(t, test.want.code, rec.Code)
-//				assert.Equal(t, test.want.contentType, rec.Header().Get(echo.HeaderContentType))
-//			}
-//		})
-//	}
-//}
+func TestHandler_Authorized(t *testing.T) {
+	t.Run("Test Authorized", func(t *testing.T) {
+		// Setup
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/api/user/urls", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		cookie := cookies.CreateCookie(ctx, cookieName)
+		req.AddCookie(cookie)
+
+		URLSInMem := inmemory.NewInMemory()
+		_, err := URLSInMem.Put(ctx, dto.Shortening{
+			CorrelationID: "1",
+			ShortURL:      "34ewfd",
+			OriginalURL:   "http://test.com",
+			UserID:        strconv.Itoa(cookies.GetUser(ctx, cookie.Value).ID)})
+		if err != nil {
+			return
+		}
+
+		h := Handler{
+			ctx:     ctx,
+			cache:   map[string]*dto.User{cookie.Value: cookies.GetUser(ctx, cookie.Value)},
+			servAPI: service.NewService(URLSInMem),
+		}
+		c := e.NewContext(req, rec)
+
+		handler := h.Authorized(h.HandleUserUrls)
+
+		// Assertions
+		if assert.NoError(t, handler(c)) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+		}
+	})
+
+	t.Run("Test Authorized Empty Cookie", func(t *testing.T) {
+		// Setup
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/api/user/urls", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		cookie := cookies.CreateCookie(ctx, cookieName)
+
+		URLSInMem := inmemory.NewInMemory()
+		_, err := URLSInMem.Put(ctx, dto.Shortening{
+			CorrelationID: "1",
+			ShortURL:      "34ewfd",
+			OriginalURL:   "http://test.com",
+			UserID:        strconv.Itoa(cookies.GetUser(ctx, cookie.Value).ID)})
+		if err != nil {
+			return
+		}
+
+		h := Handler{
+			ctx:     ctx,
+			cache:   make(map[string]*dto.User),
+			servAPI: service.NewService(URLSInMem),
+		}
+
+		c := e.NewContext(req, rec)
+
+		handler := h.Authorized(h.HandleUserUrls)
+
+		// Assertions
+		if assert.NoError(t, handler(c)) {
+			assert.Equal(t, http.StatusUnauthorized, rec.Code)
+		}
+	})
+
+	t.Run("Test Authorized Wrong Cookie", func(t *testing.T) {
+		// Setup
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/api/user/urls", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		req.AddCookie(cookies.CreateCookie(ctx, "AnotherCookieName"))
+
+		cookie := cookies.CreateCookie(ctx, cookieName)
+
+		URLSInMem := inmemory.NewInMemory()
+		_, err := URLSInMem.Put(ctx, dto.Shortening{
+			CorrelationID: "1",
+			ShortURL:      "34ewfd",
+			OriginalURL:   "http://test.com",
+			UserID:        strconv.Itoa(cookies.GetUser(ctx, cookie.Value).ID)})
+		if err != nil {
+			return
+		}
+
+		h := Handler{
+			ctx:     ctx,
+			cache:   make(map[string]*dto.User),
+			servAPI: service.NewService(URLSInMem),
+		}
+
+		c := e.NewContext(req, rec)
+
+		handler := h.Authorized(h.HandleUserUrls)
+
+		// Assertions
+		if assert.NoError(t, handler(c)) {
+			assert.Equal(t, http.StatusUnauthorized, rec.Code)
+		}
+	})
+}
