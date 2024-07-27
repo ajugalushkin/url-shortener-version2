@@ -241,7 +241,7 @@ func (s Handler) HandleUserUrls(c echo.Context) error {
 	//	return echoCtx.String(http.StatusBadRequest, validate.FailedToSend)
 	//}
 	//return echoCtx.String(http.StatusTemporaryRedirect, "")
-	return echoCtx.JSON(http.StatusTemporaryRedirect, body)
+	return echoCtx.JSON(http.StatusOK, body)
 }
 
 // HandleUserUrlsDelete ( @Summary UserURLSDelete

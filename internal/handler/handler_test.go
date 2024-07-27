@@ -454,7 +454,7 @@ func TestHandler_HandleUserUrls(t *testing.T) {
 
 		// Assertions
 		if assert.NoError(t, h.HandleUserUrls(c)) {
-			assert.Equal(t, http.StatusTemporaryRedirect, rec.Code)
+			assert.Equal(t, http.StatusOK, rec.Code)
 		}
 	})
 
