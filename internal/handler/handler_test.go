@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -482,30 +481,82 @@ func TestHandler_HandleUserUrls(t *testing.T) {
 }
 
 func TestHandler_HandleUserUrlsDelete(t *testing.T) {
-	type fields struct {
-		ctx     context.Context
-		cache   map[string]*dto.User
-		servAPI *service.Service
-	}
-	type args struct {
-		c echo.Context
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Handler{
-				ctx:     tt.fields.ctx,
-				cache:   tt.fields.cache,
-				servAPI: tt.fields.servAPI,
-			}
-			tt.wantErr(t, s.HandleUserUrlsDelete(tt.args.c), fmt.Sprintf("HandleUserUrlsDelete(%v)", tt.args.c))
-		})
-	}
+	t.Run("Test Delete URL for User Ok", func(t *testing.T) {
+		// Setup
+		e := echo.New()
+		req := httptest.NewRequest(
+			http.MethodDelete,
+			"/api/user/urls",
+			strings.NewReader("[\"6qxTVvsy\"]"),
+		)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		cookie := cookies.CreateCookie(ctx, cookieName)
+		URLSInMem := inmemory.NewInMemory()
+		_, err := URLSInMem.Put(ctx, dto.Shortening{
+			CorrelationID: "1",
+			ShortURL:      "6qxTVvsy",
+			OriginalURL:   "http://test.com",
+			UserID:        strconv.Itoa(cookies.GetUser(ctx, cookie.Value).ID)})
+		if err != nil {
+			return
+		}
+
+		h := Handler{
+			ctx:     ctx,
+			cache:   make(map[string]*dto.User),
+			servAPI: service.NewService(URLSInMem),
+		}
+		c := &CustomContext{user: cookies.GetUser(ctx, cookie.Value), Context: e.NewContext(req, rec)}
+
+		// Assertions
+		if assert.NoError(t, h.HandleUserUrlsDelete(c)) {
+			assert.Equal(t, http.StatusAccepted, rec.Code)
+		}
+	})
+
+	t.Run("Test Delete URL for User BadRequest", func(t *testing.T) {
+		// Setup
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodDelete, "/api/user/urls", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		h := Handler{
+			ctx:     ctx,
+			cache:   make(map[string]*dto.User),
+			servAPI: service.NewService(inmemory.NewInMemory()),
+		}
+		c := &CustomContext{user: &dto.User{}, Context: e.NewContext(req, rec)}
+
+		// Assertions
+		if assert.NoError(t, h.HandleUserUrlsDelete(c)) {
+			assert.Equal(t, http.StatusBadRequest, rec.Code)
+		}
+	})
+
+	t.Run("Test Delete URL for User InternalServerError", func(t *testing.T) {
+		// Setup
+		e := echo.New()
+		req := httptest.NewRequest(
+			http.MethodDelete,
+			"/api/user/urls",
+			strings.NewReader("[\n    {\n        \"short_url\": \"http://...\",\n        \"original_url\": \"http://...\"\n    },\n    ...\n] "),
+		)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		h := Handler{
+			ctx:     ctx,
+			cache:   make(map[string]*dto.User),
+			servAPI: service.NewService(inmemory.NewInMemory()),
+		}
+		c := &CustomContext{user: &dto.User{}, Context: e.NewContext(req, rec)}
+
+		// Assertions
+		if assert.NoError(t, h.HandleUserUrlsDelete(c)) {
+			assert.Equal(t, http.StatusInternalServerError, rec.Code)
+		}
+	})
 }

@@ -52,26 +52,3 @@ func SetJSONDataToBody(ctx context.Context, echoCtx echo.Context, list *dto.Shor
 
 	return newBody, nil
 }
-
-//// SetUserURLSToBody внесение данных в контекст.
-//func SetUserURLSToBody(ctx context.Context, echoCtx echo.Context, list *dto.ShorteningList) ([]byte, error) {
-//	var shortenListOut dto.UserURLList
-//	flag := config.GetConfig()
-//	for _, item := range *list {
-//		shortWithHost, _ := url.JoinPath(flag.BaseURL, item.ShortURL)
-//		shortenListOut = append(
-//			shortenListOut,
-//			dto.UserURLListLine{
-//				ShortURL:    shortWithHost,
-//				OriginalURL: item.OriginalURL,
-//			},
-//		)
-//	}
-//
-//	newBody, err := shortenListOut.MarshalJSON()
-//	if err != nil {
-//		return newBody, echoCtx.String(http.StatusBadRequest, validate.JSONNotCreate)
-//	}
-//
-//	return newBody, nil
-//}

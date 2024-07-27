@@ -134,11 +134,6 @@ func (s *Service) GetUserURLS(ctx context.Context, userID int) (*dto.UserURLList
 		)
 	}
 
-	//newBody, err := shortenListOut.MarshalJSON()
-	//if err != nil {
-	//	return newBody, echoCtx.String(http.StatusBadRequest, validate.JSONNotCreate)
-	//}
-
 	return &shortenListOut, nil
 }
 
