@@ -392,9 +392,8 @@ func TestHandler_Authorized(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/api/user/urls", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.AddCookie(cookies.CreateCookie(ctx, cookieName))
 		rec := httptest.NewRecorder()
-
-		req.AddCookie(cookies.CreateCookie(ctx, "AnotherCookieName"))
 
 		cookie := cookies.CreateCookie(ctx, cookieName)
 
