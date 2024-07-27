@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"io"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/cookies"
+	"github.com/ajugalushkin/url-shortener-version2/internal/database"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
@@ -178,8 +178,13 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 // @Failure 500 {integer} integer 1
 // @Router /ping [get]
 func (s Handler) HandlePing(echoCtx echo.Context) error {
-	flags := config.GetConfig()
-	db, err := sql.Open("pgx", flags.DataBaseDsn)
+	//flags := config.GetConfig()
+	//db, err := sql.Open("pgx", flags.DataBaseDsn)
+	//if err != nil {
+	//	return echoCtx.String(http.StatusInternalServerError, validate.PingError)
+	//}
+	//defer db.Close()
+	db, err := database.NewConnection("pgx", config.GetConfig().DataBaseDsn)
 	if err != nil {
 		return echoCtx.String(http.StatusInternalServerError, validate.PingError)
 	}
