@@ -2,6 +2,7 @@ package file
 
 import (
 	"context"
+	"errors"
 	"os"
 	"sync"
 	"testing"
@@ -130,7 +131,19 @@ func TestPutList_ErrorOnDuplicate(t *testing.T) {
 // Retrieve an existing shortening by its identifier
 func TestRetrieveExistingShortening(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage("testdata/testfile.json")
+	config.GetConfig().FileStoragePath = "testdata/testfile.json"
+	storage := NewStorage(config.GetConfig().FileStoragePath)
+
+	if _, err := os.Stat(config.GetConfig().FileStoragePath); !errors.Is(err, os.ErrNotExist) {
+		file, err := os.ReadFile(config.GetConfig().FileStoragePath)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		} else {
+			if len(file) > 0 {
+				os.Remove(config.GetConfig().FileStoragePath)
+			}
+		}
+	}
 
 	shortening := dto.Shortening{
 		ShortURL:    "short123",
@@ -138,7 +151,10 @@ func TestRetrieveExistingShortening(t *testing.T) {
 		UserID:      "user1",
 	}
 
-	storage.Put(ctx, shortening)
+	_, err := storage.Put(ctx, shortening)
+	if err != nil {
+		t.Fatalf("not expected error, got %v", err)
+	}
 
 	result, err := storage.Get(ctx, "short123")
 
@@ -236,13 +252,32 @@ func TestGetListByUserHandlesNonExistentUserID(t *testing.T) {
 // User ID does not exist
 func TestDeleteUserURLUserIDNotExist(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage("testdata/testfile.json")
+	config.GetConfig().FileStoragePath = "testdata/testfile.json"
+
+	if _, err := os.Stat(config.GetConfig().FileStoragePath); !errors.Is(err, os.ErrNotExist) {
+		file, err := os.ReadFile(config.GetConfig().FileStoragePath)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		} else {
+			if len(file) > 0 {
+				os.Remove(config.GetConfig().FileStoragePath)
+			}
+		}
+	}
+
+	storage := NewStorage(config.GetConfig().FileStoragePath)
 	userID := 999 // Non-existent user ID
 	shortURLs := []string{"short1", "short2"}
 
 	// Prepopulate storage with URLs
-	storage.Put(ctx, dto.Shortening{ShortURL: "short1", OriginalURL: "http://example.com/1"})
-	storage.Put(ctx, dto.Shortening{ShortURL: "short2", OriginalURL: "http://example.com/2"})
+	_, err := storage.Put(ctx, dto.Shortening{ShortURL: "short1", OriginalURL: "http://example.com/1"})
+	if err != nil {
+		t.Fatalf(" not expected error, got nil")
+	}
+	_, err = storage.Put(ctx, dto.Shortening{ShortURL: "short2", OriginalURL: "http://example.com/2"})
+	if err != nil {
+		t.Fatalf("not expected error, got %v", err)
+	}
 
 	// Call DeleteUserURL
 	storage.DeleteUserURL(ctx, shortURLs, userID)
