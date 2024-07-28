@@ -297,3 +297,186 @@ func TestGetListByUser_UserNotFound(t *testing.T) {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
+
+// Handles database connection failure gracefully
+func TestDeleteUserURLHandlesDBConnectionFailure(t *testing.T) {
+	ctx := context.Background()
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	repo := &Repo{db: sqlxDB}
+
+	shortList := []string{"short1", "short2"}
+	userID := 1
+
+	mock.ExpectBegin().WillReturnError(fmt.Errorf("db connection error"))
+
+	repo.DeleteUserURL(ctx, shortList, userID)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+// Channel receives all input data when doneCh is not closed
+func TestChannelReceivesAllDataWhenDoneChNotClosed(t *testing.T) {
+	doneCh := make(chan struct{})
+	input := []string{"data1", "data2", "data3"}
+
+	resultCh := prepareList(doneCh, input)
+
+	var result []string
+	for data := range resultCh {
+		result = append(result, data)
+	}
+
+	if !reflect.DeepEqual(result, input) {
+		t.Errorf("expected %v, got %v", input, result)
+	}
+}
+
+// doneCh is closed before any data is processed
+func TestDoneChClosedBeforeProcessing(t *testing.T) {
+	doneCh := make(chan struct{})
+	input := []string{"data1", "data2", "data3"}
+
+	close(doneCh)
+	resultCh := prepareList(doneCh, input)
+
+	var result []string
+	for data := range resultCh {
+		result = append(result, data)
+	}
+
+	if len(result) != 0 {
+		t.Errorf("expected no data, got %v", result)
+	}
+}
+
+// Handles empty inputCh gracefully
+func TestSearchURLsHandlesEmptyInput(t *testing.T) {
+	ctx := context.Background()
+	doneCh := make(chan struct{})
+	inputCh := make(chan string)
+	defer close(doneCh)
+	defer close(inputCh)
+
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	repo := &Repo{db: sqlxDB}
+
+	resultCh := repo.searchURLs(ctx, doneCh, inputCh)
+
+	select {
+	case result, ok := <-resultCh:
+		if ok {
+			t.Errorf("expected no results, but got %v", result)
+		}
+	default:
+		// No results as expected
+	}
+}
+
+// Correctly splits input channel into 100 worker channels
+func TestSplitCorrectlySplitsInto100WorkerChannels(t *testing.T) {
+	ctx := context.Background()
+	doneCh := make(chan struct{})
+	inputCh := make(chan string)
+	defer close(doneCh)
+	defer close(inputCh)
+
+	db, _, _ := sqlmock.New()
+	defer db.Close()
+	repo := &Repo{db: sqlx.NewDb(db, "sqlmock")}
+
+	channels := repo.split(ctx, doneCh, inputCh)
+
+	if len(channels) != 100 {
+		t.Errorf("expected 100 channels, got %d", len(channels))
+	}
+}
+
+// Handles empty input channel gracefully
+func TestSplitHandlesEmptyInputChannelGracefully(t *testing.T) {
+	ctx := context.Background()
+	doneCh := make(chan struct{})
+	inputCh := make(chan string)
+	defer close(doneCh)
+	defer close(inputCh)
+
+	db, _, _ := sqlmock.New()
+	defer db.Close()
+	repo := &Repo{db: sqlx.NewDb(db, "sqlmock")}
+
+	channels := repo.split(ctx, doneCh, inputCh)
+
+	for _, ch := range channels {
+		select {
+		case res, ok := <-ch:
+			if ok {
+				t.Errorf("expected channel to be closed, but received value: %v", res)
+			}
+		default:
+		}
+	}
+}
+
+// Merging multiple channels into a single channel without data loss
+func TestMergeMultipleChannels(t *testing.T) {
+	doneCh := make(chan struct{})
+	defer close(doneCh)
+
+	ch1 := make(chan *dto.Shortening)
+	ch2 := make(chan *dto.Shortening)
+
+	go func() {
+		ch1 <- &dto.Shortening{ShortURL: "short1", OriginalURL: "original1"}
+		close(ch1)
+	}()
+
+	go func() {
+		ch2 <- &dto.Shortening{ShortURL: "short2", OriginalURL: "original2"}
+		close(ch2)
+	}()
+
+	finalCh := merge(doneCh, ch1, ch2)
+
+	var results []*dto.Shortening
+	for result := range finalCh {
+		results = append(results, result)
+	}
+
+	if len(results) != 2 {
+		t.Fatalf("expected 2 results, got %d", len(results))
+	}
+
+	if results[0].ShortURL != "short1" || results[1].ShortURL != "short2" {
+		t.Fatalf("unexpected results: %+v", results)
+	}
+}
+
+// Handling an empty list of input channels
+func TestMergeEmptyChannels(t *testing.T) {
+	doneCh := make(chan struct{})
+	defer close(doneCh)
+
+	finalCh := merge(doneCh)
+
+	var results []*dto.Shortening
+	for result := range finalCh {
+		results = append(results, result)
+	}
+
+	if len(results) != 0 {
+		t.Fatalf("expected 0 results, got %d", len(results))
+	}
+}
