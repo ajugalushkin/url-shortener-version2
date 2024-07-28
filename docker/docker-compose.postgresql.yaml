@@ -32,7 +32,7 @@ services:
     image: dpage/pgadmin4:8.5
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-O", "-", "http://localhost:80/misc/ping"]
+      test: [ "CMD", "wget", "-O", "-", "http://localhost:80/misc/ping" ]
       start_period: 10s
       interval: 10s
       timeout: 45s
@@ -42,8 +42,8 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_EMAIL:?Please configure PGADMIN_DEFAULT_EMAIL in the .env file}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
-       - ./etc/pgadmin4/servers.json:/pgadmin4/servers.json
-       - ./volume/pgadmin:/var/lib/pgadmin
+      - ./etc/pgadmin4/servers.json:/pgadmin4/servers.json
+      - ./volume/pgadmin:/var/lib/pgadmin
     ports:
       - ${PGADMIN_PORT:-7080}:80
     networks:

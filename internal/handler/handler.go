@@ -116,7 +116,7 @@ func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 	if ctType := echoCtx.Request().Header.Get(echo.HeaderContentType); ctType != echo.MIMEApplicationJSON {
 		return echoCtx.String(http.StatusBadRequest, validate.WrongTypeRequest)
 	}
-	
+
 	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil {
 		return echoCtx.String(http.StatusBadRequest, validate.URLParseError)
