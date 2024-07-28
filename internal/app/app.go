@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"go.uber.org/zap"
 
@@ -42,7 +41,7 @@ func Run(ctx context.Context) error {
 	defer stop()
 
 	go func() {
-		log.Info("Running server", zap.String("address", config.GetConfig().ServerAddress))
+		logger.GetLogger().Info("Running server", zap.String("address", config.GetConfig().ServerAddress))
 
 		var err error
 		if !config.GetConfig().EnableHTTPS {
@@ -52,7 +51,7 @@ func Run(ctx context.Context) error {
 		}
 
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatal("shutting down the server", zap.Error(err))
+			logger.GetLogger().Fatal("shutting down the server", zap.Error(err))
 		}
 	}()
 
@@ -60,7 +59,8 @@ func Run(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatal(err.Error(), zap.String("address", config.GetConfig().ServerAddress))
+		logger.GetLogger().Fatal(err.Error(), zap.String("address", config.GetConfig().ServerAddress))
+		return err
 	}
 
 	return nil

@@ -16,7 +16,6 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
-	"github.com/ajugalushkin/url-shortener-version2/internal/parse"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
 )
@@ -118,29 +117,40 @@ func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 		return echoCtx.String(http.StatusBadRequest, validate.WrongTypeRequest)
 	}
 
-	inputList, err := parse.GetJSONDataFromBatch(s.ctx, echoCtx)
+	//inputList, err := parse.GetJSONDataFromBatch(s.ctx, echoCtx)
+	//if err != nil {
+	//	return err
+	//}
+
+	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil {
-		return err
+		return echoCtx.String(http.StatusBadRequest, validate.URLParseError)
 	}
 
-	shortList, err := s.servAPI.ShortenList(s.ctx, inputList)
+	var inputList dto.ShortenListInput
+	err = inputList.UnmarshalJSON(body)
 	if err != nil {
-		return err
+		return echoCtx.String(http.StatusBadRequest, validate.JSONParseError)
 	}
 
-	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	echoCtx.Response().Status = http.StatusCreated
-
-	body, err := parse.SetJSONDataToBody(s.ctx, echoCtx, shortList)
+	listOutput, err := s.servAPI.ShortenList(s.ctx, inputList)
 	if err != nil {
-		return err
+		return echoCtx.String(http.StatusBadRequest, validate.URLNotFound)
 	}
 
-	_, err = echoCtx.Response().Write(body)
-	if err != nil {
-		return echoCtx.String(http.StatusBadRequest, validate.FailedToSend)
-	}
-	return echoCtx.String(http.StatusTemporaryRedirect, "")
+	//echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	//echoCtx.Response().Status = http.StatusCreated
+
+	//body, err := parse.SetJSONDataToBody(s.ctx, echoCtx, shortList)
+	//if err != nil {
+	//	return err
+	//}
+
+	//_, err = echoCtx.Response().Write(body)
+	//if err != nil {
+	//	return echoCtx.String(http.StatusBadRequest, validate.FailedToSend)
+	//}
+	return echoCtx.JSON(http.StatusCreated, listOutput)
 }
 
 // HandleRedirect @Summary Redirect

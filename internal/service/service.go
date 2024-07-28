@@ -80,7 +80,7 @@ func (s *Service) Shorten(ctx context.Context, input dto.Shortening) (*dto.Short
 }
 
 // ShortenList метод для получения сокращения списка URL
-func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (*dto.ShorteningList, error) {
+func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (*dto.ShortenListOutput, error) {
 	var shorteningList dto.ShorteningList
 	for _, item := range input {
 		newShortening := dto.Shortening{
@@ -97,7 +97,20 @@ func (s *Service) ShortenList(ctx context.Context, input dto.ShortenListInput) (
 		return nil, err
 	}
 
-	return &shorteningList, nil
+	var shortenListOut dto.ShortenListOutput
+	flag := config.GetConfig()
+	for _, item := range shorteningList {
+		shortWithHost, _ := url.JoinPath(flag.BaseURL, item.ShortURL)
+		shortenListOut = append(
+			shortenListOut,
+			dto.ShortenListOutputLine{
+				CorrelationID: item.CorrelationID,
+				ShortURL:      shortWithHost,
+			},
+		)
+	}
+
+	return &shortenListOut, nil
 }
 
 // Redirect метод для перенаправления
