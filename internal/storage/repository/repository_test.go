@@ -99,7 +99,7 @@ func TestPut_HandlesDatabaseConnectionFailures(t *testing.T) {
 	}
 }
 
-//// Retrieves a shortening record successfully when the shortURL exists in the database
+// Retrieves a shortening record successfully when the shortURL exists in the database
 //func TestGet_SuccessfullyRetrievesShorteningRecord(t *testing.T) {
 //	ctx := context.Background()
 //	db, mock, err := sqlmock.New()
