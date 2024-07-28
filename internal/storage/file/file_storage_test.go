@@ -30,12 +30,14 @@ func TestPutNewShortening(t *testing.T) {
 	ctx := context.Background()
 	config.GetConfig().FileStoragePath = "/tmp/test_storage.json"
 
-	file, err := os.ReadFile(config.GetConfig().FileStoragePath)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	} else {
-		if len(file) > 0 {
-			os.Remove(config.GetConfig().FileStoragePath)
+	if _, err := os.Stat(config.GetConfig().FileStoragePath); !errors.Is(err, os.ErrNotExist) {
+		file, err := os.ReadFile(config.GetConfig().FileStoragePath)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		} else {
+			if len(file) > 0 {
+				os.Remove(config.GetConfig().FileStoragePath)
+			}
 		}
 	}
 
