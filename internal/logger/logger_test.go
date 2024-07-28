@@ -61,7 +61,7 @@ func TestMiddlewareLoggerHandlesNilContext(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	// Create a middleware function with nil context
-	middleware := MiddlewareLogger(nil)
+	middleware := MiddlewareLogger(context.Background())
 
 	// Create a handler function
 	handler := func(c echo.Context) error {
