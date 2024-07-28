@@ -5,16 +5,16 @@ definitions:
         type: string
     type: object
 info:
-  contact: {}
+  contact: { }
 paths:
   /:
     get:
       consumes:
-      - text/plain
+        - text/plain
       description: Redirect to origin URL by short URL
       operationId: redirect
       produces:
-      - text/html; charset=utf-8
+        - text/html; charset=utf-8
       responses:
         "307":
           description: Temporary Redirect
@@ -26,11 +26,11 @@ paths:
             type: integer
     post:
       consumes:
-      - text/plain
+        - text/plain
       description: Short URL
       operationId: shorten
       produces:
-      - text/plain
+        - text/plain
       responses:
         "201":
           description: Created
@@ -43,18 +43,18 @@ paths:
   /api/shorten:
     post:
       consumes:
-      - application/json
+        - application/json
       description: Short URL in json format
       operationId: shorten-json
       parameters:
-      - description: URL for shortening
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/dto.ShortenInput'
+        - description: URL for shortening
+          in: body
+          name: input
+          required: true
+          schema:
+            $ref: '#/definitions/dto.ShortenInput'
       produces:
-      - application/json
+        - application/json
       responses:
         "201":
           description: Created
@@ -67,25 +67,25 @@ paths:
   /api/shorten/batch:
     post:
       consumes:
-      - application/json
+        - application/json
       description: Short list of URLs in json format
       operationId: shorten-batch-json
       parameters:
-      - description: URL for shortening
-        in: body
-        name: input
-        required: true
-        schema:
-          items:
-            properties:
-              correlation_id:
-                type: string
-              original_url:
-                type: string
-            type: object
-          type: array
+        - description: URL for shortening
+          in: body
+          name: input
+          required: true
+          schema:
+            items:
+              properties:
+                correlation_id:
+                  type: string
+                original_url:
+                  type: string
+              type: object
+            type: array
       produces:
-      - application/json
+        - application/json
       responses:
         "307":
           description: Temporary Redirect
@@ -98,11 +98,11 @@ paths:
   /api/user/urls:
     delete:
       consumes:
-      - application/json
+        - application/json
       description: Delete all short URLS for user
       operationId: user-urls-json
       produces:
-      - application/json
+        - application/json
       responses:
         "202":
           description: Accepted
@@ -114,11 +114,11 @@ paths:
             type: integer
     get:
       consumes:
-      - application/json
+        - application/json
       description: Retrive all short URLS for user
       operationId: user-urls-json
       produces:
-      - application/json
+        - application/json
       responses:
         "307":
           description: Temporary Redirect
@@ -131,11 +131,11 @@ paths:
   /ping:
     get:
       consumes:
-      - text/plain
+        - text/plain
       description: Ping Database for check connection
       operationId: ping
       produces:
-      - text/plain; charset=utf-8
+        - text/plain; charset=utf-8
       responses:
         "200":
           description: OK
