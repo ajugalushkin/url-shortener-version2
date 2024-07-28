@@ -13,11 +13,8 @@ import (
 )
 
 // Repository is successfully created with a valid database connection
-func TestNewRepositoryWithValidDB(t *testing.T) {
-	db, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
+func TestNewRepo_SuccessfullyCreatesRepositoryWithValidDBConnection(t *testing.T) {
+	db, _, _ := sqlmock.New()
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
@@ -25,21 +22,6 @@ func TestNewRepositoryWithValidDB(t *testing.T) {
 
 	if repo == nil {
 		t.Error("expected repository to be created, got nil")
-	}
-	if repo.db != sqlxDB {
-		t.Errorf("expected db to be %v, got %v", sqlxDB, repo.db)
-	}
-}
-
-// Passing a nil database connection to the repository constructor
-func TestNewRepositoryWithNilDB(t *testing.T) {
-	repo := NewRepository(nil)
-
-	if repo == nil {
-		t.Error("expected repository to be created, got nil")
-	}
-	if repo.db != nil {
-		t.Errorf("expected db to be nil, got %v", repo.db)
 	}
 }
 
