@@ -117,11 +117,6 @@ func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 		return echoCtx.String(http.StatusBadRequest, validate.WrongTypeRequest)
 	}
 
-	//inputList, err := parse.GetJSONDataFromBatch(s.ctx, echoCtx)
-	//if err != nil {
-	//	return err
-	//}
-
 	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil {
 		return echoCtx.String(http.StatusBadRequest, validate.URLParseError)
@@ -138,18 +133,6 @@ func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 		return echoCtx.String(http.StatusBadRequest, validate.URLNotFound)
 	}
 
-	//echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	//echoCtx.Response().Status = http.StatusCreated
-
-	//body, err := parse.SetJSONDataToBody(s.ctx, echoCtx, shortList)
-	//if err != nil {
-	//	return err
-	//}
-
-	//_, err = echoCtx.Response().Write(body)
-	//if err != nil {
-	//	return echoCtx.String(http.StatusBadRequest, validate.FailedToSend)
-	//}
 	return echoCtx.JSON(http.StatusCreated, listOutput)
 }
 
