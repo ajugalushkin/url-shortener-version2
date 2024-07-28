@@ -75,11 +75,6 @@ func (r *Repo) Get(ctx context.Context, shortURL string) (*dto.Shortening, error
 			PlaceholderFormat(squirrel.Dollar).
 			Where(squirrel.Eq{"short_url": []string{shortURL}}).
 			RunWith(r.db)
-
-		sqlReqString, _, _ := sb.ToSql()
-
-		logger.GetLogger().Debug("SQL request", zap.String("SQL", sqlReqString))
-
 		query, args, err := sb.ToSql()
 		if err != nil {
 			return err
