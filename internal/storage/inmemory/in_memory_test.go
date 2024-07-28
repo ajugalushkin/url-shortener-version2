@@ -218,8 +218,15 @@ func TestGetListByUserWithExistingURLs(t *testing.T) {
 		IsDeleted:     false,
 	}
 
-	repo.Put(ctx, shortening1)
-	repo.Put(ctx, shortening2)
+	_, err := repo.Put(ctx, shortening1)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	_, err = repo.Put(ctx, shortening2)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
 
 	result, err := repo.GetListByUser(ctx, userID)
 
@@ -297,7 +304,10 @@ func TestDeleteUserURLNoURLsProvided(t *testing.T) {
 		IsDeleted:   false,
 	}
 
-	repo.Put(ctx, shortening)
+	_, err := repo.Put(ctx, shortening)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
 
 	repo.DeleteUserURL(ctx, []string{}, 1)
 

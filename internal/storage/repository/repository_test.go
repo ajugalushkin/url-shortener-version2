@@ -86,12 +86,12 @@ func TestPut_HandlesDatabaseConnectionFailures(t *testing.T) {
 	mock.ExpectBegin().WillReturnError(fmt.Errorf("connection error"))
 
 	result, err := repo.Put(ctx, shorteningInput)
-	if result != nil {
-		t.Errorf("expected nil result, got %v", result)
-	}
-
 	if err == nil || !strings.Contains(err.Error(), "connection error") {
 		t.Errorf("expected connection error, got %v", err)
+	}
+
+	if result != nil {
+		t.Errorf("expected nil result, got %v", result)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
