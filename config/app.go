@@ -1,8 +1,10 @@
 package config
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"sync"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/gommon/log"
@@ -19,6 +21,8 @@ type AppConfig struct {
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	DataBaseDsn     string `env:"DATABASE_DSN"`
 	SecretKey       string `env:"SECRET_KEY"`
+	EnableHTTPS     bool   `env:"ENABLE_HTTPS"`
+	Config          string `env:"CONFIG"`
 }
 
 // init функция инициализации начальных значений для параметров запуска.
@@ -34,6 +38,8 @@ func init() {
 	viper.SetDefault("File_Storage_PATH", "")
 	viper.SetDefault("DataBase_Dsn", "")
 	viper.SetDefault("Secret_Key", "")
+	viper.SetDefault("Enable_HTTPS", false)
+	viper.SetDefault("Config", "")
 }
 
 // bindToEnv функция для маппинга полей из ENV с полями структуры.
@@ -44,10 +50,33 @@ func bindToEnv() {
 	_ = viper.BindEnv("File_Storage_PATH")
 	_ = viper.BindEnv("DataBase_Dsn")
 	_ = viper.BindEnv("Secret_Key")
+	_ = viper.BindEnv("Enable_HTTPS")
+	_ = viper.BindEnv("Config")
 }
 
-// ReadConfig функция для чтения конфига.
-func ReadConfig() *AppConfig {
+// loadConfiguration function for read json config
+func loadConfiguration(file string) AppConfig {
+	var config AppConfig
+	configFile, err := os.Open(file)
+	defer func(configFile *os.File) {
+		err := configFile.Close()
+		if err != nil {
+			log.Warn("Error closing file JSON config", "error", err)
+		}
+	}(configFile)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	jsonParser := json.NewDecoder(configFile)
+	err = jsonParser.Decode(&config)
+	if err != nil {
+		return AppConfig{}
+	}
+	return config
+}
+
+// readConfig функция для чтения конфига.
+func readConfig() *AppConfig {
 	bindToEnv()
 	err := cmd.Execute()
 	if err != nil {
@@ -61,21 +90,52 @@ func ReadConfig() *AppConfig {
 		FileStoragePath: viper.GetString("File_Storage_PATH"),
 		DataBaseDsn:     viper.GetString("DataBase_Dsn"),
 		SecretKey:       viper.GetString("Secret_Key"),
+		EnableHTTPS:     viper.GetBool("Enable_HTTPS"),
+		Config:          viper.GetString("Config"),
 	}
+
+	if result.Config != "" {
+		configJSON := loadConfiguration(result.Config)
+
+		if result.ServerAddress == "" {
+			result.ServerAddress = configJSON.ServerAddress
+		}
+		if result.BaseURL == "" {
+			result.BaseURL = configJSON.BaseURL
+		}
+		if result.FlagLogLevel == "" {
+			result.FlagLogLevel = configJSON.FlagLogLevel
+		}
+		if result.FileStoragePath == "" {
+			result.FileStoragePath = configJSON.FileStoragePath
+		}
+		if result.DataBaseDsn == "" {
+			result.DataBaseDsn = configJSON.DataBaseDsn
+		}
+		if result.SecretKey == "" {
+			result.SecretKey = configJSON.SecretKey
+		}
+		if result.EnableHTTPS {
+			result.EnableHTTPS = configJSON.EnableHTTPS
+		}
+	}
+
 	return result
 }
 
-type ctxConfig struct{}
+// переменные для генерации инстанции
+var (
+	cfg  *AppConfig
+	once sync.Once
+)
 
-// ContextWithFlags функция позволяет сохранить конфиг в контекст.
-func ContextWithFlags(ctx context.Context, config *AppConfig) context.Context {
-	return context.WithValue(ctx, ctxConfig{}, config)
-}
+// GetConfig получение инстанции
+func GetConfig() *AppConfig {
+	once.Do(
+		func() {
+			// инициализируем объект
+			cfg = readConfig()
+		})
 
-// FlagsFromContext функция позволяет получить конфиг из контекста.
-func FlagsFromContext(ctx context.Context) *AppConfig {
-	if config, ok := ctx.Value(ctxConfig{}).(*AppConfig); ok {
-		return config
-	}
-	return &AppConfig{}
+	return cfg
 }

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"io"
 	"net/http"
@@ -13,10 +12,10 @@ import (
 
 	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/cookies"
+	"github.com/ajugalushkin/url-shortener-version2/internal/database"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
-	"github.com/ajugalushkin/url-shortener-version2/internal/parse"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/validate"
 )
@@ -24,6 +23,7 @@ import (
 // Handler структура Handler
 type Handler struct {
 	ctx     context.Context
+	cache   map[string]*dto.User
 	servAPI *service.Service
 }
 
@@ -31,8 +31,11 @@ type Handler struct {
 func NewHandler(ctx context.Context, servAPI *service.Service) *Handler {
 	return &Handler{
 		ctx:     ctx,
+		cache:   make(map[string]*dto.User),
 		servAPI: servAPI}
 }
+
+const cookieName string = "User"
 
 // HandleSave @Summary Shorten
 // @Description Short URL
@@ -43,19 +46,20 @@ func NewHandler(ctx context.Context, servAPI *service.Service) *Handler {
 // @Failure 400 {integer} integer 1
 // @Router / [post]
 func (s Handler) HandleSave(echoCtx echo.Context) error {
-	parseURL, err := parse.GetURL(s.ctx, echoCtx)
-	if err != nil {
-		return echoCtx.String(http.StatusBadRequest, err.Error())
+	body, err := io.ReadAll(echoCtx.Request().Body)
+	if err != nil || len(body) == 0 {
+		return echoCtx.String(http.StatusBadRequest, "Body is empty or invalid")
 	}
 
-	cookieValue, err := cookies.Read(echoCtx, "user")
+	cookieValue, err := cookies.Read(echoCtx, cookieName)
 	if err != nil {
-		cookieValue = cookies.Write(s.ctx, echoCtx, "user")
+		cookieValue = cookies.Write(s.ctx, echoCtx, cookieName)
+		s.cache[cookieValue] = cookies.GetUser(s.ctx, cookieValue)
 	}
 
 	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{
-		OriginalURL: parseURL,
-		UserID:      strconv.Itoa(cookies.GetUserID(s.ctx, cookieValue))})
+		OriginalURL: string(body),
+		UserID:      strconv.Itoa(cookies.GetUser(s.ctx, cookieValue).ID)})
 
 	if err != nil {
 		if errors.Is(err, userErr.ErrorDuplicateURL) {
@@ -78,7 +82,7 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 // @Router /api/shorten [post]
 func (s Handler) HandleShorten(echoCtx echo.Context) error {
 	body, err := io.ReadAll(echoCtx.Request().Body)
-	if err != nil {
+	if err != nil || len(body) == 0 {
 		return echoCtx.String(http.StatusBadRequest, validate.URLParseError)
 	}
 
@@ -109,37 +113,27 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 // @Failure 400 {integer} integer 1
 // @Router /api/shorten/batch [post]
 func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodPost {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
-
 	if ctType := echoCtx.Request().Header.Get(echo.HeaderContentType); ctType != echo.MIMEApplicationJSON {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
+		return echoCtx.String(http.StatusBadRequest, validate.WrongTypeRequest)
 	}
 
-	inputList, err := parse.GetJSONDataFromBatch(s.ctx, echoCtx)
+	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil {
-		return err
+		return echoCtx.String(http.StatusBadRequest, validate.URLParseError)
 	}
 
-	shortList, err := s.servAPI.ShortenList(s.ctx, inputList)
+	var inputList dto.ShortenListInput
+	err = inputList.UnmarshalJSON(body)
 	if err != nil {
-		return err
+		return echoCtx.String(http.StatusBadRequest, validate.JSONParseError)
 	}
 
-	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	echoCtx.Response().Status = http.StatusCreated
-
-	body, err := parse.SetJSONDataToBody(s.ctx, echoCtx, shortList)
+	listOutput, err := s.servAPI.ShortenList(s.ctx, inputList)
 	if err != nil {
-		return err
+		return echoCtx.String(http.StatusBadRequest, validate.URLNotFound)
 	}
 
-	sizeBody, err := echoCtx.Response().Write(body)
-	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
-	}
-	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
+	return echoCtx.JSON(http.StatusCreated, listOutput)
 }
 
 // HandleRedirect @Summary Redirect
@@ -151,26 +145,21 @@ func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 // @Failure 400 {integer} integer 1
 // @Router / [get]
 func (s Handler) HandleRedirect(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodGet {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
-
 	redirect, err := s.servAPI.Redirect(s.ctx, strings.Replace(echoCtx.Request().URL.Path, "/", "", -1))
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
+		return echoCtx.String(http.StatusBadRequest, validate.URLNotFound)
 	}
 
 	if redirect.IsDeleted {
-		return validate.AddError(s.ctx, echoCtx, "URL was delete!", http.StatusGone, 0)
+		return echoCtx.String(http.StatusGone, validate.URLWasDelete)
 	}
 
 	if redirect.OriginalURL != "" {
-		return validate.Redirect(s.ctx, echoCtx, redirect.OriginalURL)
+		return echoCtx.Redirect(http.StatusTemporaryRedirect, redirect.OriginalURL)
 	}
 
-	log := logger.LogFromContext(s.ctx)
-	log.Error(validate.URLNotFound)
-	return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
+	logger.GetLogger().Error(validate.URLNotFound)
+	return echoCtx.String(http.StatusBadRequest, validate.URLNotFound)
 }
 
 // HandlePing ( @Summary Ping
@@ -182,14 +171,39 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 // @Failure 500 {integer} integer 1
 // @Router /ping [get]
 func (s Handler) HandlePing(echoCtx echo.Context) error {
-	flags := config.FlagsFromContext(s.ctx)
-	db, err := sql.Open("pgx", flags.DataBaseDsn)
+	db, err := database.NewConnection("pgx", config.GetConfig().DataBaseDsn)
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, "", http.StatusInternalServerError, 0)
+		return echoCtx.String(http.StatusInternalServerError, validate.PingError)
 	}
 	defer db.Close()
 
-	return validate.AddMessageOK(s.ctx, echoCtx, "", http.StatusOK, 0)
+	return echoCtx.String(http.StatusOK, validate.PingOk)
+}
+
+// CustomContext структура расширяет echo.Context
+type CustomContext struct {
+	user *dto.User
+	echo.Context
+}
+
+// Authorized middleware для авторизация cookie
+func (s Handler) Authorized(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(echoCtx echo.Context) error {
+		cookie, err := echoCtx.Cookie(cookieName)
+		if err != nil {
+			return echoCtx.String(http.StatusUnauthorized, err.Error())
+		}
+
+		if _, ok := s.cache[cookie.Value]; !ok {
+			return echoCtx.String(http.StatusUnauthorized, "")
+		}
+
+		user := cookies.GetUser(s.ctx, cookie.Value)
+
+		newContext := &CustomContext{user: user, Context: echoCtx}
+
+		return next(newContext)
+	}
 }
 
 // HandleUserUrls ( @Summary UserURLS
@@ -200,37 +214,15 @@ func (s Handler) HandlePing(echoCtx echo.Context) error {
 // @Success 307 {integer} integer 1
 // @Failure 400 {integer} integer 1
 // @Router /api/user/urls [get]
-func (s Handler) HandleUserUrls(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodGet {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
+func (s Handler) HandleUserUrls(c echo.Context) error {
+	echoCtx := c.(*CustomContext)
+
+	shortList, err := s.servAPI.GetUserURLS(s.ctx, echoCtx.user.ID)
+	if err != nil || len(*shortList) == 0 {
+		return echoCtx.String(http.StatusBadRequest, validate.URLNotFound)
 	}
 
-	cookieIn, err := cookies.Read(echoCtx, "user")
-	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, "", http.StatusUnauthorized, 0)
-	}
-
-	userID := cookies.GetUserID(s.ctx, cookieIn)
-	if userID == 0 {
-		return validate.AddError(s.ctx, echoCtx, "", http.StatusUnauthorized, 0)
-	}
-
-	shortList, err := s.servAPI.GetUserURLS(s.ctx, userID)
-	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.URLNotFound, http.StatusBadRequest, 0)
-	}
-
-	body, err := parse.SetUserURLSToBody(s.ctx, echoCtx, shortList)
-	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, "", http.StatusNoContent, 0)
-	}
-
-	echoCtx.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	sizeBody, err := echoCtx.Response().Write(body)
-	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.FailedToSend, http.StatusBadRequest, 0)
-	}
-	return validate.AddMessageOK(s.ctx, echoCtx, validate.URLSent, http.StatusTemporaryRedirect, sizeBody)
+	return echoCtx.JSON(http.StatusOK, shortList)
 }
 
 // HandleUserUrlsDelete ( @Summary UserURLSDelete
@@ -241,33 +233,21 @@ func (s Handler) HandleUserUrls(echoCtx echo.Context) error {
 // @Success 202 {integer} integer 1
 // @Failure 400 {integer} integer 1
 // @Router /api/user/urls [delete]
-func (s Handler) HandleUserUrlsDelete(echoCtx echo.Context) error {
-	if echoCtx.Request().Method != http.MethodDelete {
-		return validate.AddError(s.ctx, echoCtx, validate.WrongTypeRequest, http.StatusBadRequest, 0)
-	}
+func (s Handler) HandleUserUrlsDelete(c echo.Context) error {
+	echoCtx := c.(*CustomContext)
 
 	body, err := io.ReadAll(echoCtx.Request().Body)
-	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, validate.URLParseError, http.StatusBadRequest, 0)
-	}
-
-	cookieIn, err := cookies.Read(echoCtx, "user")
-	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, "Not found cookies fo user", http.StatusUnauthorized, 0)
-	}
-
-	userID := cookies.GetUserID(s.ctx, cookieIn)
-	if userID == 0 {
-		return validate.AddError(s.ctx, echoCtx, "Not found UserID for user", http.StatusUnauthorized, 0)
+	if err != nil || len(body) == 0 {
+		return echoCtx.String(http.StatusBadRequest, validate.URLParseError)
 	}
 
 	var URLs dto.URLs
 	err = URLs.UnmarshalJSON(body)
 	if err != nil {
-		return validate.AddError(s.ctx, echoCtx, "Error parse input json", http.StatusUnauthorized, 0)
+		return echoCtx.String(http.StatusInternalServerError, "Error parse input json")
 	}
 
-	s.servAPI.DeleteUserURL(s.ctx, URLs, userID)
+	s.servAPI.DeleteUserURL(s.ctx, URLs, echoCtx.user.ID)
 
-	return validate.AddMessageOK(s.ctx, echoCtx, "URLS Delete OK", http.StatusAccepted, 0)
+	return echoCtx.String(http.StatusAccepted, "URLS Delete OK")
 }

@@ -32,7 +32,7 @@ func (r *Storage) Put(ctx context.Context, shortening dto.Shortening) (*dto.Shor
 
 	r.m.Store(shortening.ShortURL, shortening)
 
-	flags := config.FlagsFromContext(ctx)
+	flags := config.GetConfig()
 	err := save(flags.FileStoragePath, &r.m)
 	if err != nil {
 		return nil, err

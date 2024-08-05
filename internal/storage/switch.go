@@ -16,8 +16,8 @@ import (
 
 // GetStorage функция определяет инстанцию хранилища в зависимости от конфигурации.
 func GetStorage(ctx context.Context) service.PutGetter {
-	flags := config.FlagsFromContext(ctx)
-	log := logger.LogFromContext(ctx)
+	flags := config.GetConfig()
+	log := logger.GetLogger()
 	if flags.DataBaseDsn != "" {
 		db, err := database.NewConnection("pgx", flags.DataBaseDsn)
 		if err != nil {

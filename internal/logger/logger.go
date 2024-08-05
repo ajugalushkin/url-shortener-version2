@@ -2,30 +2,39 @@ package logger
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+
+	"github.com/ajugalushkin/url-shortener-version2/config"
 )
 
-// ctxLogger структура контекста
-type ctxLogger struct{}
+// переменные для генерации инстанции
+var (
+	logger *zap.Logger
+	once   sync.Once
+)
 
-// ContextWithLogger функция сохраняет логгер в контекст
-func ContextWithLogger(ctx context.Context, logger *zap.Logger) context.Context {
-	return context.WithValue(ctx, ctxLogger{}, logger)
-}
+// GetLogger создает инстанцию логгера
+func GetLogger() *zap.Logger {
+	once.Do(
+		func() {
+			// инициализируем объект
+			log, err := initialize(config.GetConfig().FlagLogLevel)
+			if err != nil {
+				logger = zap.L()
+				return
+			}
+			logger = log
+		})
 
-// LogFromContext функция получает логгер из контекста.
-func LogFromContext(ctx context.Context) *zap.Logger {
-	if logger, ok := ctx.Value(ctxLogger{}).(*zap.Logger); ok {
-		return logger
-	}
-	return zap.L()
+	return logger
 }
 
 // Initialize функция инициализации
-func Initialize(level string) (*zap.Logger, error) {
+func initialize(level string) (*zap.Logger, error) {
 	lvl, err := zap.ParseAtomicLevel(level)
 	if err != nil {
 		return nil, err
@@ -54,8 +63,8 @@ func MiddlewareLogger(ctx context.Context) func(echo.HandlerFunc) echo.HandlerFu
 
 			duration := time.Since(start)
 
-			log := LogFromContext(ctx)
-			log.Debug("got incoming HTTP request",
+			//log := LogFromContext(ctx)
+			logger.Debug("got incoming HTTP request",
 				zap.String("method", context.Request().Method),
 				zap.String("path", context.Request().URL.Path),
 				zap.String("time", duration.String()),

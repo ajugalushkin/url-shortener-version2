@@ -5,6 +5,7 @@ go 1.22.0
 toolchain go1.22.3
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/brianvoe/gofakeit/v7 v7.0.4
 	github.com/fatih/errwrap v1.6.0

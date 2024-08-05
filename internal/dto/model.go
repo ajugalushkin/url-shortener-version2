@@ -2,6 +2,11 @@ package dto
 
 //go:generate easyjson -all json.go
 
+// User структура cookie
+type User struct {
+	ID int
+}
+
 //easyjson:json
 type Shortening struct {
 	CorrelationID string `json:"correlation_id" db:"correlation_id" `

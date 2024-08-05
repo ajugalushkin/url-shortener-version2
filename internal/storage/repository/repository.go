@@ -75,7 +75,6 @@ func (r *Repo) Get(ctx context.Context, shortURL string) (*dto.Shortening, error
 			PlaceholderFormat(squirrel.Dollar).
 			Where(squirrel.Eq{"short_url": []string{shortURL}}).
 			RunWith(r.db)
-
 		query, args, err := sb.ToSql()
 		if err != nil {
 			return err
@@ -83,7 +82,8 @@ func (r *Repo) Get(ctx context.Context, shortURL string) (*dto.Shortening, error
 
 		return r.db.SelectContext(ctx, &shorteningList, query, args...)
 	})
-	log := logger.LogFromContext(ctx)
+
+	log := logger.GetLogger()
 	if err != nil {
 		log.Debug("repository.Get", zap.Error(err))
 		return nil, errors.Wrap(err, "repository.Get")
@@ -116,7 +116,8 @@ func (r *Repo) GetByURL(ctx context.Context, originURL string) (*dto.Shortening,
 
 		return r.db.SelectContext(ctx, &shorteningList, query, args...)
 	})
-	log := logger.LogFromContext(ctx)
+
+	log := logger.GetLogger()
 	if err != nil {
 		log.Info("repository.Get", zap.Error(err))
 		return nil, errors.Wrap(err, "repository.Get")
@@ -182,7 +183,8 @@ func (r *Repo) GetListByUser(ctx context.Context, userID string) (*dto.Shortenin
 
 		return r.db.SelectContext(ctx, &shorteningList, query, args...)
 	})
-	log := logger.LogFromContext(ctx)
+
+	log := logger.GetLogger()
 	if err != nil {
 		log.Info("repository.GetListByUser", zap.Error(err))
 		return nil, errors.Wrap(err, "repository.GetListByUser")
@@ -204,7 +206,7 @@ func (r *Repo) DeleteUserURL(ctx context.Context, shortList []string, userID int
 	channels := r.split(ctx, doneCh, inputCh)
 	resultCh := merge(doneCh, channels...)
 
-	log := logger.LogFromContext(ctx)
+	log := logger.GetLogger()
 	err := database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
 		toSQL, _, err := squirrel.StatementBuilder.
 			Update("shorten_urls").
