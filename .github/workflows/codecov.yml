@@ -1,3 +1,4 @@
-ignore:
-  - "**/model*.go"
-  - "**/validate*.go"
+coverage:
+  ignore:
+    - "**/model*.go"
+    - "**/validate*.go"
