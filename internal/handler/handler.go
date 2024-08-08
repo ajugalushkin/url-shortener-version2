@@ -3,7 +3,9 @@ package handler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -250,4 +252,21 @@ func (s Handler) HandleUserUrlsDelete(c echo.Context) error {
 	s.servAPI.DeleteUserURL(s.ctx, URLs, echoCtx.user.ID)
 
 	return echoCtx.String(http.StatusAccepted, "URLS Delete OK")
+}
+
+func (s Handler) FilterIP(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		trustedSub := config.GetConfig().TrustedSubnet
+		_, subnet, _ := net.ParseCIDR(trustedSub)
+		if !subnet.Contains(net.IP(c.RealIP())) || trustedSub == "" {
+			return echo.NewHTTPError(http.StatusForbidden,
+				fmt.Sprintf("IP address %s not allowed", c.RealIP()))
+		}
+
+		return next(c)
+	}
+}
+
+func (s Handler) HandleStats(c echo.Context) error {
+	return c.JSON(http.StatusOK, s.servAPI.GetStats(s.ctx))
 }

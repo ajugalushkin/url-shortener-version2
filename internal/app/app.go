@@ -86,6 +86,7 @@ func setRouting(ctx context.Context, server *echo.Echo) {
 	server.GET("/:id", newHandler.HandleRedirect)
 	server.GET("/ping", newHandler.HandlePing)
 	server.GET("/api/user/urls", newHandler.Authorized(newHandler.HandleUserUrls))
+	server.GET("/api/internal/stats", newHandler.FilterIP(newHandler.HandleStats))
 
 	server.DELETE("/api/user/urls", newHandler.Authorized(newHandler.HandleUserUrlsDelete))
 
