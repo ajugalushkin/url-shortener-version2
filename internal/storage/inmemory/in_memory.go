@@ -117,10 +117,10 @@ func (r *InMemory) GetStats(ctx context.Context) (*dto.Stats, error) {
 	r.m.Range(func(k, v interface{}) bool {
 		itemCurrent := v.(dto.Shortening)
 
-		if _, isURLExists := urls[itemCurrent.ShortURL]; isURLExists != true {
+		if _, isURLExists := urls[itemCurrent.ShortURL]; !isURLExists {
 			urls[itemCurrent.OriginalURL] = itemCurrent.OriginalURL
 		}
-		if _, isUsersExists := users[itemCurrent.ShortURL]; isUsersExists != true {
+		if _, isUsersExists := users[itemCurrent.ShortURL]; !isUsersExists {
 			users[itemCurrent.UserID] = itemCurrent.UserID
 		}
 		return true
