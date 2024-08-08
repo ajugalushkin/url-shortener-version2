@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
+	"github.com/labstack/gommon/log"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -322,4 +323,35 @@ func merge(doneCh chan struct{}, resultChs ...<-chan *dto.Shortening) <-chan *dt
 	}()
 
 	return finalCh
+}
+
+// GetStats метод для получения статистики
+func (r *Repo) GetStats(ctx context.Context) (*dto.Stats, error) {
+	var stats dto.Stats
+	err := database.WithTx(ctx, r.db, func(ctx context.Context, tx *sqlx.Tx) error {
+		sb := squirrel.Select("count(short_url) AS urls", "count(user_id) as users").
+			From("shorten_urls").
+			PlaceholderFormat(squirrel.Dollar).
+			RunWith(r.db)
+
+		query, args, err := sb.ToSql()
+		if err != nil {
+			return err
+		}
+
+		return r.db.SelectContext(ctx, &stats, query, args...)
+	})
+
+	if err != nil {
+		logger.GetLogger().Info("repository.GetStats", zap.Error(err))
+		return nil, errors.Wrap(err, "repository.GetStats")
+	}
+
+	log.Info(
+		"repository.GetStats OK",
+		zap.String("URLS", strconv.Itoa(stats.URLS)),
+		zap.String("Users", strconv.Itoa(stats.Users)),
+	)
+
+	return &stats, nil
 }

@@ -64,3 +64,9 @@ type UserURLList []struct {
 
 //easyjson:json
 type URLs []string
+
+//easyjson:json
+type Stats struct {
+	URLS  int `json:"URLS" db:"urls"`
+	Users int `json:"Users" db:"users"`
+}

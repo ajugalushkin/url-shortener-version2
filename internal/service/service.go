@@ -22,6 +22,7 @@ type PutGetter interface {
 	GetListByUser(ctx context.Context, userID string) (*dto.ShorteningList, error)
 	PutList(ctx context.Context, list dto.ShorteningList) error
 	DeleteUserURL(ctx context.Context, shortURL []string, userID int)
+	GetStats(ctx context.Context) (*dto.Stats, error)
 }
 
 // Service структура сервиса
@@ -153,4 +154,14 @@ func (s *Service) GetUserURLS(ctx context.Context, userID int) (*dto.UserURLList
 // DeleteUserURL метод для удаления списка URL для конкретного пользователя.
 func (s *Service) DeleteUserURL(ctx context.Context, shortURL []string, userID int) {
 	s.storage.DeleteUserURL(ctx, shortURL, userID)
+}
+
+// GetStats метод для получения статистики
+func (s *Service) GetStats(ctx context.Context) *dto.Stats {
+	stats, err := s.storage.GetStats(ctx)
+	if err != nil {
+		logger.GetLogger().Debug("service.GetStats ERROR", zap.Error(err))
+		return nil
+	}
+	return stats
 }

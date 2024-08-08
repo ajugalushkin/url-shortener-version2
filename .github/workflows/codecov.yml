@@ -1,3 +1,4 @@
 coverage:
   ignore:
-  - "internal/dto"
+    - "**/model*.go"
+    - "**/validate*.go"
