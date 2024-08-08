@@ -254,6 +254,7 @@ func (s Handler) HandleUserUrlsDelete(c echo.Context) error {
 	return echoCtx.String(http.StatusAccepted, "URLS Delete OK")
 }
 
+// FilterIP middleware для фильтрации по IP
 func (s Handler) FilterIP(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		trustedSub := config.GetConfig().TrustedSubnet
@@ -267,6 +268,14 @@ func (s Handler) FilterIP(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+// HandleStats ( @Summary Stats
+// @Description Get count of URLS and count of Users
+// @ID stats-json
+// @Accept json
+// @Produce json
+// @Success 202 {integer} integer 1
+// @Failure 400 {integer} integer 1
+// @Router /api/internal/stats [get]
 func (s Handler) HandleStats(c echo.Context) error {
 	return c.JSON(http.StatusOK, s.servAPI.GetStats(s.ctx))
 }
