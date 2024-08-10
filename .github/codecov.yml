@@ -2,3 +2,6 @@ ignore:
   - "**/model*.go"
   - "**/validate*.go"
   - "proto"
+  - "cmd/root.go"
+  - "cmd/shortener/main.go"
+  - "config/app.go"
