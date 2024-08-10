@@ -47,7 +47,7 @@ const cookieName string = "User"
 // @Success 201 {integer} integer 1
 // @Failure 400 {integer} integer 1
 // @Router / [post]
-func (s Handler) HandleSave(echoCtx echo.Context) error {
+func (s *Handler) HandleSave(echoCtx echo.Context) error {
 	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil || len(body) == 0 {
 		return echoCtx.String(http.StatusBadRequest, "Body is empty or invalid")
@@ -82,7 +82,7 @@ func (s Handler) HandleSave(echoCtx echo.Context) error {
 // @Success 201 {integer} integer 1
 // @Failure 400 {integer} integer 1
 // @Router /api/shorten [post]
-func (s Handler) HandleShorten(echoCtx echo.Context) error {
+func (s *Handler) HandleShorten(echoCtx echo.Context) error {
 	body, err := io.ReadAll(echoCtx.Request().Body)
 	if err != nil || len(body) == 0 {
 		return echoCtx.String(http.StatusBadRequest, validate.URLParseError)
@@ -114,7 +114,7 @@ func (s Handler) HandleShorten(echoCtx echo.Context) error {
 // @Success 307 {integer} integer 1
 // @Failure 400 {integer} integer 1
 // @Router /api/shorten/batch [post]
-func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
+func (s *Handler) HandleShortenBatch(echoCtx echo.Context) error {
 	if ctType := echoCtx.Request().Header.Get(echo.HeaderContentType); ctType != echo.MIMEApplicationJSON {
 		return echoCtx.String(http.StatusBadRequest, validate.WrongTypeRequest)
 	}
@@ -146,7 +146,7 @@ func (s Handler) HandleShortenBatch(echoCtx echo.Context) error {
 // @Success 307 {integer} integer 1
 // @Failure 400 {integer} integer 1
 // @Router / [get]
-func (s Handler) HandleRedirect(echoCtx echo.Context) error {
+func (s *Handler) HandleRedirect(echoCtx echo.Context) error {
 	redirect, err := s.servAPI.Redirect(s.ctx, strings.Replace(echoCtx.Request().URL.Path, "/", "", -1))
 	if err != nil {
 		return echoCtx.String(http.StatusBadRequest, validate.URLNotFound)
@@ -172,7 +172,7 @@ func (s Handler) HandleRedirect(echoCtx echo.Context) error {
 // @Success 200 {integer} integer 1
 // @Failure 500 {integer} integer 1
 // @Router /ping [get]
-func (s Handler) HandlePing(echoCtx echo.Context) error {
+func (s *Handler) HandlePing(echoCtx echo.Context) error {
 	db, err := database.NewConnection("pgx", config.GetConfig().DataBaseDsn)
 	if err != nil {
 		return echoCtx.String(http.StatusInternalServerError, validate.PingError)
@@ -189,7 +189,7 @@ type CustomContext struct {
 }
 
 // Authorized middleware для авторизация cookie
-func (s Handler) Authorized(next echo.HandlerFunc) echo.HandlerFunc {
+func (s *Handler) Authorized(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(echoCtx echo.Context) error {
 		cookie, err := echoCtx.Cookie(cookieName)
 		if err != nil {
@@ -216,7 +216,7 @@ func (s Handler) Authorized(next echo.HandlerFunc) echo.HandlerFunc {
 // @Success 307 {integer} integer 1
 // @Failure 400 {integer} integer 1
 // @Router /api/user/urls [get]
-func (s Handler) HandleUserUrls(c echo.Context) error {
+func (s *Handler) HandleUserUrls(c echo.Context) error {
 	echoCtx := c.(*CustomContext)
 
 	shortList, err := s.servAPI.GetUserURLS(s.ctx, echoCtx.user.ID)
@@ -235,7 +235,7 @@ func (s Handler) HandleUserUrls(c echo.Context) error {
 // @Success 202 {integer} integer 1
 // @Failure 400 {integer} integer 1
 // @Router /api/user/urls [delete]
-func (s Handler) HandleUserUrlsDelete(c echo.Context) error {
+func (s *Handler) HandleUserUrlsDelete(c echo.Context) error {
 	echoCtx := c.(*CustomContext)
 
 	body, err := io.ReadAll(echoCtx.Request().Body)
@@ -255,7 +255,7 @@ func (s Handler) HandleUserUrlsDelete(c echo.Context) error {
 }
 
 // FilterIP middleware для фильтрации по IP
-func (s Handler) FilterIP(next echo.HandlerFunc) echo.HandlerFunc {
+func (s *Handler) FilterIP(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		trustedSub := config.GetConfig().TrustedSubnet
 		_, subnet, _ := net.ParseCIDR(trustedSub)
@@ -276,6 +276,6 @@ func (s Handler) FilterIP(next echo.HandlerFunc) echo.HandlerFunc {
 // @Success 202 {integer} integer 1
 // @Failure 400 {integer} integer 1
 // @Router /api/internal/stats [get]
-func (s Handler) HandleStats(c echo.Context) error {
+func (s *Handler) HandleStats(c echo.Context) error {
 	return c.JSON(http.StatusOK, s.servAPI.GetStats(s.ctx))
 }

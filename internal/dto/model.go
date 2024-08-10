@@ -36,6 +36,12 @@ type ShortenOutput struct {
 }
 
 //easyjson:json
+type ShortenListItemInput struct {
+	CorrelationID string `json:"correlation_id"`
+	OriginalURL   string `json:"original_url"`
+}
+
+//easyjson:json
 type ShortenListInput []struct {
 	CorrelationID string `json:"correlation_id"`
 	OriginalURL   string `json:"original_url"`

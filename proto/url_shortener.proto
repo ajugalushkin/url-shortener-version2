@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+option go_package = "github.com/ajugalushkin/url-shortener-version2/proto";
+
+package proto;
+
+service URLShortenerService {
+  rpc Save(SaveRequest) returns (SaveResponse);
+  rpc Shorten(ShortenRequest) returns (ShortenResponse);
+  rpc ShortenBatch(ShortenBatchRequest) returns (ShortenBatchResponse);
+  rpc Redirect(RedirectRequest) returns (RedirectResponse);
+  rpc Ping(PingRequest) returns (PingResponse);
+  rpc UserUrls(UserUrlsRequest) returns (UserUrlsResponse);
+  rpc UserUrlsDelete(UserUrlsDeleteRequest) returns (UserUrlsDeleteResponse);
+  rpc Stats(StatsRequest) returns (StatsResponse);
+}
+
+message SaveRequest {
+  string url = 1;
+}
+
+message SaveResponse {
+  string short_url = 1;
+}
+
+message ShortenRequest {
+  message ShortenInput{
+    string url = 1;
+  }
+  ShortenInput input = 1;
+}
+
+message ShortenResponse {
+  message ShortenOutput{
+    string short_url = 1;
+  }
+  ShortenOutput output = 1;
+}
+
+message ShortenBatchRequest {
+  message ShortenBatchInput{
+    string correlation_id = 1;
+    string original_url = 2;
+  }
+  repeated ShortenBatchInput input = 1;
+}
+
+message ShortenBatchResponse {
+  message ShortenBatchOutput{
+    string correlation_id = 1;
+    string short_url = 2;
+  }
+  repeated ShortenBatchOutput output = 1;
+}
+
+message RedirectRequest {
+  string short_url = 1;
+}
+
+message RedirectResponse {
+  string original_url = 1;
+}
+
+message PingRequest {
+}
+
+message PingResponse {
+  bool result = 1;
+}
+
+message UserUrlsRequest {
+}
+
+message UserUrlsResponse {
+  message UserUrls{
+    string short_url = 1;
+    string original_url = 2;
+  }
+  repeated UserUrls output = 1;
+}
+
+message UserUrlsDeleteRequest {
+  repeated string urls = 1;
+}
+
+message UserUrlsDeleteResponse {
+  string result = 1;
+}
+
+message StatsRequest {
+}
+
+message StatsResponse {
+  int64 urls = 1;
+  int64 users = 2;
+}

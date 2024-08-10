@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"net"
 	"net/http"
 	_ "net/http/pprof"
 	"os/signal"
@@ -13,15 +14,18 @@ import (
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 
 	_ "github.com/ajugalushkin/url-shortener-version2/api"
 	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
+	"github.com/ajugalushkin/url-shortener-version2/internal/grpc_handler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
+	pb "github.com/ajugalushkin/url-shortener-version2/proto"
 )
 
 // Run является основным местом запуска сервиса.
@@ -66,8 +70,27 @@ func Run(ctx context.Context) error {
 	return nil
 }
 
+func RungRPC(ctx context.Context) error {
+	listen, err := net.Listen("tcp", config.GetConfig().ServerAddressGrpc)
+	if err != nil {
+		logger.GetLogger().Fatal("failed to listen", zap.Error(err))
+		return err
+	}
+
+	s := grpc.NewServer()
+	newHandler := grpc_handler.NewHandler(ctx, service.NewService(storage.GetStorage()))
+	pb.RegisterURLShortenerServiceServer(s, newHandler)
+
+	logger.GetLogger().Debug("Server gRPC started", zap.String("address", config.GetConfig().ServerAddressGrpc))
+	if err := s.Serve(listen); err != nil {
+		logger.GetLogger().Fatal("failed to serve", zap.Error(err))
+		return err
+	}
+	return nil
+}
+
 func setRouting(ctx context.Context, server *echo.Echo) {
-	newHandler := handler.NewHandler(ctx, service.NewService(storage.GetStorage(ctx)))
+	newHandler := handler.NewHandler(ctx, service.NewService(storage.GetStorage()))
 
 	//Middleware
 	server.Use(logger.MiddlewareLogger(ctx))
