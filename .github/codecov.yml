@@ -5,3 +5,4 @@ ignore:
   - "cmd/root.go"
   - "cmd/shortener/main.go"
   - "config/app.go"
+  - "config/staticlint"
