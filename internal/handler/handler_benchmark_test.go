@@ -20,7 +20,7 @@ import (
 func BenchmarkHandler_HandleSave(b *testing.B) {
 	b.Run("Endpoint: POST /", func(b *testing.B) {
 		e := echo.New()
-		h := NewHandler(ctx, service.NewService(storage.GetStorage(ctx)))
+		h := NewHandler(ctx, service.NewService(storage.GetStorage()))
 
 		for i := 0; i < b.N; i++ {
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(gofakeit.URL()))
@@ -39,7 +39,7 @@ func BenchmarkHandler_HandleSave(b *testing.B) {
 func BenchmarkHandler_HandleShorten(b *testing.B) {
 	b.Run("Endpoint: POST /api/shorten", func(b *testing.B) {
 		e := echo.New()
-		h := NewHandler(ctx, service.NewService(storage.GetStorage(ctx)))
+		h := NewHandler(ctx, service.NewService(storage.GetStorage()))
 
 		for i := 0; i < b.N; i++ {
 			shorten := dto.ShortenInput{URL: gofakeit.URL()}
@@ -65,7 +65,7 @@ func BenchmarkHandler_HandleShorten(b *testing.B) {
 func BenchmarkHandler_HandleShortenBatch(b *testing.B) {
 	b.Run("Endpoint: POST /api/shorten/batch", func(b *testing.B) {
 		e := echo.New()
-		h := NewHandler(ctx, service.NewService(storage.GetStorage(ctx)))
+		h := NewHandler(ctx, service.NewService(storage.GetStorage()))
 
 		for i := 0; i < b.N; i++ {
 			shortList := dto.ShortenListInput{{
@@ -94,7 +94,7 @@ func BenchmarkHandler_HandleShortenBatch(b *testing.B) {
 func BenchmarkHandler_HandleRedirect(b *testing.B) {
 	b.Run("Endpoint: GET /", func(b *testing.B) {
 		e := echo.New()
-		h := NewHandler(ctx, service.NewService(storage.GetStorage(ctx)))
+		h := NewHandler(ctx, service.NewService(storage.GetStorage()))
 
 		for i := 0; i < b.N; i++ {
 			// Post
@@ -133,7 +133,7 @@ func BenchmarkHandler_HandleRedirect(b *testing.B) {
 func BenchmarkHandler_HandleUserUrls(b *testing.B) {
 	b.Run("Endpoint: GET /api/user/urls", func(b *testing.B) {
 		e := echo.New()
-		h := NewHandler(ctx, service.NewService(storage.GetStorage(ctx)))
+		h := NewHandler(ctx, service.NewService(storage.GetStorage()))
 
 		for i := 0; i < b.N; i++ {
 			// Post
@@ -165,7 +165,7 @@ func BenchmarkHandler_HandleUserUrls(b *testing.B) {
 func BenchmarkHandler_HandleUserUrlsDelete(b *testing.B) {
 	b.Run("Endpoint: DELETE /api/user/urls", func(b *testing.B) {
 		e := echo.New()
-		h := NewHandler(ctx, service.NewService(storage.GetStorage(ctx)))
+		h := NewHandler(ctx, service.NewService(storage.GetStorage()))
 
 		for i := 0; i < b.N; i++ {
 			// Post
