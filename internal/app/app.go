@@ -19,7 +19,7 @@ import (
 	_ "github.com/ajugalushkin/url-shortener-version2/api"
 	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
-	"github.com/ajugalushkin/url-shortener-version2/internal/grpc_handler"
+	"github.com/ajugalushkin/url-shortener-version2/internal/grpchandler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
@@ -78,7 +78,7 @@ func RungRPC(ctx context.Context) error {
 	}
 
 	s := grpc.NewServer()
-	newHandler := grpc_handler.NewHandler(ctx, service.NewService(storage.GetStorage()))
+	newHandler := grpchandler.NewHandler(ctx, service.NewService(storage.GetStorage()))
 	pb.RegisterURLShortenerServiceServer(s, newHandler)
 
 	logger.GetLogger().Debug("Server gRPC started", zap.String("address", config.GetConfig().ServerAddressGrpc))
