@@ -31,7 +31,7 @@ func TestNewHandlerInitialization(t *testing.T) {
 func TestNewHandlerNilContext(t *testing.T) {
 	servAPI := &service.Service{}
 
-	handler := NewHandler(nil, servAPI)
+	handler := NewHandler(context.Background(), servAPI)
 
 	if handler.ctx != nil {
 		t.Errorf("expected context to be nil, got %v", handler.ctx)
