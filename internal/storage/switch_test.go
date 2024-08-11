@@ -20,6 +20,8 @@ func TestGetStorageReturnsFileStorage(t *testing.T) {
 	if _, ok := storage.(*file.Storage); !ok {
 		t.Errorf("expected *file.Storage, got %T", storage)
 	}
+
+	config.GetConfig().FileStoragePath = ""
 }
 
 // Returns an in-memory storage when neither DataBaseDsn nor FileStoragePath is provided
