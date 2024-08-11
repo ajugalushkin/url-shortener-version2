@@ -259,7 +259,11 @@ func (s *Handler) FilterIP(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		trustedSub := config.GetConfig().TrustedSubnet
 		_, subnet, _ := net.ParseCIDR(trustedSub)
-		if !subnet.Contains(net.IP(c.RealIP())) || trustedSub == "" {
+
+		realIP := c.Request().Header.Get(echo.HeaderXRealIP)
+
+		isContain := subnet.Contains(net.ParseIP(realIP))
+		if (!isContain) || trustedSub == "" {
 			return echo.NewHTTPError(http.StatusForbidden,
 				fmt.Sprintf("IP address %s not allowed", c.RealIP()))
 		}

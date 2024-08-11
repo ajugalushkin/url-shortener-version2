@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/cookies"
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
@@ -558,4 +559,27 @@ func TestHandler_HandleUserUrlsDelete(t *testing.T) {
 			assert.Equal(t, http.StatusInternalServerError, rec.Code)
 		}
 	})
+}
+
+// IP address within the trusted subnet proceeds to the next handler
+func TestIPWithinTrustedSubnetProceeds(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+
+	//e.IPExtractor = echo.ExtractIPFromRealIPHeader()
+	c := e.NewContext(req, rec)
+	//c.SetRequest(req.WithContext(context.WithValue(req.Context(), echo.HeaderXRealIP, "192.168.1.1")))
+	c.Request().Header.Set(echo.HeaderXRealIP, "192.168.1.1")
+
+	config.GetConfig().TrustedSubnet = "192.168.1.0/24"
+	handler := &Handler{}
+	nextHandler := func(c echo.Context) error {
+		return c.String(http.StatusOK, "next handler called")
+	}
+
+	err := handler.FilterIP(nextHandler)(c)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "next handler called", rec.Body.String())
 }
