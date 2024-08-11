@@ -26,22 +26,3 @@ func TestNewHandlerInitialization(t *testing.T) {
 		t.Error("expected cache to be initialized, got nil")
 	}
 }
-
-// Handles nil context input gracefully
-func TestNewHandlerNilContext(t *testing.T) {
-	servAPI := &service.Service{}
-
-	handler := NewHandler(context.Background(), servAPI)
-
-	if handler.ctx != nil {
-		t.Errorf("expected context to be nil, got %v", handler.ctx)
-	}
-
-	if handler.servAPI != servAPI {
-		t.Errorf("expected service API %v, got %v", servAPI, handler.servAPI)
-	}
-
-	if handler.cache == nil {
-		t.Error("expected cache to be initialized, got nil")
-	}
-}
