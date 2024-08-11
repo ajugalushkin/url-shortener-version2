@@ -6,3 +6,4 @@ ignore:
   - "cmd/shortener/main.go"
   - "config/app.go"
   - "config/staticlint"
+  - "internal/database"
