@@ -260,8 +260,7 @@ func (s *Handler) FilterIP(next echo.HandlerFunc) echo.HandlerFunc {
 		trustedSub := config.GetConfig().TrustedSubnet
 		_, subnet, err := net.ParseCIDR(trustedSub)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusForbidden,
-				fmt.Sprintf("IP address is empty"))
+			return echo.NewHTTPError(http.StatusForbidden, "IP address is empty")
 		}
 
 		realIP := c.Request().Header.Get(echo.HeaderXRealIP)
