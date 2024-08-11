@@ -258,14 +258,17 @@ func (s *Handler) HandleUserUrlsDelete(c echo.Context) error {
 func (s *Handler) FilterIP(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		trustedSub := config.GetConfig().TrustedSubnet
-		_, subnet, _ := net.ParseCIDR(trustedSub)
+		_, subnet, err := net.ParseCIDR(trustedSub)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusForbidden,
+				fmt.Sprintf("IP address is empty"))
+		}
 
 		realIP := c.Request().Header.Get(echo.HeaderXRealIP)
 
-		isContain := subnet.Contains(net.ParseIP(realIP))
-		if (!isContain) || trustedSub == "" {
+		if trustedSub == "" || !subnet.Contains(net.ParseIP(realIP)) {
 			return echo.NewHTTPError(http.StatusForbidden,
-				fmt.Sprintf("IP address %s not allowed", c.RealIP()))
+				fmt.Sprintf("IP address %s not allowed", realIP))
 		}
 
 		return next(c)

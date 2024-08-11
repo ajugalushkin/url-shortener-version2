@@ -188,6 +188,49 @@ func TestHandler_HandleRedirect(t *testing.T) {
 	}
 }
 
+// Redirects to the original URL if it exists and is not deleted
+func TestHandleRedirect_RedirectsToOriginalURL(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	serviceAPI := service.NewService(inmemory.NewInMemory())
+
+	handler := &Handler{
+		ctx:     ctx,
+		servAPI: serviceAPI,
+	}
+
+	server := echo.New()
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.URL.Path = "/test"
+	rec := httptest.NewRecorder()
+	echoCtx := server.NewContext(req, rec)
+
+	shortening := &dto.Shortening{
+		ShortURL:    "test",
+		OriginalURL: "http://example.com",
+		IsDeleted:   false,
+	}
+
+	_, err := serviceAPI.Shorten(ctx, *shortening)
+	if err != nil {
+		assert.NoError(t, err)
+	}
+
+	_, err = serviceAPI.Redirect(ctx, "test")
+	if err != nil {
+		assert.NoError(t, err)
+	}
+
+	// Act
+	err = handler.HandleRedirect(echoCtx)
+
+	// Assert
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusTemporaryRedirect, echoCtx.Response().Status)
+	assert.Equal(t, "http://example.com", echoCtx.Response().Header().Get("Location"))
+}
+
 func TestHandler_HandleShorten(t *testing.T) {
 	type request struct {
 		method      string
@@ -567,9 +610,7 @@ func TestIPWithinTrustedSubnetProceeds(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
 
-	//e.IPExtractor = echo.ExtractIPFromRealIPHeader()
 	c := e.NewContext(req, rec)
-	//c.SetRequest(req.WithContext(context.WithValue(req.Context(), echo.HeaderXRealIP, "192.168.1.1")))
 	c.Request().Header.Set(echo.HeaderXRealIP, "192.168.1.1")
 
 	config.GetConfig().TrustedSubnet = "192.168.1.0/24"
@@ -582,4 +623,27 @@ func TestIPWithinTrustedSubnetProceeds(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	assert.Equal(t, "next handler called", rec.Body.String())
+}
+
+// Trusted subnet is an empty string
+func TestEmptyTrustedSubnet(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set(echo.HeaderXRealIP, "192.168.1.1")
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	config.GetConfig().TrustedSubnet = ""
+
+	h := &Handler{}
+	next := func(c echo.Context) error {
+		return c.String(http.StatusOK, "OK")
+	}
+
+	err := h.FilterIP(next)(c)
+
+	assert.Error(t, err)
+	httpError, ok := err.(*echo.HTTPError)
+	assert.True(t, ok)
+	assert.Equal(t, http.StatusForbidden, httpError.Code)
 }
