@@ -1,9 +1,3 @@
 ignore:
-  - "**/model*.go"
-  - "**/validate*.go"
+  - "**/model_easyjson.go"
   - "proto"
-  - "cmd/root.go"
-  - "cmd/shortener/main.go"
-  - "config/app.go"
-  - "config/staticlint"
-  - "internal/database"
