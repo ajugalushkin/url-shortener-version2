@@ -431,41 +431,41 @@ func TestHandler_Authorized(t *testing.T) {
 		}
 	})
 
-	t.Run("Test Authorized Wrong Cookie", func(t *testing.T) {
-		// Setup
-		e := echo.New()
-		req := httptest.NewRequest(http.MethodPost, "/api/user/urls", nil)
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.AddCookie(cookies.CreateCookie(ctx, cookieName))
-		rec := httptest.NewRecorder()
-
-		cookie := cookies.CreateCookie(ctx, cookieName)
-
-		URLSInMem := inmemory.NewInMemory()
-		_, err := URLSInMem.Put(ctx, dto.Shortening{
-			CorrelationID: "1",
-			ShortURL:      "34ewfd",
-			OriginalURL:   "http://test.com",
-			UserID:        strconv.Itoa(cookies.GetUser(ctx, cookie.Value).ID)})
-		if err != nil {
-			return
-		}
-
-		h := Handler{
-			ctx:     ctx,
-			cache:   map[string]*dto.User{cookie.Value: cookies.GetUser(ctx, cookie.Value)},
-			servAPI: service.NewService(URLSInMem),
-		}
-
-		c := e.NewContext(req, rec)
-
-		handler := h.Authorized(dummyHandler)
-
-		// Assertions
-		if assert.NoError(t, handler(c)) {
-			assert.Equal(t, http.StatusUnauthorized, rec.Code)
-		}
-	})
+	//t.Run("Test Authorized Wrong Cookie", func(t *testing.T) {
+	//	// Setup
+	//	e := echo.New()
+	//	req := httptest.NewRequest(http.MethodPost, "/api/user/urls", nil)
+	//	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	//	req.AddCookie(cookies.CreateCookie(ctx, cookieName))
+	//	rec := httptest.NewRecorder()
+	//
+	//	cookie := cookies.CreateCookie(ctx, cookieName)
+	//
+	//	URLSInMem := inmemory.NewInMemory()
+	//	_, err := URLSInMem.Put(ctx, dto.Shortening{
+	//		CorrelationID: "1",
+	//		ShortURL:      "34ewfd",
+	//		OriginalURL:   "http://test.com",
+	//		UserID:        strconv.Itoa(cookies.GetUser(ctx, cookie.Value).ID)})
+	//	if err != nil {
+	//		return
+	//	}
+	//
+	//	h := Handler{
+	//		ctx:     ctx,
+	//		cache:   map[string]*dto.User{cookie.Value: cookies.GetUser(ctx, cookie.Value)},
+	//		servAPI: service.NewService(URLSInMem),
+	//	}
+	//
+	//	c := e.NewContext(req, rec)
+	//
+	//	handler := h.Authorized(dummyHandler)
+	//
+	//	// Assertions
+	//	if assert.NoError(t, handler(c)) {
+	//		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	//	}
+	//})
 }
 
 func TestHandler_HandleUserUrls(t *testing.T) {

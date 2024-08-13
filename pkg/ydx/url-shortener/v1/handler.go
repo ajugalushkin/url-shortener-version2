@@ -1,4 +1,4 @@
-package url_shortener
+package v1
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	pb "github.com/ajugalushkin/url-shortener-version2/proto"
 )
 
+// URLSServer Структура
 type URLSServer struct {
 	pb.UnimplementedURLShortenerServiceV1Server
 	ctx     context.Context
@@ -23,6 +24,7 @@ func NewHandler(ctx context.Context, servAPI *service.Service) *URLSServer {
 		servAPI: servAPI}
 }
 
+// ShortenV1 метод реализует метод Shorten
 func (s *URLSServer) ShortenV1(ctx context.Context, in *pb.ShortenRequestV1) (*pb.ShortenResponseV1, error) {
 	var response pb.ShortenResponseV1
 
@@ -40,7 +42,8 @@ func (s *URLSServer) ShortenV1(ctx context.Context, in *pb.ShortenRequestV1) (*p
 	return &response, nil
 }
 
-func (s *URLSServer) ShortenBatch(ctx context.Context, in *pb.ShortenBatchRequestV1) (*pb.ShortenBatchResponseV1, error) {
+// ShortenBatchV1 метод реализует метод ShortenBatch
+func (s *URLSServer) ShortenBatchV1(ctx context.Context, in *pb.ShortenBatchRequestV1) (*pb.ShortenBatchResponseV1, error) {
 	var response pb.ShortenBatchResponseV1
 
 	inputList := in.GetInput()
@@ -65,6 +68,7 @@ func (s *URLSServer) ShortenBatch(ctx context.Context, in *pb.ShortenBatchReques
 	return &response, nil
 }
 
+// GetV1 метод реализует метод Get GRPC
 func (s *URLSServer) GetV1(ctx context.Context, in *pb.GetRequestV1) (*pb.GetResponseV1, error) {
 	var response pb.GetResponseV1
 
@@ -78,13 +82,15 @@ func (s *URLSServer) GetV1(ctx context.Context, in *pb.GetRequestV1) (*pb.GetRes
 	return &response, nil
 }
 
-func (s *URLSServer) Ping(ctx context.Context, in *pb.PingRequestV1) (*pb.PingResponseV1, error) {
+// PingV1 метод реализует метод Ping GRPC
+func (s *URLSServer) PingV1(ctx context.Context, in *pb.PingRequestV1) (*pb.PingResponseV1, error) {
 	var response pb.PingResponseV1
 
 	return &response, nil
 }
 
-func (s *URLSServer) UserUrls(ctx context.Context, in *pb.UserUrlsRequestV1) (*pb.UserUrlsResponseV1, error) {
+// UserUrlsV1 метод реализует метод UserUrls GRPC
+func (s *URLSServer) UserUrlsV1(ctx context.Context, in *pb.UserUrlsRequestV1) (*pb.UserUrlsResponseV1, error) {
 	var response pb.UserUrlsResponseV1
 
 	shortList, err := s.servAPI.GetUserURLS(s.ctx, 0)
@@ -102,7 +108,8 @@ func (s *URLSServer) UserUrls(ctx context.Context, in *pb.UserUrlsRequestV1) (*p
 	return &response, nil
 }
 
-func (s *URLSServer) UserUrlsDelete(ctx context.Context, in *pb.UserUrlsDeleteRequestV1) (*pb.UserUrlsDeleteResponseV1, error) {
+// UserUrlsDeleteV1 метод реализует метод UserUrlsDelete GRPC
+func (s *URLSServer) UserUrlsDeleteV1(ctx context.Context, in *pb.UserUrlsDeleteRequestV1) (*pb.UserUrlsDeleteResponseV1, error) {
 	var response pb.UserUrlsDeleteResponseV1
 
 	s.servAPI.DeleteUserURL(s.ctx, in.Urls, 0)
@@ -112,7 +119,8 @@ func (s *URLSServer) UserUrlsDelete(ctx context.Context, in *pb.UserUrlsDeleteRe
 	return &response, nil
 }
 
-func (s *URLSServer) Stats(ctx context.Context, in *pb.StatsRequestV1) (*pb.StatsResponseV1, error) {
+// StatsV1 метод реализует метод Stats GRPC
+func (s *URLSServer) StatsV1(ctx context.Context, in *pb.StatsRequestV1) (*pb.StatsResponseV1, error) {
 	stats := s.servAPI.GetStats(s.ctx)
 
 	response := pb.StatsResponseV1{

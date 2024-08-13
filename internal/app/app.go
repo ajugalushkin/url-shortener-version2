@@ -22,7 +22,7 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
-	"github.com/ajugalushkin/url-shortener-version2/pkg/ydx/url-shortener"
+	"github.com/ajugalushkin/url-shortener-version2/pkg/ydx/url-shortener/v1"
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	pb "github.com/ajugalushkin/url-shortener-version2/proto"
@@ -68,7 +68,7 @@ func Run() error {
 	})
 
 	serverGRPC := grpc.NewServer()
-	newHandler := url_shortener.NewHandler(mainCtx, service.NewService(storage.GetStorage()))
+	newHandler := v1.NewHandler(mainCtx, service.NewService(storage.GetStorage()))
 	pb.RegisterURLShortenerServiceV1Server(serverGRPC, newHandler)
 	group.Go(func() error {
 		listen, err := net.Listen("tcp", config.GetConfig().ServerAddressGrpc)
