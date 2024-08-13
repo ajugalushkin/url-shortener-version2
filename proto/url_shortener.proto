@@ -1,43 +1,34 @@
 syntax = "proto3";
 
-option go_package = "github.com/ajugalushkin/url-shortener-version2/proto";
+option go_package = "github.com/ajugalushkin/url-shortener-version2/pkg/ydx/url-shortene/v1";
 
 package proto;
 
-service URLShortenerService {
-  rpc Save(SaveRequest) returns (SaveResponse);
-  rpc Shorten(ShortenRequest) returns (ShortenResponse);
-  rpc ShortenBatch(ShortenBatchRequest) returns (ShortenBatchResponse);
-  rpc Redirect(RedirectRequest) returns (RedirectResponse);
-  rpc Ping(PingRequest) returns (PingResponse);
-  rpc UserUrls(UserUrlsRequest) returns (UserUrlsResponse);
-  rpc UserUrlsDelete(UserUrlsDeleteRequest) returns (UserUrlsDeleteResponse);
-  rpc Stats(StatsRequest) returns (StatsResponse);
+service URLShortenerServiceV1 {
+  rpc ShortenV1(ShortenRequestV1) returns (ShortenResponseV1);
+  rpc ShortenBatchV1(ShortenBatchRequestV1) returns (ShortenBatchResponseV1);
+  rpc RedirectV1(RedirectRequestV1) returns (RedirectResponseV1);
+  rpc PingV1(PingRequestV1) returns (PingResponseV1);
+  rpc UserUrlsV1(UserUrlsRequestV1) returns (UserUrlsResponseV1);
+  rpc UserUrlsDeleteV1(UserUrlsDeleteRequestV1) returns (UserUrlsDeleteResponseV1);
+  rpc StatsV1(StatsRequestV1) returns (StatsResponseV1);
 }
 
-message SaveRequest {
-  string url = 1;
-}
-
-message SaveResponse {
-  string short_url = 1;
-}
-
-message ShortenRequest {
+message ShortenRequestV1 {
   message ShortenInput{
     string url = 1;
   }
   ShortenInput input = 1;
 }
 
-message ShortenResponse {
+message ShortenResponseV1 {
   message ShortenOutput{
     string short_url = 1;
   }
   ShortenOutput output = 1;
 }
 
-message ShortenBatchRequest {
+message ShortenBatchRequestV1 {
   message ShortenBatchInput{
     string correlation_id = 1;
     string original_url = 2;
@@ -45,7 +36,7 @@ message ShortenBatchRequest {
   repeated ShortenBatchInput input = 1;
 }
 
-message ShortenBatchResponse {
+message ShortenBatchResponseV1 {
   message ShortenBatchOutput{
     string correlation_id = 1;
     string short_url = 2;
@@ -53,25 +44,25 @@ message ShortenBatchResponse {
   repeated ShortenBatchOutput output = 1;
 }
 
-message RedirectRequest {
+message RedirectRequestV1 {
   string short_url = 1;
 }
 
-message RedirectResponse {
+message RedirectResponseV1 {
   string original_url = 1;
 }
 
-message PingRequest {
+message PingRequestV1 {
 }
 
-message PingResponse {
+message PingResponseV1 {
   bool result = 1;
 }
 
-message UserUrlsRequest {
+message UserUrlsRequestV1 {
 }
 
-message UserUrlsResponse {
+message UserUrlsResponseV1 {
   message UserUrls{
     string short_url = 1;
     string original_url = 2;
@@ -79,18 +70,18 @@ message UserUrlsResponse {
   repeated UserUrls output = 1;
 }
 
-message UserUrlsDeleteRequest {
+message UserUrlsDeleteRequestV1 {
   repeated string urls = 1;
 }
 
-message UserUrlsDeleteResponse {
+message UserUrlsDeleteResponseV1 {
   string result = 1;
 }
 
-message StatsRequest {
+message StatsRequestV1 {
 }
 
-message StatsResponse {
+message StatsResponseV1 {
   int64 urls = 1;
   int64 users = 2;
 }

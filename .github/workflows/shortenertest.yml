@@ -87,7 +87,8 @@ jobs:
           github.head_ref == 'iter21' ||
           github.head_ref == 'iter22' ||
           github.head_ref == 'iter23' ||
-          github.head_ref == 'iter24'
+          github.head_ref == 'iter24' ||
+          github.head_ref == 'iter25'
         run: |
           shortenertestbeta -test.v -test.run=^TestIteration1$ \
               -binary-path=cmd/shortener/shortener
