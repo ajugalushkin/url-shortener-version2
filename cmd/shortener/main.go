@@ -34,7 +34,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	if err := app.RungRPC(context.Background()); err != nil {
-		fmt.Println(err)
-	}
+	//if err := app.RungRPC(context.Background()); err != nil {
+	//	fmt.Println(err)
+	//}
 }
