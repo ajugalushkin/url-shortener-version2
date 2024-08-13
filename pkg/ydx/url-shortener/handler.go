@@ -1,4 +1,4 @@
-package grpchandler
+package url_shortener
 
 import (
 	"context"
@@ -7,13 +7,12 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/internal/dto"
 	userErr "github.com/ajugalushkin/url-shortener-version2/internal/errors"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
-	"github.com/ajugalushkin/url-shortener-version2/proto"
+	pb "github.com/ajugalushkin/url-shortener-version2/proto"
 )
 
 type URLSServer struct {
-	proto.UnimplementedURLShortenerServiceServer
+	pb.UnimplementedURLShortenerServiceV1Server
 	ctx     context.Context
-	cache   map[string]*dto.User
 	servAPI *service.Service
 }
 
@@ -21,15 +20,14 @@ type URLSServer struct {
 func NewHandler(ctx context.Context, servAPI *service.Service) *URLSServer {
 	return &URLSServer{
 		ctx:     ctx,
-		cache:   make(map[string]*dto.User),
 		servAPI: servAPI}
 }
 
-func (s *URLSServer) Save(ctx context.Context, in *proto.SaveRequest) (*proto.SaveResponse, error) {
-	var response proto.SaveResponse
+func (s *URLSServer) ShortenV1(ctx context.Context, in *pb.ShortenRequestV1) (*pb.ShortenResponseV1, error) {
+	var response pb.ShortenResponseV1
 
 	shorten, err := s.servAPI.Shorten(s.ctx, dto.Shortening{
-		OriginalURL: in.Url,
+		OriginalURL: in.Input.Url,
 		UserID:      ""})
 
 	if err != nil {
@@ -38,27 +36,12 @@ func (s *URLSServer) Save(ctx context.Context, in *proto.SaveRequest) (*proto.Sa
 		}
 		return nil, err
 	}
-	response.ShortUrl = shorten.ShortURL
+	response.Output.ShortUrl = shorten.ShortURL
 	return &response, nil
 }
 
-func (s *URLSServer) Shorten(ctx context.Context, in *proto.ShortenRequest) (*proto.ShortenResponse, error) {
-	var response proto.ShortenResponse
-
-	shortenURL, err := s.servAPI.Shorten(s.ctx, dto.Shortening{OriginalURL: in.Input.GetUrl()})
-	if err != nil {
-		if errors.Is(err, userErr.ErrorDuplicateURL) {
-			return nil, err
-		}
-		return nil, err
-	}
-
-	response.Output.ShortUrl = shortenURL.ShortURL
-	return &response, nil
-}
-
-func (s *URLSServer) ShortenBatch(ctx context.Context, in *proto.ShortenBatchRequest) (*proto.ShortenBatchResponse, error) {
-	var response proto.ShortenBatchResponse
+func (s *URLSServer) ShortenBatch(ctx context.Context, in *pb.ShortenBatchRequestV1) (*pb.ShortenBatchResponseV1, error) {
+	var response pb.ShortenBatchResponseV1
 
 	inputList := in.GetInput()
 	var inputListParse dto.ShortenListInput
@@ -75,15 +58,15 @@ func (s *URLSServer) ShortenBatch(ctx context.Context, in *proto.ShortenBatchReq
 	}
 
 	for _, output := range *listOutput {
-		response.Output = append(response.Output, &proto.ShortenBatchResponse_ShortenBatchOutput{
+		response.Output = append(response.Output, &pb.ShortenBatchResponseV1_ShortenBatchOutput{
 			CorrelationId: output.CorrelationID,
 			ShortUrl:      output.ShortURL})
 	}
 	return &response, nil
 }
 
-func (s *URLSServer) Redirect(ctx context.Context, in *proto.RedirectRequest) (*proto.RedirectResponse, error) {
-	var response proto.RedirectResponse
+func (s *URLSServer) GetV1(ctx context.Context, in *pb.GetRequestV1) (*pb.GetResponseV1, error) {
+	var response pb.GetResponseV1
 
 	redirect, err := s.servAPI.Redirect(s.ctx, in.ShortUrl)
 	if err != nil {
@@ -95,14 +78,14 @@ func (s *URLSServer) Redirect(ctx context.Context, in *proto.RedirectRequest) (*
 	return &response, nil
 }
 
-func (s *URLSServer) Ping(ctx context.Context, in *proto.PingRequest) (*proto.PingResponse, error) {
-	var response proto.PingResponse
+func (s *URLSServer) Ping(ctx context.Context, in *pb.PingRequestV1) (*pb.PingResponseV1, error) {
+	var response pb.PingResponseV1
 
 	return &response, nil
 }
 
-func (s *URLSServer) UserUrls(ctx context.Context, in *proto.UserUrlsRequest) (*proto.UserUrlsResponse, error) {
-	var response proto.UserUrlsResponse
+func (s *URLSServer) UserUrls(ctx context.Context, in *pb.UserUrlsRequestV1) (*pb.UserUrlsResponseV1, error) {
+	var response pb.UserUrlsResponseV1
 
 	shortList, err := s.servAPI.GetUserURLS(s.ctx, 0)
 	if err != nil || len(*shortList) == 0 {
@@ -110,7 +93,7 @@ func (s *URLSServer) UserUrls(ctx context.Context, in *proto.UserUrlsRequest) (*
 	}
 
 	for _, shortURL := range *shortList {
-		response.Output = append(response.Output, &proto.UserUrlsResponse_UserUrls{
+		response.Output = append(response.Output, &pb.UserUrlsResponseV1_UserUrls{
 			OriginalUrl: shortURL.OriginalURL,
 			ShortUrl:    shortURL.ShortURL,
 		})
@@ -119,8 +102,8 @@ func (s *URLSServer) UserUrls(ctx context.Context, in *proto.UserUrlsRequest) (*
 	return &response, nil
 }
 
-func (s *URLSServer) UserUrlsDelete(ctx context.Context, in *proto.UserUrlsDeleteRequest) (*proto.UserUrlsDeleteResponse, error) {
-	var response proto.UserUrlsDeleteResponse
+func (s *URLSServer) UserUrlsDelete(ctx context.Context, in *pb.UserUrlsDeleteRequestV1) (*pb.UserUrlsDeleteResponseV1, error) {
+	var response pb.UserUrlsDeleteResponseV1
 
 	s.servAPI.DeleteUserURL(s.ctx, in.Urls, 0)
 
@@ -129,10 +112,10 @@ func (s *URLSServer) UserUrlsDelete(ctx context.Context, in *proto.UserUrlsDelet
 	return &response, nil
 }
 
-func (s *URLSServer) Stats(ctx context.Context, in *proto.StatsRequest) (*proto.StatsResponse, error) {
+func (s *URLSServer) Stats(ctx context.Context, in *pb.StatsRequestV1) (*pb.StatsResponseV1, error) {
 	stats := s.servAPI.GetStats(s.ctx)
 
-	response := proto.StatsResponse{
+	response := pb.StatsResponseV1{
 		Urls:  int64(stats.URLS),
 		Users: int64(stats.Users),
 	}

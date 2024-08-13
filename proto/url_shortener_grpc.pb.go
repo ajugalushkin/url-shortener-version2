@@ -4,7 +4,7 @@
 // - protoc             v5.28.0--rc2
 // source: proto/url_shortener.proto
 
-package proto
+package v1
 
 import (
 	context "context"
@@ -19,367 +19,329 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	URLShortenerService_Save_FullMethodName           = "/proto.URLShortenerService/Save"
-	URLShortenerService_Shorten_FullMethodName        = "/proto.URLShortenerService/Shorten"
-	URLShortenerService_ShortenBatch_FullMethodName   = "/proto.URLShortenerService/ShortenBatch"
-	URLShortenerService_Redirect_FullMethodName       = "/proto.URLShortenerService/Redirect"
-	URLShortenerService_Ping_FullMethodName           = "/proto.URLShortenerService/Ping"
-	URLShortenerService_UserUrls_FullMethodName       = "/proto.URLShortenerService/UserUrls"
-	URLShortenerService_UserUrlsDelete_FullMethodName = "/proto.URLShortenerService/UserUrlsDelete"
-	URLShortenerService_Stats_FullMethodName          = "/proto.URLShortenerService/Stats"
+	URLShortenerServiceV1_ShortenV1_FullMethodName        = "/proto.URLShortenerServiceV1/ShortenV1"
+	URLShortenerServiceV1_ShortenBatchV1_FullMethodName   = "/proto.URLShortenerServiceV1/ShortenBatchV1"
+	URLShortenerServiceV1_GetV1_FullMethodName            = "/proto.URLShortenerServiceV1/GetV1"
+	URLShortenerServiceV1_PingV1_FullMethodName           = "/proto.URLShortenerServiceV1/PingV1"
+	URLShortenerServiceV1_UserUrlsV1_FullMethodName       = "/proto.URLShortenerServiceV1/UserUrlsV1"
+	URLShortenerServiceV1_UserUrlsDeleteV1_FullMethodName = "/proto.URLShortenerServiceV1/UserUrlsDeleteV1"
+	URLShortenerServiceV1_StatsV1_FullMethodName          = "/proto.URLShortenerServiceV1/StatsV1"
 )
 
-// URLShortenerServiceClient is the client API for URLShortenerService service.
+// URLShortenerServiceV1Client is the client API for URLShortenerServiceV1 service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type URLShortenerServiceClient interface {
-	Save(ctx context.Context, in *SaveRequest, opts ...grpc.CallOption) (*SaveResponse, error)
-	Shorten(ctx context.Context, in *ShortenRequest, opts ...grpc.CallOption) (*ShortenResponse, error)
-	ShortenBatch(ctx context.Context, in *ShortenBatchRequest, opts ...grpc.CallOption) (*ShortenBatchResponse, error)
-	Redirect(ctx context.Context, in *RedirectRequest, opts ...grpc.CallOption) (*RedirectResponse, error)
-	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
-	UserUrls(ctx context.Context, in *UserUrlsRequest, opts ...grpc.CallOption) (*UserUrlsResponse, error)
-	UserUrlsDelete(ctx context.Context, in *UserUrlsDeleteRequest, opts ...grpc.CallOption) (*UserUrlsDeleteResponse, error)
-	Stats(ctx context.Context, in *StatsRequest, opts ...grpc.CallOption) (*StatsResponse, error)
+type URLShortenerServiceV1Client interface {
+	ShortenV1(ctx context.Context, in *ShortenRequestV1, opts ...grpc.CallOption) (*ShortenResponseV1, error)
+	ShortenBatchV1(ctx context.Context, in *ShortenBatchRequestV1, opts ...grpc.CallOption) (*ShortenBatchResponseV1, error)
+	GetV1(ctx context.Context, in *GetRequestV1, opts ...grpc.CallOption) (*GetResponseV1, error)
+	PingV1(ctx context.Context, in *PingRequestV1, opts ...grpc.CallOption) (*PingResponseV1, error)
+	UserUrlsV1(ctx context.Context, in *UserUrlsRequestV1, opts ...grpc.CallOption) (*UserUrlsResponseV1, error)
+	UserUrlsDeleteV1(ctx context.Context, in *UserUrlsDeleteRequestV1, opts ...grpc.CallOption) (*UserUrlsDeleteResponseV1, error)
+	StatsV1(ctx context.Context, in *StatsRequestV1, opts ...grpc.CallOption) (*StatsResponseV1, error)
 }
 
-type uRLShortenerServiceClient struct {
+type uRLShortenerServiceV1Client struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewURLShortenerServiceClient(cc grpc.ClientConnInterface) URLShortenerServiceClient {
-	return &uRLShortenerServiceClient{cc}
+func NewURLShortenerServiceV1Client(cc grpc.ClientConnInterface) URLShortenerServiceV1Client {
+	return &uRLShortenerServiceV1Client{cc}
 }
 
-func (c *uRLShortenerServiceClient) Save(ctx context.Context, in *SaveRequest, opts ...grpc.CallOption) (*SaveResponse, error) {
+func (c *uRLShortenerServiceV1Client) ShortenV1(ctx context.Context, in *ShortenRequestV1, opts ...grpc.CallOption) (*ShortenResponseV1, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SaveResponse)
-	err := c.cc.Invoke(ctx, URLShortenerService_Save_FullMethodName, in, out, cOpts...)
+	out := new(ShortenResponseV1)
+	err := c.cc.Invoke(ctx, URLShortenerServiceV1_ShortenV1_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *uRLShortenerServiceClient) Shorten(ctx context.Context, in *ShortenRequest, opts ...grpc.CallOption) (*ShortenResponse, error) {
+func (c *uRLShortenerServiceV1Client) ShortenBatchV1(ctx context.Context, in *ShortenBatchRequestV1, opts ...grpc.CallOption) (*ShortenBatchResponseV1, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ShortenResponse)
-	err := c.cc.Invoke(ctx, URLShortenerService_Shorten_FullMethodName, in, out, cOpts...)
+	out := new(ShortenBatchResponseV1)
+	err := c.cc.Invoke(ctx, URLShortenerServiceV1_ShortenBatchV1_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *uRLShortenerServiceClient) ShortenBatch(ctx context.Context, in *ShortenBatchRequest, opts ...grpc.CallOption) (*ShortenBatchResponse, error) {
+func (c *uRLShortenerServiceV1Client) GetV1(ctx context.Context, in *GetRequestV1, opts ...grpc.CallOption) (*GetResponseV1, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ShortenBatchResponse)
-	err := c.cc.Invoke(ctx, URLShortenerService_ShortenBatch_FullMethodName, in, out, cOpts...)
+	out := new(GetResponseV1)
+	err := c.cc.Invoke(ctx, URLShortenerServiceV1_GetV1_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *uRLShortenerServiceClient) Redirect(ctx context.Context, in *RedirectRequest, opts ...grpc.CallOption) (*RedirectResponse, error) {
+func (c *uRLShortenerServiceV1Client) PingV1(ctx context.Context, in *PingRequestV1, opts ...grpc.CallOption) (*PingResponseV1, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RedirectResponse)
-	err := c.cc.Invoke(ctx, URLShortenerService_Redirect_FullMethodName, in, out, cOpts...)
+	out := new(PingResponseV1)
+	err := c.cc.Invoke(ctx, URLShortenerServiceV1_PingV1_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *uRLShortenerServiceClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error) {
+func (c *uRLShortenerServiceV1Client) UserUrlsV1(ctx context.Context, in *UserUrlsRequestV1, opts ...grpc.CallOption) (*UserUrlsResponseV1, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PingResponse)
-	err := c.cc.Invoke(ctx, URLShortenerService_Ping_FullMethodName, in, out, cOpts...)
+	out := new(UserUrlsResponseV1)
+	err := c.cc.Invoke(ctx, URLShortenerServiceV1_UserUrlsV1_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *uRLShortenerServiceClient) UserUrls(ctx context.Context, in *UserUrlsRequest, opts ...grpc.CallOption) (*UserUrlsResponse, error) {
+func (c *uRLShortenerServiceV1Client) UserUrlsDeleteV1(ctx context.Context, in *UserUrlsDeleteRequestV1, opts ...grpc.CallOption) (*UserUrlsDeleteResponseV1, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UserUrlsResponse)
-	err := c.cc.Invoke(ctx, URLShortenerService_UserUrls_FullMethodName, in, out, cOpts...)
+	out := new(UserUrlsDeleteResponseV1)
+	err := c.cc.Invoke(ctx, URLShortenerServiceV1_UserUrlsDeleteV1_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *uRLShortenerServiceClient) UserUrlsDelete(ctx context.Context, in *UserUrlsDeleteRequest, opts ...grpc.CallOption) (*UserUrlsDeleteResponse, error) {
+func (c *uRLShortenerServiceV1Client) StatsV1(ctx context.Context, in *StatsRequestV1, opts ...grpc.CallOption) (*StatsResponseV1, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UserUrlsDeleteResponse)
-	err := c.cc.Invoke(ctx, URLShortenerService_UserUrlsDelete_FullMethodName, in, out, cOpts...)
+	out := new(StatsResponseV1)
+	err := c.cc.Invoke(ctx, URLShortenerServiceV1_StatsV1_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *uRLShortenerServiceClient) Stats(ctx context.Context, in *StatsRequest, opts ...grpc.CallOption) (*StatsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StatsResponse)
-	err := c.cc.Invoke(ctx, URLShortenerService_Stats_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// URLShortenerServiceServer is the server API for URLShortenerService service.
-// All implementations must embed UnimplementedURLShortenerServiceServer
+// URLShortenerServiceV1Server is the server API for URLShortenerServiceV1 service.
+// All implementations must embed UnimplementedURLShortenerServiceV1Server
 // for forward compatibility.
-type URLShortenerServiceServer interface {
-	Save(context.Context, *SaveRequest) (*SaveResponse, error)
-	Shorten(context.Context, *ShortenRequest) (*ShortenResponse, error)
-	ShortenBatch(context.Context, *ShortenBatchRequest) (*ShortenBatchResponse, error)
-	Redirect(context.Context, *RedirectRequest) (*RedirectResponse, error)
-	Ping(context.Context, *PingRequest) (*PingResponse, error)
-	UserUrls(context.Context, *UserUrlsRequest) (*UserUrlsResponse, error)
-	UserUrlsDelete(context.Context, *UserUrlsDeleteRequest) (*UserUrlsDeleteResponse, error)
-	Stats(context.Context, *StatsRequest) (*StatsResponse, error)
-	mustEmbedUnimplementedURLShortenerServiceServer()
+type URLShortenerServiceV1Server interface {
+	ShortenV1(context.Context, *ShortenRequestV1) (*ShortenResponseV1, error)
+	ShortenBatchV1(context.Context, *ShortenBatchRequestV1) (*ShortenBatchResponseV1, error)
+	GetV1(context.Context, *GetRequestV1) (*GetResponseV1, error)
+	PingV1(context.Context, *PingRequestV1) (*PingResponseV1, error)
+	UserUrlsV1(context.Context, *UserUrlsRequestV1) (*UserUrlsResponseV1, error)
+	UserUrlsDeleteV1(context.Context, *UserUrlsDeleteRequestV1) (*UserUrlsDeleteResponseV1, error)
+	StatsV1(context.Context, *StatsRequestV1) (*StatsResponseV1, error)
+	mustEmbedUnimplementedURLShortenerServiceV1Server()
 }
 
-// UnimplementedURLShortenerServiceServer must be embedded to have
+// UnimplementedURLShortenerServiceV1Server must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedURLShortenerServiceServer struct{}
+type UnimplementedURLShortenerServiceV1Server struct{}
 
-func (UnimplementedURLShortenerServiceServer) Save(context.Context, *SaveRequest) (*SaveResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Save not implemented")
+func (UnimplementedURLShortenerServiceV1Server) ShortenV1(context.Context, *ShortenRequestV1) (*ShortenResponseV1, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ShortenV1 not implemented")
 }
-func (UnimplementedURLShortenerServiceServer) Shorten(context.Context, *ShortenRequest) (*ShortenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Shorten not implemented")
+func (UnimplementedURLShortenerServiceV1Server) ShortenBatchV1(context.Context, *ShortenBatchRequestV1) (*ShortenBatchResponseV1, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ShortenBatchV1 not implemented")
 }
-func (UnimplementedURLShortenerServiceServer) ShortenBatch(context.Context, *ShortenBatchRequest) (*ShortenBatchResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ShortenBatch not implemented")
+func (UnimplementedURLShortenerServiceV1Server) GetV1(context.Context, *GetRequestV1) (*GetResponseV1, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetV1 not implemented")
 }
-func (UnimplementedURLShortenerServiceServer) Redirect(context.Context, *RedirectRequest) (*RedirectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Redirect not implemented")
+func (UnimplementedURLShortenerServiceV1Server) PingV1(context.Context, *PingRequestV1) (*PingResponseV1, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PingV1 not implemented")
 }
-func (UnimplementedURLShortenerServiceServer) Ping(context.Context, *PingRequest) (*PingResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+func (UnimplementedURLShortenerServiceV1Server) UserUrlsV1(context.Context, *UserUrlsRequestV1) (*UserUrlsResponseV1, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserUrlsV1 not implemented")
 }
-func (UnimplementedURLShortenerServiceServer) UserUrls(context.Context, *UserUrlsRequest) (*UserUrlsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UserUrls not implemented")
+func (UnimplementedURLShortenerServiceV1Server) UserUrlsDeleteV1(context.Context, *UserUrlsDeleteRequestV1) (*UserUrlsDeleteResponseV1, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserUrlsDeleteV1 not implemented")
 }
-func (UnimplementedURLShortenerServiceServer) UserUrlsDelete(context.Context, *UserUrlsDeleteRequest) (*UserUrlsDeleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UserUrlsDelete not implemented")
+func (UnimplementedURLShortenerServiceV1Server) StatsV1(context.Context, *StatsRequestV1) (*StatsResponseV1, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StatsV1 not implemented")
 }
-func (UnimplementedURLShortenerServiceServer) Stats(context.Context, *StatsRequest) (*StatsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Stats not implemented")
-}
-func (UnimplementedURLShortenerServiceServer) mustEmbedUnimplementedURLShortenerServiceServer() {}
-func (UnimplementedURLShortenerServiceServer) testEmbeddedByValue()                             {}
+func (UnimplementedURLShortenerServiceV1Server) mustEmbedUnimplementedURLShortenerServiceV1Server() {}
+func (UnimplementedURLShortenerServiceV1Server) testEmbeddedByValue()                               {}
 
-// UnsafeURLShortenerServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to URLShortenerServiceServer will
+// UnsafeURLShortenerServiceV1Server may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to URLShortenerServiceV1Server will
 // result in compilation errors.
-type UnsafeURLShortenerServiceServer interface {
-	mustEmbedUnimplementedURLShortenerServiceServer()
+type UnsafeURLShortenerServiceV1Server interface {
+	mustEmbedUnimplementedURLShortenerServiceV1Server()
 }
 
-func RegisterURLShortenerServiceServer(s grpc.ServiceRegistrar, srv URLShortenerServiceServer) {
-	// If the following call pancis, it indicates UnimplementedURLShortenerServiceServer was
+func RegisterURLShortenerServiceV1Server(s grpc.ServiceRegistrar, srv URLShortenerServiceV1Server) {
+	// If the following call pancis, it indicates UnimplementedURLShortenerServiceV1Server was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&URLShortenerService_ServiceDesc, srv)
+	s.RegisterService(&URLShortenerServiceV1_ServiceDesc, srv)
 }
 
-func _URLShortenerService_Save_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SaveRequest)
+func _URLShortenerServiceV1_ShortenV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ShortenRequestV1)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(URLShortenerServiceServer).Save(ctx, in)
+		return srv.(URLShortenerServiceV1Server).ShortenV1(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: URLShortenerService_Save_FullMethodName,
+		FullMethod: URLShortenerServiceV1_ShortenV1_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(URLShortenerServiceServer).Save(ctx, req.(*SaveRequest))
+		return srv.(URLShortenerServiceV1Server).ShortenV1(ctx, req.(*ShortenRequestV1))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _URLShortenerService_Shorten_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ShortenRequest)
+func _URLShortenerServiceV1_ShortenBatchV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ShortenBatchRequestV1)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(URLShortenerServiceServer).Shorten(ctx, in)
+		return srv.(URLShortenerServiceV1Server).ShortenBatchV1(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: URLShortenerService_Shorten_FullMethodName,
+		FullMethod: URLShortenerServiceV1_ShortenBatchV1_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(URLShortenerServiceServer).Shorten(ctx, req.(*ShortenRequest))
+		return srv.(URLShortenerServiceV1Server).ShortenBatchV1(ctx, req.(*ShortenBatchRequestV1))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _URLShortenerService_ShortenBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ShortenBatchRequest)
+func _URLShortenerServiceV1_GetV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequestV1)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(URLShortenerServiceServer).ShortenBatch(ctx, in)
+		return srv.(URLShortenerServiceV1Server).GetV1(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: URLShortenerService_ShortenBatch_FullMethodName,
+		FullMethod: URLShortenerServiceV1_GetV1_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(URLShortenerServiceServer).ShortenBatch(ctx, req.(*ShortenBatchRequest))
+		return srv.(URLShortenerServiceV1Server).GetV1(ctx, req.(*GetRequestV1))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _URLShortenerService_Redirect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RedirectRequest)
+func _URLShortenerServiceV1_PingV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PingRequestV1)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(URLShortenerServiceServer).Redirect(ctx, in)
+		return srv.(URLShortenerServiceV1Server).PingV1(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: URLShortenerService_Redirect_FullMethodName,
+		FullMethod: URLShortenerServiceV1_PingV1_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(URLShortenerServiceServer).Redirect(ctx, req.(*RedirectRequest))
+		return srv.(URLShortenerServiceV1Server).PingV1(ctx, req.(*PingRequestV1))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _URLShortenerService_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PingRequest)
+func _URLShortenerServiceV1_UserUrlsV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserUrlsRequestV1)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(URLShortenerServiceServer).Ping(ctx, in)
+		return srv.(URLShortenerServiceV1Server).UserUrlsV1(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: URLShortenerService_Ping_FullMethodName,
+		FullMethod: URLShortenerServiceV1_UserUrlsV1_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(URLShortenerServiceServer).Ping(ctx, req.(*PingRequest))
+		return srv.(URLShortenerServiceV1Server).UserUrlsV1(ctx, req.(*UserUrlsRequestV1))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _URLShortenerService_UserUrls_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserUrlsRequest)
+func _URLShortenerServiceV1_UserUrlsDeleteV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserUrlsDeleteRequestV1)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(URLShortenerServiceServer).UserUrls(ctx, in)
+		return srv.(URLShortenerServiceV1Server).UserUrlsDeleteV1(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: URLShortenerService_UserUrls_FullMethodName,
+		FullMethod: URLShortenerServiceV1_UserUrlsDeleteV1_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(URLShortenerServiceServer).UserUrls(ctx, req.(*UserUrlsRequest))
+		return srv.(URLShortenerServiceV1Server).UserUrlsDeleteV1(ctx, req.(*UserUrlsDeleteRequestV1))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _URLShortenerService_UserUrlsDelete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserUrlsDeleteRequest)
+func _URLShortenerServiceV1_StatsV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StatsRequestV1)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(URLShortenerServiceServer).UserUrlsDelete(ctx, in)
+		return srv.(URLShortenerServiceV1Server).StatsV1(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: URLShortenerService_UserUrlsDelete_FullMethodName,
+		FullMethod: URLShortenerServiceV1_StatsV1_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(URLShortenerServiceServer).UserUrlsDelete(ctx, req.(*UserUrlsDeleteRequest))
+		return srv.(URLShortenerServiceV1Server).StatsV1(ctx, req.(*StatsRequestV1))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _URLShortenerService_Stats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StatsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(URLShortenerServiceServer).Stats(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: URLShortenerService_Stats_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(URLShortenerServiceServer).Stats(ctx, req.(*StatsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// URLShortenerService_ServiceDesc is the grpc.ServiceDesc for URLShortenerService service.
+// URLShortenerServiceV1_ServiceDesc is the grpc.ServiceDesc for URLShortenerServiceV1 service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var URLShortenerService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.URLShortenerService",
-	HandlerType: (*URLShortenerServiceServer)(nil),
+var URLShortenerServiceV1_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.URLShortenerServiceV1",
+	HandlerType: (*URLShortenerServiceV1Server)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Save",
-			Handler:    _URLShortenerService_Save_Handler,
+			MethodName: "ShortenV1",
+			Handler:    _URLShortenerServiceV1_ShortenV1_Handler,
 		},
 		{
-			MethodName: "Shorten",
-			Handler:    _URLShortenerService_Shorten_Handler,
+			MethodName: "ShortenBatchV1",
+			Handler:    _URLShortenerServiceV1_ShortenBatchV1_Handler,
 		},
 		{
-			MethodName: "ShortenBatch",
-			Handler:    _URLShortenerService_ShortenBatch_Handler,
+			MethodName: "GetV1",
+			Handler:    _URLShortenerServiceV1_GetV1_Handler,
 		},
 		{
-			MethodName: "Redirect",
-			Handler:    _URLShortenerService_Redirect_Handler,
+			MethodName: "PingV1",
+			Handler:    _URLShortenerServiceV1_PingV1_Handler,
 		},
 		{
-			MethodName: "Ping",
-			Handler:    _URLShortenerService_Ping_Handler,
+			MethodName: "UserUrlsV1",
+			Handler:    _URLShortenerServiceV1_UserUrlsV1_Handler,
 		},
 		{
-			MethodName: "UserUrls",
-			Handler:    _URLShortenerService_UserUrls_Handler,
+			MethodName: "UserUrlsDeleteV1",
+			Handler:    _URLShortenerServiceV1_UserUrlsDeleteV1_Handler,
 		},
 		{
-			MethodName: "UserUrlsDelete",
-			Handler:    _URLShortenerService_UserUrlsDelete_Handler,
-		},
-		{
-			MethodName: "Stats",
-			Handler:    _URLShortenerService_Stats_Handler,
+			MethodName: "StatsV1",
+			Handler:    _URLShortenerServiceV1_StatsV1_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

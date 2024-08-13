@@ -9,20 +9,20 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
 	_ "github.com/ajugalushkin/url-shortener-version2/api"
 	"github.com/ajugalushkin/url-shortener-version2/config"
 	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
-	"github.com/ajugalushkin/url-shortener-version2/internal/grpchandler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
 	"github.com/ajugalushkin/url-shortener-version2/internal/storage"
+	"github.com/ajugalushkin/url-shortener-version2/pkg/ydx/url-shortener"
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
 	pb "github.com/ajugalushkin/url-shortener-version2/proto"
@@ -31,62 +31,68 @@ import (
 // Run является основным местом запуска сервиса.
 // В методе происходит инициализация контекста, логгера и
 // происходит привязка обработчиков к запросам.
-func Run(ctx context.Context) error {
-	logger.GetLogger()
-
-	server := echo.New()
-	setRouting(ctx, server)
-
-	ctx, stop := signal.NotifyContext(
+func Run() error {
+	mainCtx, stop := signal.NotifyContext(
 		context.Background(),
 		syscall.SIGINT,
 		syscall.SIGTERM,
 		syscall.SIGQUIT)
 	defer stop()
 
-	go func() {
-		logger.GetLogger().Info("Running server", zap.String("address", config.GetConfig().ServerAddress))
+	serverHTTP := echo.New()
+	setRouting(mainCtx, serverHTTP)
+
+	group, groupCtx := errgroup.WithContext(mainCtx)
+	group.Go(func() error {
+		logger.GetLogger().Info("Running HTTP server", zap.String("address", config.GetConfig().ServerAddress))
 
 		var err error
 		if !config.GetConfig().EnableHTTPS {
-			err = server.Start(config.GetConfig().ServerAddress)
+			err = serverHTTP.Start(config.GetConfig().ServerAddress)
 		} else {
-			err = server.StartAutoTLS(config.GetConfig().ServerAddress)
+			err = serverHTTP.StartAutoTLS(config.GetConfig().ServerAddress)
 		}
 
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.GetLogger().Fatal("shutting down the server", zap.Error(err))
+			logger.GetLogger().Fatal("shutting down the HTTP", zap.Error(err))
 		}
-	}()
-
-	<-ctx.Done()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := server.Shutdown(ctx); err != nil {
-		logger.GetLogger().Fatal(err.Error(), zap.String("address", config.GetConfig().ServerAddress))
 		return err
-	}
+	})
+	group.Go(func() error {
+		<-groupCtx.Done()
+		if err := serverHTTP.Shutdown(context.Background()); err != nil {
+			logger.GetLogger().Fatal(err.Error(), zap.String("address", config.GetConfig().ServerAddress))
+			return err
+		}
+		return nil
+	})
 
-	return nil
-}
+	serverGRPC := grpc.NewServer()
+	newHandler := url_shortener.NewHandler(mainCtx, service.NewService(storage.GetStorage()))
+	pb.RegisterURLShortenerServiceV1Server(serverGRPC, newHandler)
+	group.Go(func() error {
+		listen, err := net.Listen("tcp", config.GetConfig().ServerAddressGrpc)
+		if err != nil {
+			logger.GetLogger().Fatal("failed to listen", zap.Error(err))
+			return err
+		}
 
-func RungRPC(ctx context.Context) error {
-	listen, err := net.Listen("tcp", config.GetConfig().ServerAddressGrpc)
-	if err != nil {
-		logger.GetLogger().Fatal("failed to listen", zap.Error(err))
-		return err
-	}
+		logger.GetLogger().Debug("Running GRPC server", zap.String("address", config.GetConfig().ServerAddressGrpc))
+		if err := serverGRPC.Serve(listen); err != nil {
+			logger.GetLogger().Fatal("GRPC failed to serve", zap.Error(err))
+			return err
+		}
+		return nil
+	})
 
-	s := grpc.NewServer()
-	newHandler := grpchandler.NewHandler(ctx, service.NewService(storage.GetStorage()))
-	pb.RegisterURLShortenerServiceServer(s, newHandler)
+	group.Go(func() error {
+		<-groupCtx.Done()
+		serverGRPC.Stop()
+		logger.GetLogger().Debug("GRPC server has stopped")
+		return nil
+	})
 
-	logger.GetLogger().Debug("Server gRPC started", zap.String("address", config.GetConfig().ServerAddressGrpc))
-	if err := s.Serve(listen); err != nil {
-		logger.GetLogger().Fatal("failed to serve", zap.Error(err))
-		return err
-	}
-	return nil
+	return group.Wait()
 }
 
 func setRouting(ctx context.Context, server *echo.Echo) {
