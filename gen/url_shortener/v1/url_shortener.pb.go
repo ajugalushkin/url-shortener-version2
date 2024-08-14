@@ -7,7 +7,6 @@
 package url_shortenerv1
 
 import (
-	_ "github.com/ajugalushkin/url-shortener-version2/gen/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
