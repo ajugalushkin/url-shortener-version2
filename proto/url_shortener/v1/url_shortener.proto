@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+option go_package = "github.com/ajugalushkin/url-shortener-version2/pkg/ydx/url-shortener/v1";
+
+package url_shortener.v1;
+
+import "buf/validate/validate.proto";
+
+service URLShortenerV1Service {
+  rpc ShortenV1(ShortenV1Request) returns (ShortenV1Response);
+  rpc ShortenBatchV1(ShortenBatchV1Request) returns (ShortenBatchV1Response);
+  rpc GetV1(GetV1Request) returns (GetV1Response);
+  rpc PingV1(PingV1Request) returns (PingV1Response);
+  rpc UserUrlsV1(UserUrlsV1Request) returns (UserUrlsV1Response);
+  rpc UserUrlsDeleteV1(UserUrlsDeleteV1Request) returns (UserUrlsDeleteV1Response);
+  rpc StatsV1(StatsV1Request) returns (StatsV1Response);
+}
+
+message ShortenV1Request {
+  message ShortenInput{
+    string url = 1 [(buf.validate.field).string.pattern = "^((http|https)://)[-a-zA-Z0-9@:%._\\+~#?&//=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%._\\+~#?&//=]*)$"];
+  }
+  ShortenInput input = 1;
+}
+
+message ShortenV1Response {
+  message ShortenOutput{
+    string short_url = 1;
+  }
+  ShortenOutput output = 1;
+}
+
+message ShortenBatchV1Request {
+  message ShortenBatchInput{
+    string correlation_id = 1;
+    string original_url = 2;
+  }
+  repeated ShortenBatchInput input = 1;
+}
+
+message ShortenBatchV1Response {
+  message ShortenBatchOutput{
+    string correlation_id = 1;
+    string short_url = 2;
+  }
+  repeated ShortenBatchOutput output = 1;
+}
+
+message GetV1Request {
+  string short_url = 1;
+}
+
+message GetV1Response {
+  string original_url = 1;
+}
+
+message PingV1Request {
+}
+
+message PingV1Response {
+  bool result = 1;
+}
+
+message UserUrlsV1Request {
+}
+
+message UserUrlsV1Response {
+  message UserUrls{
+    string short_url = 1;
+    string original_url = 2;
+  }
+  repeated UserUrls output = 1;
+}
+
+message UserUrlsDeleteV1Request {
+  repeated string urls = 1;
+}
+
+message UserUrlsDeleteV1Response {
+  string result = 1;
+}
+
+message StatsV1Request {
+}
+
+message StatsV1Response {
+  int64 urls = 1;
+  int64 users = 2;
+}

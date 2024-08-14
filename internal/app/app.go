@@ -18,6 +18,7 @@ import (
 
 	_ "github.com/ajugalushkin/url-shortener-version2/api"
 	"github.com/ajugalushkin/url-shortener-version2/config"
+	pb "github.com/ajugalushkin/url-shortener-version2/gen/url_shortener/v1"
 	"github.com/ajugalushkin/url-shortener-version2/internal/compress"
 	"github.com/ajugalushkin/url-shortener-version2/internal/handler"
 	"github.com/ajugalushkin/url-shortener-version2/internal/service"
@@ -25,7 +26,6 @@ import (
 	"github.com/ajugalushkin/url-shortener-version2/pkg/ydx/url-shortener/v1"
 
 	"github.com/ajugalushkin/url-shortener-version2/internal/logger"
-	pb "github.com/ajugalushkin/url-shortener-version2/proto"
 )
 
 // Run является основным местом запуска сервиса.
@@ -69,7 +69,7 @@ func Run() error {
 
 	serverGRPC := grpc.NewServer()
 	newHandler := v1.NewHandler(mainCtx, service.NewService(storage.GetStorage()))
-	pb.RegisterURLShortenerServiceV1Server(serverGRPC, newHandler)
+	pb.RegisterURLShortenerV1ServiceServer(serverGRPC, newHandler)
 	group.Go(func() error {
 		listen, err := net.Listen("tcp", config.GetConfig().ServerAddressGrpc)
 		if err != nil {
