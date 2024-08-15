@@ -15,14 +15,16 @@ import (
 
 // AppConfig структура параметров заауска.
 type AppConfig struct {
-	ServerAddress   string `env:"SERVER_ADDRESS"`
-	BaseURL         string `env:"BASE_URL"`
-	FlagLogLevel    string `env:"LOG_LEVEL"`
-	FileStoragePath string `env:"FILE_STORAGE_PATH"`
-	DataBaseDsn     string `env:"DATABASE_DSN"`
-	SecretKey       string `env:"SECRET_KEY"`
-	EnableHTTPS     bool   `env:"ENABLE_HTTPS"`
-	Config          string `env:"CONFIG"`
+	ServerAddress     string `env:"SERVER_ADDRESS"`
+	ServerAddressGrpc string `env:"SERVER_ADDRESS_GRPC"`
+	BaseURL           string `env:"BASE_URL"`
+	FlagLogLevel      string `env:"LOG_LEVEL"`
+	FileStoragePath   string `env:"FILE_STORAGE_PATH"`
+	DataBaseDsn       string `env:"DATABASE_DSN"`
+	SecretKey         string `env:"SECRET_KEY"`
+	EnableHTTPS       bool   `env:"ENABLE_HTTPS"`
+	Config            string `env:"CONFIG"`
+	TrustedSubnet     string `env:"TRUSTED_SUBNET"`
 }
 
 // init функция инициализации начальных значений для параметров запуска.
@@ -33,6 +35,7 @@ func init() {
 	}
 
 	viper.SetDefault("Server_Address", "localhost:8080")
+	viper.SetDefault("Server_Address_Grpc", "localhost:3200")
 	viper.SetDefault("Base_URL", "http://localhost:8080")
 	viper.SetDefault("Log_Level", "Debug")
 	viper.SetDefault("File_Storage_PATH", "")
@@ -40,11 +43,13 @@ func init() {
 	viper.SetDefault("Secret_Key", "")
 	viper.SetDefault("Enable_HTTPS", false)
 	viper.SetDefault("Config", "")
+	viper.SetDefault("Trusted_Subnet", "")
 }
 
 // bindToEnv функция для маппинга полей из ENV с полями структуры.
 func bindToEnv() {
 	_ = viper.BindEnv("Server_Address")
+	_ = viper.BindEnv("Server_Address_Grpc")
 	_ = viper.BindEnv("Base_URL")
 	_ = viper.BindEnv("Log_Level")
 	_ = viper.BindEnv("File_Storage_PATH")
@@ -52,6 +57,7 @@ func bindToEnv() {
 	_ = viper.BindEnv("Secret_Key")
 	_ = viper.BindEnv("Enable_HTTPS")
 	_ = viper.BindEnv("Config")
+	_ = viper.BindEnv("Trusted_Subnet")
 }
 
 // loadConfiguration function for read json config
@@ -84,14 +90,16 @@ func readConfig() *AppConfig {
 	}
 
 	result := &AppConfig{
-		ServerAddress:   viper.GetString("Server_Address"),
-		BaseURL:         viper.GetString("Base_URL"),
-		FlagLogLevel:    viper.GetString("Log_Level"),
-		FileStoragePath: viper.GetString("File_Storage_PATH"),
-		DataBaseDsn:     viper.GetString("DataBase_Dsn"),
-		SecretKey:       viper.GetString("Secret_Key"),
-		EnableHTTPS:     viper.GetBool("Enable_HTTPS"),
-		Config:          viper.GetString("Config"),
+		ServerAddress:     viper.GetString("Server_Address"),
+		ServerAddressGrpc: viper.GetString("Server_Address_Grpc"),
+		BaseURL:           viper.GetString("Base_URL"),
+		FlagLogLevel:      viper.GetString("Log_Level"),
+		FileStoragePath:   viper.GetString("File_Storage_PATH"),
+		DataBaseDsn:       viper.GetString("DataBase_Dsn"),
+		SecretKey:         viper.GetString("Secret_Key"),
+		EnableHTTPS:       viper.GetBool("Enable_HTTPS"),
+		Config:            viper.GetString("Config"),
+		TrustedSubnet:     viper.GetString("Trusted_Subnet"),
 	}
 
 	if result.Config != "" {
@@ -99,6 +107,9 @@ func readConfig() *AppConfig {
 
 		if result.ServerAddress == "" {
 			result.ServerAddress = configJSON.ServerAddress
+		}
+		if result.ServerAddressGrpc == "" {
+			result.ServerAddressGrpc = configJSON.ServerAddressGrpc
 		}
 		if result.BaseURL == "" {
 			result.BaseURL = configJSON.BaseURL
@@ -117,6 +128,9 @@ func readConfig() *AppConfig {
 		}
 		if result.EnableHTTPS {
 			result.EnableHTTPS = configJSON.EnableHTTPS
+		}
+		if result.TrustedSubnet == "" {
+			result.TrustedSubnet = configJSON.TrustedSubnet
 		}
 	}
 

@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"context"
-
 	"go.uber.org/zap"
 
 	"github.com/ajugalushkin/url-shortener-version2/config"
@@ -15,7 +13,7 @@ import (
 )
 
 // GetStorage функция определяет инстанцию хранилища в зависимости от конфигурации.
-func GetStorage(ctx context.Context) service.PutGetter {
+func GetStorage() service.PutGetter {
 	flags := config.GetConfig()
 	log := logger.GetLogger()
 	if flags.DataBaseDsn != "" {

@@ -125,3 +125,8 @@ func load(files *sync.Map, fileName string) error {
 
 	return nil
 }
+
+// GetStats метод для получения статистики
+func (r *Storage) GetStats(ctx context.Context) (*dto.Stats, error) {
+	return nil, nil
+}

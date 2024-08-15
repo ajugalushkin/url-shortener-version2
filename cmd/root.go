@@ -31,6 +31,7 @@ func init() {
 	rootCmd.PersistentFlags().StringP("DataBaseDsn", "d", "", "DB path for connect")
 	rootCmd.PersistentFlags().BoolP("EnableHTTPS", "s", false, "Enable HTTPS in the web server")
 	rootCmd.PersistentFlags().BoolP("Config", "c", false, "set JSON config file")
+	rootCmd.PersistentFlags().StringP("TrustedSubnet", "t", "", "set CIDR")
 
 	_ = viper.BindPFlag("Server_Address", rootCmd.PersistentFlags().Lookup("ServerAddress"))
 	_ = viper.BindPFlag("Base_URL", rootCmd.PersistentFlags().Lookup("BaseURL"))
@@ -39,4 +40,5 @@ func init() {
 	_ = viper.BindPFlag("DataBase_Dsn", rootCmd.PersistentFlags().Lookup("DataBaseDsn"))
 	_ = viper.BindPFlag("Enable_HTTPS", rootCmd.PersistentFlags().Lookup("EnableHTTPS"))
 	_ = viper.BindPFlag("Config", rootCmd.PersistentFlags().Lookup("Config"))
+	_ = viper.BindPFlag("Trusted_Subnet", rootCmd.PersistentFlags().Lookup("TrustedSubnet"))
 }

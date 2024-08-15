@@ -3,7 +3,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ajugalushkin/url-shortener-version2/config"
@@ -30,7 +29,11 @@ func main() {
 	fmt.Printf("Build date: %s\n", buildDate)
 	fmt.Printf("Build commit: %s\n", buildCommit)
 
-	if err := app.Run(context.Background()); err != nil {
+	if err := app.Run(); err != nil {
 		fmt.Println(err)
 	}
+
+	//if err := app.RungRPC(context.Background()); err != nil {
+	//	fmt.Println(err)
+	//}
 }

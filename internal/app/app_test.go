@@ -19,7 +19,7 @@ import (
 func TestHandleSaveEmptyOrInvalidBody(t *testing.T) {
 	e := echo.New()
 	ctx := context.Background()
-	servAPI := service.NewService(storage.GetStorage(ctx))
+	servAPI := service.NewService(storage.GetStorage())
 	h := handler.NewHandler(ctx, servAPI)
 
 	req := httptest.NewRequest(http.MethodPost, "/", nil)

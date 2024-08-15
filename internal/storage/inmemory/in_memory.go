@@ -107,3 +107,24 @@ func (r *InMemory) DeleteUserURL(ctx context.Context, shortURL []string, userID 
 		r.m.CompareAndSwap(value, v.(dto.Shortening), newShortening)
 	}
 }
+
+// GetStats метод для получения статистики
+func (r *InMemory) GetStats(ctx context.Context) (*dto.Stats, error) {
+	var (
+		urls  map[string]string
+		users map[string]string
+	)
+	r.m.Range(func(k, v interface{}) bool {
+		itemCurrent := v.(dto.Shortening)
+
+		if _, isURLExists := urls[itemCurrent.ShortURL]; !isURLExists {
+			urls[itemCurrent.OriginalURL] = itemCurrent.OriginalURL
+		}
+		if _, isUsersExists := users[itemCurrent.ShortURL]; !isUsersExists {
+			users[itemCurrent.UserID] = itemCurrent.UserID
+		}
+		return true
+	})
+
+	return &dto.Stats{Users: len(users), URLS: len(urls)}, nil
+}

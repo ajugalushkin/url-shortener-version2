@@ -1,0 +1,3 @@
+ignore:
+  - "internal/dto/model*.go"
+  - "proto"
