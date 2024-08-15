@@ -6,31 +6,31 @@ package url_shortener.v1;
 
 import "buf/validate/validate.proto";
 
-service URLShortenerV1Service {
-  rpc ShortenV1(ShortenV1Request) returns (ShortenV1Response);
-  rpc ShortenBatchV1(ShortenBatchV1Request) returns (ShortenBatchV1Response);
-  rpc GetV1(GetV1Request) returns (GetV1Response);
-  rpc PingV1(PingV1Request) returns (PingV1Response);
-  rpc UserUrlsV1(UserUrlsV1Request) returns (UserUrlsV1Response);
-  rpc UserUrlsDeleteV1(UserUrlsDeleteV1Request) returns (UserUrlsDeleteV1Response);
-  rpc StatsV1(StatsV1Request) returns (StatsV1Response);
+service URLShortenerServiceV1 {
+  rpc ShortenV1(ShortenRequestV1) returns (ShortenResponseV1);
+  rpc ShortenBatchV1(ShortenBatchRequestV1) returns (ShortenBatchResponseV1);
+  rpc GetV1(GetRequestV1) returns (GetResponseV1);
+  rpc PingV1(PingRequestV1) returns (PingResponseV1);
+  rpc UserUrlsV1(UserUrlsRequestV1) returns (UserUrlsResponseV1);
+  rpc UserUrlsDeleteV1(UserUrlsDeleteRequestV1) returns (UserUrlsDeleteResponseV1);
+  rpc StatsV1(StatsRequestV1) returns (StatsResponseV1);
 }
 
-message ShortenV1Request {
+message ShortenRequestV1 {
   message ShortenInput{
-    string url = 1 [(buf.validate.field).string.pattern = "^((http|https)://)[-a-zA-Z0-9@:%._\\+~#?&//=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%._\\+~#?&//=]*)$"];
+    string url = 1 [(buf.validate.field).string.uri = true];
   }
   ShortenInput input = 1;
 }
 
-message ShortenV1Response {
+message ShortenResponseV1 {
   message ShortenOutput{
     string short_url = 1;
   }
   ShortenOutput output = 1;
 }
 
-message ShortenBatchV1Request {
+message ShortenBatchRequestV1 {
   message ShortenBatchInput{
     string correlation_id = 1;
     string original_url = 2;
@@ -38,7 +38,7 @@ message ShortenBatchV1Request {
   repeated ShortenBatchInput input = 1;
 }
 
-message ShortenBatchV1Response {
+message ShortenBatchResponseV1 {
   message ShortenBatchOutput{
     string correlation_id = 1;
     string short_url = 2;
@@ -46,25 +46,25 @@ message ShortenBatchV1Response {
   repeated ShortenBatchOutput output = 1;
 }
 
-message GetV1Request {
+message GetRequestV1 {
   string short_url = 1;
 }
 
-message GetV1Response {
+message GetResponseV1 {
   string original_url = 1;
 }
 
-message PingV1Request {
+message PingRequestV1 {
 }
 
-message PingV1Response {
+message PingResponseV1 {
   bool result = 1;
 }
 
-message UserUrlsV1Request {
+message UserUrlsRequestV1 {
 }
 
-message UserUrlsV1Response {
+message UserUrlsResponseV1 {
   message UserUrls{
     string short_url = 1;
     string original_url = 2;
@@ -72,18 +72,18 @@ message UserUrlsV1Response {
   repeated UserUrls output = 1;
 }
 
-message UserUrlsDeleteV1Request {
+message UserUrlsDeleteRequestV1 {
   repeated string urls = 1;
 }
 
-message UserUrlsDeleteV1Response {
+message UserUrlsDeleteResponseV1 {
   string result = 1;
 }
 
-message StatsV1Request {
+message StatsRequestV1 {
 }
 
-message StatsV1Response {
+message StatsResponseV1 {
   int64 urls = 1;
   int64 users = 2;
 }

@@ -69,7 +69,7 @@ func Run() error {
 
 	serverGRPC := grpc.NewServer()
 	newHandler := v1.NewHandler(mainCtx, service.NewService(storage.GetStorage()))
-	pb.RegisterURLShortenerV1ServiceServer(serverGRPC, newHandler)
+	pb.RegisterURLShortenerServiceV1Server(serverGRPC, newHandler)
 	group.Go(func() error {
 		listen, err := net.Listen("tcp", config.GetConfig().ServerAddressGrpc)
 		if err != nil {
